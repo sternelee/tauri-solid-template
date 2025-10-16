@@ -1,0 +1,35 @@
+{
+  "name": "app",
+  "private": true,
+  "type": "module",
+  "description": "",
+  "scripts": {
+    "start": "vinxi start",
+    "dev": "vinxi dev --host",
+    "build": "vinxi build",
+    "serve": "vinxi serve",
+    "tauri": "tauri",
+    "format": "prettier --write src"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@solidjs/router": "^0.15.3",
+    "@solidjs/start": "^1.2.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@tauri-apps/api": "2.8.0",
+    "@tauri-apps/plugin-shell": "2.3.1",
+    "solid-js": "^1.9.9",
+    "tailwindcss": "^4.1.14",
+    "vinxi": "^0.5.8"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.8.4",
+    "autoprefixer": "^10.4.21",
+    "internal-ip": "^8.0.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.7.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10",
+    "vite-plugin-solid": "^2.11.9"
+  }
+}
