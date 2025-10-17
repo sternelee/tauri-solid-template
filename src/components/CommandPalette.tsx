@@ -233,88 +233,410 @@ const [search, setSearch] = createSignal("");
   };
 
   return (
-  <>
-  {/* Plugin Container */}
-  <div id="plugin-container" class="plugin-container"></div>
+    <>
+      {/* Plugin Container */}
+      <div id="plugin-container" class="plugin-container"></div>
 
     <Command.Dialog
-        open={open()}
-        onOpenChange={setOpen}
-        class="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
-      >
-      {/* Backdrop */}
-      <div class="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+  open={open()}
+  onOpenChange={setOpen}
+  class="raycast-dialog"
+  >
+    {/* Backdrop */}
+    <div class="raycast-backdrop" />
 
-      {/* Command Palette */}
-      <div class="relative w-full max-w-2xl mx-auto">
-        <Command class="rounded-lg border border-gray-200 bg-white shadow-2xl overflow-hidden dark:border-gray-700 dark:bg-gray-900">
-          {/* Search Input */}
-          <div class="flex items-center border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-            <Command.Input
-              value={search()}
-              onValueChange={setSearch}
-              placeholder="Type a command or search..."
-              class="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-500 dark:text-white dark:placeholder:text-gray-400"
-            />
-            <kbd class="ml-2 rounded border border-gray-200 px-2 py-1 text-xs font-mono text-gray-500 dark:border-gray-600 dark:text-gray-400">
-              ESC
-            </kbd>
-          </div>
+    {/* Command Palette */}
+    <div class="raycast-container">
+    <Command class="raycast-palette">
+    {/* Search Input */}
+    <div class="raycast-search">
+    <div class="raycast-search-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  </div>
+    <Command.Input
+      value={search()}
+    onValueChange={setSearch}
+      placeholder="Search for apps and commands..."
+        class="raycast-input"
+              />
+      <div class="raycast-shortcuts">
+        <kbd class="raycast-kbd raycast-kbd-primary">
+        <span>⌘</span>
+        <span>K</span>
+    </kbd>
+      <span class="raycast-shortcut-separator">or</span>
+                <kbd class="raycast-kbd">
+        <span>ESC</span>
+      </kbd>
+  </div>
+  </div>
 
-          {/* Command List */}
-          <Command.List class="max-h-[50vh] overflow-y-auto p-2">
-            {/* Empty State */}
-            <Command.Empty class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-              No results found.
-            </Command.Empty>
+  {/* Command List */}
+  <Command.List class="raycast-list">
+  {/* Empty State */}
+  <Command.Empty class="raycast-empty">
+  <div class="raycast-empty-icon">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <path d="M9.75 9.75L14.25 14.25M14.25 9.75L9.75 14.25M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+  </div>
+  <div class="raycast-empty-text">
+  No results found
+  </div>
+  <div class="raycast-empty-subtitle">
+  Try searching for something else
+  </div>
+  </Command.Empty>
 
-            {/* Command Groups */}
-            {commandGroups.map((group) => (
-              <Command.Group key={group.heading} heading={group.heading}>
-                <div class="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                  {group.heading}
-                </div>
-                {group.items.map((item) => (
-                  <Command.Item
-                    key={item.id}
-                    value={`${item.title} ${item.subtitle || ""} ${item.keywords?.join(" ") || ""}`}
+  {/* Command Groups */}
+  {commandGroups.map((group) => (
+    <Command.Group key={group.heading} heading={group.heading}>
+        <div class="raycast-group-header">
+            {group.heading}
+            </div>
+            {group.items.map((item) => (
+              <Command.Item
+                      key={item.id}
+              value={`${item.title} ${item.subtitle || ""} ${item.keywords?.join(" ") || ""}`}
                     onSelect={() => handleSelect(item)}
-                    class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2.5 text-sm text-gray-900 outline-none hover:bg-gray-100 aria-selected:bg-gray-100 dark:text-white dark:hover:bg-gray-800 dark:aria-selected:bg-gray-800"
-                  >
-                    <span class="mr-3 text-lg">{item.icon}</span>
-                    <div class="flex-1">
-                      <div class="font-medium">{item.title}</div>
-                      {item.subtitle && (
-                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                          {item.subtitle}
-                        </div>
+                  class="raycast-item"
+              >
+                <div class="raycast-item-icon">
+                  {item.icon}
+                </div>
+                <div class="raycast-item-content">
+                  <div class="raycast-item-title">
+                    {item.title}
+                    </div>
+                        {item.subtitle && (
+                      <div class="raycast-item-subtitle">
+                      {item.subtitle}
+                      </div>
                       )}
                     </div>
-                  </Command.Item>
-                ))}
-              </Command.Group>
-            ))}
-          </Command.List>
-        </Command>
+                      {item.shortcut && (
+                        <div class="raycast-item-shortcut">
+                          <kbd class="raycast-kbd raycast-kbd-small">
+                            {item.shortcut.split('+').map((key, index) => (
+                              <span key={index}>
+                                {key === 'Cmd' ? '⌘' :
+                                 key === 'Shift' ? '⇧' :
+                                 key === 'Alt' ? '⌥' :
+                                 key === 'Ctrl' ? '⌃' :
+                                 key.toUpperCase()}
+                              </span>
+                            ))}
+                          </kbd>
+                        </div>
+                      )}
+                    </Command.Item>
+                  ))}
+                </Command.Group>
+              ))}
+            </Command.List>
+          </Command>
         </div>
-        </Command.Dialog>
+      </Command.Dialog>
 
-          {/* Plugin Container Styles */}
-    <style jsx>{`
-      .plugin-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        pointer-events: none;
-        z-index: 100;
-      }
+      {/* Raycast-style CSS */}
+      <style jsx global>{`
+        /* Raycast-inspired styling */
+        .raycast-dialog {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding-top: 12vh;
+        }
 
-      .plugin-container plugin-host {
-        pointer-events: auto;
-      }
-    `}</style>
+        .raycast-backdrop {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+        }
+
+        .raycast-container {
+          position: relative;
+          width: 100%;
+          max-width: 640px;
+          margin: 0 16px;
+        }
+
+        .raycast-palette {
+          background: rgba(23, 23, 23, 0.95);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.1),
+            0 10px 10px -5px rgba(0, 0, 0, 0.04),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+          overflow: hidden;
+          animation: raycast-enter 0.15s ease-out;
+        }
+
+        @keyframes raycast-enter {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        .raycast-search {
+          display: flex;
+          align-items: center;
+          padding: 16px 20px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          gap: 12px;
+        }
+
+        .raycast-search-icon {
+          color: rgba(255, 255, 255, 0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .raycast-input {
+          flex: 1;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: rgba(255, 255, 255, 0.9);
+          font-size: 16px;
+          font-weight: 400;
+          line-height: 1.5;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .raycast-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .raycast-input:focus {
+          outline: none;
+        }
+
+        .raycast-shortcuts {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-left: auto;
+        }
+
+        .raycast-shortcut-separator {
+          color: rgba(255, 255, 255, 0.4);
+          font-size: 12px;
+          font-weight: 500;
+        }
+
+        .raycast-kbd {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 1px;
+          padding: 2px 6px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.8);
+          font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+          line-height: 1;
+          user-select: none;
+        }
+
+        .raycast-kbd-primary {
+          background: rgba(59, 130, 246, 0.2);
+          border-color: rgba(59, 130, 246, 0.3);
+          color: #60a5fa;
+        }
+
+        .raycast-kbd-small {
+          padding: 1px 4px;
+          font-size: 10px;
+          min-height: 16px;
+        }
+
+        .raycast-list {
+          max-height: 400px;
+          overflow-y: auto;
+          padding: 8px 0;
+        }
+
+        .raycast-list::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .raycast-list::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .raycast-list::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+
+        .raycast-list::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+
+        .raycast-group-header {
+          padding: 8px 20px 4px;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: rgba(255, 255, 255, 0.5);
+          user-select: none;
+        }
+
+        .raycast-item {
+          display: flex;
+          align-items: center;
+          padding: 8px 20px;
+          margin: 0 8px;
+          border-radius: 8px;
+          cursor: pointer;
+          user-select: none;
+          transition: all 0.15s ease;
+          outline: none;
+        }
+
+        .raycast-item:hover,
+        .raycast-item[aria-selected="true"] {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .raycast-item-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          margin-right: 12px;
+          font-size: 16px;
+          flex-shrink: 0;
+        }
+
+        .raycast-item-content {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .raycast-item-title {
+          font-size: 14px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.9);
+          line-height: 1.4;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .raycast-item-subtitle {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+          line-height: 1.3;
+          margin-top: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .raycast-item-shortcut {
+          margin-left: 12px;
+          flex-shrink: 0;
+        }
+
+        .raycast-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 20px;
+          text-align: center;
+        }
+
+        .raycast-empty-icon {
+          color: rgba(255, 255, 255, 0.4);
+          margin-bottom: 16px;
+        }
+
+        .raycast-empty-text {
+          font-size: 16px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.8);
+          margin-bottom: 4px;
+        }
+
+        .raycast-empty-subtitle {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Plugin Container */
+        .plugin-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          pointer-events: none;
+          z-index: 10000;
+        }
+
+        .plugin-container plugin-host {
+          pointer-events: auto;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+          .raycast-dialog {
+            padding-top: 8vh;
+          }
+
+          .raycast-container {
+            margin: 0 12px;
+          }
+
+          .raycast-search {
+            padding: 12px 16px;
+          }
+
+          .raycast-item {
+            padding: 12px 16px;
+            margin: 0 4px;
+          }
+
+          .raycast-group-header {
+            padding: 8px 16px 4px;
+          }
+        }
+
+        /* Focus states */
+        .raycast-item:focus-visible {
+          outline: 2px solid rgba(59, 130, 246, 0.5);
+          outline-offset: 2px;
+        }
+
+        .raycast-input:focus-visible {
+          outline: none;
+        }
+      `}</style>
     </>
   );
 }
