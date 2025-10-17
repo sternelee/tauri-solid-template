@@ -509,11 +509,6 @@ export class PluginManager {
     );
   }
 
-  // Get active plugin
-  getActivePlugin(): PluginInstance | null {
-    return this.activePlugin;
-  }
-
   // Get registered plugins
   getPlugins(): PluginInstance[] {
     return Array.from(this.plugins.values());
