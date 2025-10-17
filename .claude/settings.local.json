@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__jean-memory__jean_memory",
+      "WebFetch(domain:cmdk-solid.vercel.app)",
+      "Bash(mkdir:*)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm add:*)",
+      "Bash(cargo build:*)",
+      "Bash(pnpm tauri dev:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(cargo clean:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

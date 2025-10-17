@@ -6,6 +6,23 @@ export const commands = {
   async greet(name: string): Promise<string> {
     return await TAURI_INVOKE("greet", { name });
   },
+  async executeCommand(
+    command: string,
+    args: string[],
+  ): Promise<Result<string, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("execute_command", { command, args }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getSystemInfo(): Promise<SystemInfo> {
+    return await TAURI_INVOKE("get_system_info");
+  },
 };
 
 /** user-defined events **/
@@ -21,6 +38,7 @@ export const events = __makeEvents__<{
 /** user-defined types **/
 
 export type DemoEvent = string;
+export type SystemInfo = { os: string; arch: string };
 
 /** tauri-specta globals **/
 
