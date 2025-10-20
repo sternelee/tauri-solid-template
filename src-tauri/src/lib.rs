@@ -46,9 +46,9 @@ fn get_system_info() -> SystemInfo {
 #[tauri::command]
 #[specta::specta]
 async fn create_plugin_window(
-    app: tauri::AppHandle,
-    window_id: String,
-    config: serde_json::Value,
+    _app: tauri::AppHandle,
+    _window_id: String,
+    _config: serde_json::Value,
 ) -> Result<(), String> {
     // This would create a new window for plugins - simplified for now
     Ok(())
@@ -57,9 +57,9 @@ async fn create_plugin_window(
 #[tauri::command]
 #[specta::specta]
 async fn update_plugin_window(
-    app: tauri::AppHandle,
-    window_id: String,
-    config: serde_json::Value,
+    _app: tauri::AppHandle,
+    _window_id: String,
+    _config: serde_json::Value,
 ) -> Result<(), String> {
     // Update window configuration
     Ok(())
@@ -67,14 +67,14 @@ async fn update_plugin_window(
 
 #[tauri::command]
 #[specta::specta]
-async fn close_plugin_window(app: tauri::AppHandle, window_id: String) -> Result<(), String> {
+async fn close_plugin_window(_app: tauri::AppHandle, _window_id: String) -> Result<(), String> {
     // Close plugin window
     Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
-async fn focus_plugin_window(app: tauri::AppHandle, window_id: String) -> Result<(), String> {
+async fn focus_plugin_window(_app: tauri::AppHandle, _window_id: String) -> Result<(), String> {
     // Focus plugin window
     Ok(())
 }
@@ -82,9 +82,9 @@ async fn focus_plugin_window(app: tauri::AppHandle, window_id: String) -> Result
 #[tauri::command]
 #[specta::specta]
 async fn set_window_fullscreen(
-    app: tauri::AppHandle,
-    window_id: String,
-    fullscreen: bool,
+    _app: tauri::AppHandle,
+    _window_id: String,
+    _fullscreen: bool,
 ) -> Result<(), String> {
     // Set window fullscreen mode
     Ok(())
@@ -127,7 +127,18 @@ pub fn run() {
         .commands(tauri_specta::collect_commands![
             greet,
             execute_command,
-            get_system_info
+            get_system_info,
+            create_plugin_window,
+            update_plugin_window,
+            apps::get_applications,
+            apps::get_frontmost_app,
+            apps::refresh_applications_list,
+            apps::refresh_applications_list_in_bg,
+            apps::hide_all_apps_except_frontmost,
+            close_plugin_window,
+            focus_plugin_window,
+            set_window_fullscreen,
+            request_screenshot_permission
         ])
         .events(tauri_specta::collect_events![crate::DemoEvent]);
 
@@ -157,19 +168,6 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(apps::ApplicationsState::default())
         .invoke_handler(specta_builder.invoke_handler())
-        .invoke_handler(tauri::generate_handler![
-            apps::get_applications,
-            apps::refresh_applications_list,
-            apps::refresh_applications_list_in_bg,
-            apps::get_frontmost_app,
-            apps::hide_all_apps_except_frontmost,
-            create_plugin_window,
-            update_plugin_window,
-            close_plugin_window,
-            focus_plugin_window,
-            set_window_fullscreen,
-            request_screenshot_permission
-        ])
         .setup(move |app| {
             specta_builder.mount_events(app);
 
