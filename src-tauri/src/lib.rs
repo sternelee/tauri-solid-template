@@ -1,3 +1,4 @@
+use tauri::Manager;
 use tauri_specta::Event;
 pub mod apps;
 
@@ -99,6 +100,35 @@ async fn request_screenshot_permission() -> Result<bool, String> {
     Ok(true)
 }
 
+// Window management
+#[tauri::command]
+#[specta::specta]
+async fn toggle_window_visibility(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app.get_webview_window("main").unwrap();
+
+    if window
+        .is_visible()
+        .map_err(|e: tauri::Error| e.to_string())?
+    {
+        window.hide().map_err(|e: tauri::Error| e.to_string())?;
+    } else {
+        window.show().map_err(|e: tauri::Error| e.to_string())?;
+        window
+            .set_focus()
+            .map_err(|e: tauri::Error| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn hide_window(app: tauri::AppHandle) -> Result<(), String> {
+    let window = app.get_webview_window("main").unwrap();
+    window.hide().map_err(|e: tauri::Error| e.to_string())?;
+    Ok(())
+}
+
 // System info struct
 #[derive(serde::Serialize, serde::Deserialize, specta::Type)]
 pub struct SystemInfo {
@@ -138,7 +168,9 @@ pub fn run() {
             close_plugin_window,
             focus_plugin_window,
             set_window_fullscreen,
-            request_screenshot_permission
+            request_screenshot_permission,
+            toggle_window_visibility,
+            hide_window
         ])
         .events(tauri_specta::collect_events![crate::DemoEvent]);
 

@@ -9,7 +9,10 @@
     "dialog:allow-message",
     "core:event:allow-listen",
     "core:event:default",
-    "notification:default"
+    "notification:default",
+    "fs:default",
+    "global-shortcut:default",
+    "global-shortcut:allow-register",
+    "opener:allow-open-path"
   ]
 }
-

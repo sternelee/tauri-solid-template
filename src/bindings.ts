@@ -23,6 +23,155 @@ export const commands = {
   async getSystemInfo(): Promise<SystemInfo> {
     return await TAURI_INVOKE("get_system_info");
   },
+  async createPluginWindow(
+    windowId: string,
+    config: JsonValue,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("create_plugin_window", { windowId, config }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async updatePluginWindow(
+    windowId: string,
+    config: JsonValue,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_plugin_window", { windowId, config }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getApplications(): Promise<Result<AppInfoWrapper[], string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_applications") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getFrontmostApp(): Promise<Result<AppInfoWrapper | null, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_frontmost_app") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async refreshApplicationsList(): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("refresh_applications_list"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async refreshApplicationsListInBg(): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("refresh_applications_list_in_bg"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Hide All Apps Except Frontmost (macOS only)
+   */
+  async hideAllAppsExceptFrontmost(): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("hide_all_apps_except_frontmost"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async closePluginWindow(windowId: string): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("close_plugin_window", { windowId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async focusPluginWindow(windowId: string): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("focus_plugin_window", { windowId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async setWindowFullscreen(
+    windowId: string,
+    fullscreen: boolean,
+  ): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_window_fullscreen", {
+          windowId,
+          fullscreen,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async requestScreenshotPermission(): Promise<Result<boolean, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("request_screenshot_permission"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async toggleWindowVisibility(): Promise<Result<null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("toggle_window_visibility"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async hideWindow(): Promise<Result<null, string>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("hide_window") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -37,7 +186,20 @@ export const events = __makeEvents__<{
 
 /** user-defined types **/
 
+export type AppInfoWrapper = {
+  name: string;
+  bundle_id: string;
+  path: string | null;
+  icon: string | null;
+};
 export type DemoEvent = string;
+export type JsonValue =
+  | null
+  | boolean
+  | number
+  | string
+  | JsonValue[]
+  | { [key in string]: JsonValue };
 export type SystemInfo = { os: string; arch: string };
 
 /** tauri-specta globals **/

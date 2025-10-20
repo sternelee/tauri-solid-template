@@ -1,6 +1,6 @@
-import { Permission } from './types';
-import { PermissionDeniedError } from './errors';
-import { tauriCommands } from '../tauri-commands';
+import { Permission } from "./types";
+import { PermissionDeniedError } from "./errors";
+import { tauriCommands } from "../tauri-commands";
 
 export class PermissionManager {
   private grantedPermissions: Set<string> = new Set();
@@ -30,10 +30,10 @@ export class PermissionManager {
   // Request permission from system/user
   private async requestPermission(permission: Permission): Promise<boolean> {
     switch (permission.type) {
-      case 'screen-capture':
+      case "screen-capture":
         return await tauriCommands.requestScreenshotPermission();
 
-      case 'filesystem':
+      case "filesystem":
         // For filesystem, we can try a test operation
         try {
           // This is a simplified check - in production you'd want more specific checks
@@ -42,15 +42,17 @@ export class PermissionManager {
           return false;
         }
 
-      case 'clipboard':
+      case "clipboard":
         // Clipboard permission is usually granted automatically
         return true;
 
-      case 'notification':
+      case "notification":
         // Check if notifications are supported and enabled
-        return 'Notification' in window && Notification.permission === 'granted';
+        return (
+          "Notification" in window && Notification.permission === "granted"
+        );
 
-      case 'global-shortcut':
+      case "global-shortcut":
         // Global shortcuts usually need explicit permission
         return true; // Simplified
 
@@ -61,7 +63,10 @@ export class PermissionManager {
   }
 
   // Validate plugin permissions
-  async validatePluginPermissions(permissions: Permission[], pluginId: string): Promise<void> {
+  async validatePluginPermissions(
+    permissions: Permission[],
+    pluginId: string,
+  ): Promise<void> {
     const deniedPermissions: Permission[] = [];
 
     for (const permission of permissions) {
@@ -73,8 +78,8 @@ export class PermissionManager {
 
     if (deniedPermissions.length > 0) {
       throw new PermissionDeniedError(
-        deniedPermissions.map(p => p.type).join(', '),
-        pluginId
+        deniedPermissions.map((p) => p.type).join(", "),
+        pluginId,
       );
     }
   }

@@ -3,41 +3,41 @@ import { tauriCommands } from "../../tauri-commands";
 
 // Screenshot UI Component
 function ScreenshotUI() {
-const sdk = getCurrentPluginSDK();
+  const sdk = getCurrentPluginSDK();
 
-const startScreenshot = async () => {
-if (!sdk) {
-console.error('SDK not available');
-return;
-}
+  const startScreenshot = async () => {
+    if (!sdk) {
+      console.error("SDK not available");
+      return;
+    }
 
-try {
-// Request permission first
+    try {
+      // Request permission first
       const hasPermission = await tauriCommands.requestScreenshotPermission();
-if (!hasPermission) {
-  sdk.showHUD('Screenshot permission denied');
-  return;
+      if (!hasPermission) {
+        sdk.showHUD("Screenshot permission denied");
+        return;
       }
 
-// Set window to fullscreen mode
-sdk.setWindowMode('fullscreen');
-sdk.showHUD('Screenshot mode activated. Press Esc to exit.');
+      // Set window to fullscreen mode
+      sdk.setWindowMode("fullscreen");
+      sdk.showHUD("Screenshot mode activated. Press Esc to exit.");
 
-// In a real implementation, this would capture the screen
-  // For demo purposes, we'll simulate it
-setTimeout(() => {
-  sdk.showHUD('Screenshot captured!');
-    sdk.setWindowMode('normal');
-    }, 2000);
+      // In a real implementation, this would capture the screen
+      // For demo purposes, we'll simulate it
+      setTimeout(() => {
+        sdk.showHUD("Screenshot captured!");
+        sdk.setWindowMode("normal");
+      }, 2000);
     } catch (error) {
-    console.error('Screenshot failed:', error);
-  sdk.showHUD('Screenshot failed');
-}
-};
+      console.error("Screenshot failed:", error);
+      sdk.showHUD("Screenshot failed");
+    }
+  };
 
   const cancelScreenshot = () => {
     if (!sdk) return;
-    sdk.setWindowMode('normal');
+    sdk.setWindowMode("normal");
     sdk.closeWindow();
   };
 
@@ -159,10 +159,10 @@ export default definePlugin(
     description: "Capture screenshots with ease",
     author: "Raycast Team",
     permissions: [
-    {
-    type: 'screen-capture' as const,
-    description: 'Access to capture screen content',
-    },
+      {
+        type: "screen-capture" as const,
+        description: "Access to capture screen content",
+      },
     ],
   },
   [
