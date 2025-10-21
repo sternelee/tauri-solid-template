@@ -14,7 +14,12 @@
       "Bash(cargo doc:*)",
       "WebFetch(domain:lib.rs)",
       "WebFetch(domain:docs.rs)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(//Users/sternelee/www/github/rig/**)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(cargo run:*)",
+      "Bash(npx tsc:*)",
+      "Read(//Users/sternelee/www/github/jan-dev/src-tauri/src/core/chat/**)"
     ],
     "deny": [],
     "ask": []

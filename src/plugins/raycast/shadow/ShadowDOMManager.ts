@@ -1,5 +1,5 @@
-import { render, createRoot } from 'solid-js/web';
-import { JSX } from 'solid-js';
+import { render } from "solid-js/web";
+import { JSX } from "solid-js";
 
 // ============================================================================
 // Shadow DOM Manager
@@ -7,7 +7,7 @@ import { JSX } from 'solid-js';
 
 export interface ShadowContainerConfig {
   pluginId: string;
-  theme?: 'light' | 'dark' | 'auto';
+  theme?: "light" | "dark" | "auto";
   enableCSS?: boolean;
   enableEvents?: boolean;
   enableFocusManagement?: boolean;
@@ -27,7 +27,7 @@ export class ShadowDOMManager {
   private static instance: ShadowDOMManager;
   private containers: Map<string, ShadowContainer> = new Map();
   private activeContainer: ShadowContainer | null = null;
-  private globalStyles: string = '';
+  private globalStyles: string = "";
 
   private constructor() {
     this.setupGlobalEventHandlers();
@@ -47,25 +47,27 @@ export class ShadowDOMManager {
 
   createContainer(config: ShadowContainerConfig): ShadowContainer {
     const containerId = `raycast-plugin-${config.pluginId}`;
-    
+
     // Check if container already exists
     if (this.containers.has(containerId)) {
       const existing = this.containers.get(containerId)!;
-      console.warn(`Shadow container for plugin "${config.pluginId}" already exists`);
+      console.warn(
+        `Shadow container for plugin "${config.pluginId}" already exists`,
+      );
       return existing;
     }
 
     // Create host element
-    const hostElement = document.createElement('div');
+    const hostElement = document.createElement("div");
     hostElement.id = containerId;
-    hostElement.className = 'raycast-plugin-host';
-    hostElement.setAttribute('data-plugin-id', config.pluginId);
-    hostElement.setAttribute('data-raycast-container', 'true');
+    hostElement.className = "raycast-plugin-host";
+    hostElement.setAttribute("data-plugin-id", config.pluginId);
+    hostElement.setAttribute("data-raycast-container", "true");
 
     // Create shadow root
-    const shadowRoot = hostElement.attachShadow({ 
-      mode: 'open',
-      delegatesFocus: config.enableFocusManagement !== false
+    const shadowRoot = hostElement.attachShadow({
+      mode: "open",
+      delegatesFocus: config.enableFocusManagement !== false,
     });
 
     // Create container object
@@ -75,7 +77,7 @@ export class ShadowDOMManager {
       hostElement,
       shadowRoot,
       config,
-      isActive: false
+      isActive: false,
     };
 
     // Initialize shadow DOM
@@ -96,7 +98,7 @@ export class ShadowDOMManager {
   destroyContainer(pluginId: string): void {
     const containerId = `raycast-plugin-${pluginId}`;
     const container = this.containers.get(containerId);
-    
+
     if (!container) {
       console.warn(`No shadow container found for plugin: ${pluginId}`);
       return;
@@ -136,11 +138,11 @@ export class ShadowDOMManager {
 
     // Activate new container
     container.isActive = true;
-    container.hostElement.style.display = 'block';
+    container.hostElement.style.display = "block";
     this.activeContainer = container;
 
     // Emit activation event
-    this.emitContainerEvent('activated', container);
+    this.emitContainerEvent("activated", container);
   }
 
   deactivateContainer(pluginId: string): void {
@@ -148,14 +150,14 @@ export class ShadowDOMManager {
     if (!container) return;
 
     container.isActive = false;
-    container.hostElement.style.display = 'none';
+    container.hostElement.style.display = "none";
 
     if (this.activeContainer === container) {
       this.activeContainer = null;
     }
 
     // Emit deactivation event
-    this.emitContainerEvent('deactivated', container);
+    this.emitContainerEvent("deactivated", container);
   }
 
   // ========================================
@@ -191,11 +193,13 @@ export class ShadowDOMManager {
     }
 
     // Clear shadow DOM content (keep styles)
-    const styleElements = Array.from(container.shadowRoot.querySelectorAll('style'));
-    container.shadowRoot.innerHTML = '';
-    
+    const styleElements = Array.from(
+      container.shadowRoot.querySelectorAll("style"),
+    );
+    container.shadowRoot.innerHTML = "";
+
     // Re-add styles
-    styleElements.forEach(style => container.shadowRoot.appendChild(style));
+    styleElements.forEach((style) => container.shadowRoot.appendChild(style));
   }
 
   // ========================================
@@ -219,19 +223,19 @@ export class ShadowDOMManager {
     }
 
     // Apply theme
-    this.applyTheme(container, container.config.theme || 'auto');
+    this.applyTheme(container, container.config.theme || "auto");
   }
 
   private injectBaseStyles(container: ShadowContainer): void {
-    const style = document.createElement('style');
-    style.setAttribute('data-raycast-styles', 'base');
+    const style = document.createElement("style");
+    style.setAttribute("data-raycast-styles", "base");
     style.textContent = this.generateBaseCSS(container);
     container.shadowRoot.appendChild(style);
 
     // Add global styles if any
     if (this.globalStyles) {
-      const globalStyle = document.createElement('style');
-      globalStyle.setAttribute('data-raycast-styles', 'global');
+      const globalStyle = document.createElement("style");
+      globalStyle.setAttribute("data-raycast-styles", "global");
       globalStyle.textContent = this.globalStyles;
       container.shadowRoot.appendChild(globalStyle);
     }
@@ -368,11 +372,11 @@ export class ShadowDOMManager {
         :host {
           font-size: 16px;
         }
-        
+
         .raycast-list-item {
           padding: 12px 16px;
         }
-        
+
         .raycast-grid {
           grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
           gap: 12px;
@@ -404,48 +408,56 @@ export class ShadowDOMManager {
 
   private setupContainerEvents(container: ShadowContainer): void {
     // Handle clicks outside to potentially close plugin
-    container.shadowRoot.addEventListener('click', (e) => {
+    container.shadowRoot.addEventListener("click", (e) => {
       e.stopPropagation();
     });
 
     // Handle keyboard events
-    container.shadowRoot.addEventListener('keydown', (e) => {
+    container.shadowRoot.addEventListener("keydown", (e) => {
       this.handleContainerKeydown(container, e);
     });
 
     // Handle focus events
-    container.shadowRoot.addEventListener('focusin', (e) => {
+    container.shadowRoot.addEventListener("focusin", (e) => {
       this.handleContainerFocusIn(container, e);
     });
 
-    container.shadowRoot.addEventListener('focusout', (e) => {
+    container.shadowRoot.addEventListener("focusout", (e) => {
       this.handleContainerFocusOut(container, e);
     });
   }
 
-  private handleContainerKeydown(container: ShadowContainer, e: KeyboardEvent): void {
+  private handleContainerKeydown(
+    container: ShadowContainer,
+    e: KeyboardEvent,
+  ): void {
     // Handle Escape key to close plugin
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
-      this.emitContainerEvent('escape', container);
+      this.emitContainerEvent("escape", container);
     }
 
     // Handle Tab navigation within shadow DOM
-    if (e.key === 'Tab') {
+    if (e.key === "Tab") {
       this.handleTabNavigation(container, e);
     }
   }
 
-  private handleTabNavigation(container: ShadowContainer, e: KeyboardEvent): void {
+  private handleTabNavigation(
+    container: ShadowContainer,
+    e: KeyboardEvent,
+  ): void {
     const focusableElements = container.shadowRoot.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
     if (focusableElements.length === 0) return;
 
     const firstElement = focusableElements[0] as HTMLElement;
-    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    const lastElement = focusableElements[
+      focusableElements.length - 1
+    ] as HTMLElement;
 
     if (e.shiftKey) {
       // Shift+Tab - going backwards
@@ -462,17 +474,23 @@ export class ShadowDOMManager {
     }
   }
 
-  private handleContainerFocusIn(container: ShadowContainer, e: FocusEvent): void {
+  private handleContainerFocusIn(
+    container: ShadowContainer,
+    e: FocusEvent,
+  ): void {
     // Emit focus event for plugin management
-    this.emitContainerEvent('focus', container, { target: e.target });
+    this.emitContainerEvent("focus", container, { target: e.target });
   }
 
-  private handleContainerFocusOut(container: ShadowContainer, e: FocusEvent): void {
+  private handleContainerFocusOut(
+    container: ShadowContainer,
+    e: FocusEvent,
+  ): void {
     // Check if focus is leaving the shadow DOM entirely
     setTimeout(() => {
       const activeElement = container.shadowRoot.activeElement;
       if (!activeElement) {
-        this.emitContainerEvent('blur', container, { target: e.target });
+        this.emitContainerEvent("blur", container, { target: e.target });
       }
     }, 0);
   }
@@ -483,7 +501,7 @@ export class ShadowDOMManager {
 
   private setupFocusManagement(container: ShadowContainer): void {
     // Set up focus trap when container is active
-    container.hostElement.addEventListener('focus', () => {
+    container.hostElement.addEventListener("focus", () => {
       if (container.isActive) {
         this.focusFirstElement(container);
       }
@@ -492,7 +510,7 @@ export class ShadowDOMManager {
 
   focusFirstElement(container: ShadowContainer): void {
     const focusableElements = container.shadowRoot.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
 
     if (focusableElements.length > 0) {
@@ -513,20 +531,26 @@ export class ShadowDOMManager {
 
   private setupThemeDetection(): void {
     if (window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addEventListener('change', () => {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      mediaQuery.addEventListener("change", () => {
         this.updateAllContainerThemes();
       });
     }
   }
 
-  private applyTheme(container: ShadowContainer, theme: 'light' | 'dark' | 'auto'): void {
-    const resolvedTheme = theme === 'auto' 
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : theme;
+  private applyTheme(
+    container: ShadowContainer,
+    theme: "light" | "dark" | "auto",
+  ): void {
+    const resolvedTheme =
+      theme === "auto"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : theme;
 
-    container.hostElement.setAttribute('data-theme', resolvedTheme);
-    
+    container.hostElement.setAttribute("data-theme", resolvedTheme);
+
     // Update CSS custom properties
     const themeVars = this.getThemeVariables(resolvedTheme);
     Object.entries(themeVars).forEach(([property, value]) => {
@@ -534,33 +558,33 @@ export class ShadowDOMManager {
     });
   }
 
-  private getThemeVariables(theme: 'light' | 'dark'): Record<string, string> {
-    if (theme === 'dark') {
+  private getThemeVariables(theme: "light" | "dark"): Record<string, string> {
+    if (theme === "dark") {
       return {
-        '--raycast-text-color': '#ffffff',
-        '--raycast-bg-color': '#1c1c1e',
-        '--raycast-surface-color': '#2c2c2e',
-        '--raycast-border-color': '#38383a',
-        '--raycast-hover-color': '#3a3a3c',
-        '--raycast-focus-color': '#0a84ff',
-        '--raycast-accent-color': '#0a84ff'
+        "--raycast-text-color": "#ffffff",
+        "--raycast-bg-color": "#1c1c1e",
+        "--raycast-surface-color": "#2c2c2e",
+        "--raycast-border-color": "#38383a",
+        "--raycast-hover-color": "#3a3a3c",
+        "--raycast-focus-color": "#0a84ff",
+        "--raycast-accent-color": "#0a84ff",
       };
     } else {
       return {
-        '--raycast-text-color': '#000000',
-        '--raycast-bg-color': '#ffffff',
-        '--raycast-surface-color': '#f8f9fa',
-        '--raycast-border-color': '#e5e5e5',
-        '--raycast-hover-color': '#f5f5f5',
-        '--raycast-focus-color': '#007AFF',
-        '--raycast-accent-color': '#007AFF'
+        "--raycast-text-color": "#000000",
+        "--raycast-bg-color": "#ffffff",
+        "--raycast-surface-color": "#f8f9fa",
+        "--raycast-border-color": "#e5e5e5",
+        "--raycast-hover-color": "#f5f5f5",
+        "--raycast-focus-color": "#007AFF",
+        "--raycast-accent-color": "#007AFF",
       };
     }
   }
 
   private updateAllContainerThemes(): void {
-    this.containers.forEach(container => {
-      this.applyTheme(container, container.config.theme || 'auto');
+    this.containers.forEach((container) => {
+      this.applyTheme(container, container.config.theme || "auto");
     });
   }
 
@@ -570,14 +594,17 @@ export class ShadowDOMManager {
 
   private setupGlobalEventHandlers(): void {
     // Handle clicks outside shadow containers
-    document.addEventListener('click', (e) => {
-      if (this.activeContainer && !this.isEventFromContainer(e, this.activeContainer)) {
-        this.emitContainerEvent('clickOutside', this.activeContainer);
+    document.addEventListener("click", (e) => {
+      if (
+        this.activeContainer &&
+        !this.isEventFromContainer(e, this.activeContainer)
+      ) {
+        this.emitContainerEvent("clickOutside", this.activeContainer);
       }
     });
 
     // Handle global keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener("keydown", (e) => {
       if (this.activeContainer) {
         this.handleGlobalKeydown(e);
       }
@@ -586,19 +613,21 @@ export class ShadowDOMManager {
 
   private isEventFromContainer(e: Event, container: ShadowContainer): boolean {
     const target = e.target as Node;
-    return container.hostElement.contains(target) || 
-           container.shadowRoot.contains(target);
+    return (
+      container.hostElement.contains(target) ||
+      container.shadowRoot.contains(target)
+    );
   }
 
   private handleGlobalKeydown(e: KeyboardEvent): void {
     // Handle global shortcuts that should work even when focus is in shadow DOM
     if (e.metaKey || e.ctrlKey) {
       switch (e.key) {
-        case 'w':
+        case "w":
           // Cmd/Ctrl+W - close active plugin
           e.preventDefault();
           if (this.activeContainer) {
-            this.emitContainerEvent('close', this.activeContainer);
+            this.emitContainerEvent("close", this.activeContainer);
           }
           break;
       }
@@ -609,13 +638,17 @@ export class ShadowDOMManager {
   // Event System
   // ========================================
 
-  private emitContainerEvent(eventType: string, container: ShadowContainer, detail?: any): void {
+  private emitContainerEvent(
+    eventType: string,
+    container: ShadowContainer,
+    detail?: any,
+  ): void {
     const event = new CustomEvent(`raycast:container:${eventType}`, {
       detail: {
         pluginId: container.pluginId,
         containerId: container.id,
-        ...detail
-      }
+        ...detail,
+      },
     });
 
     // Emit on both the container and globally
@@ -629,15 +662,17 @@ export class ShadowDOMManager {
 
   setGlobalStyles(css: string): void {
     this.globalStyles = css;
-    
+
     // Update all existing containers
-    this.containers.forEach(container => {
-      const existingGlobalStyle = container.shadowRoot.querySelector('style[data-raycast-styles="global"]');
+    this.containers.forEach((container) => {
+      const existingGlobalStyle = container.shadowRoot.querySelector(
+        'style[data-raycast-styles="global"]',
+      );
       if (existingGlobalStyle) {
         existingGlobalStyle.textContent = css;
       } else if (css) {
-        const globalStyle = document.createElement('style');
-        globalStyle.setAttribute('data-raycast-styles', 'global');
+        const globalStyle = document.createElement("style");
+        globalStyle.setAttribute("data-raycast-styles", "global");
         globalStyle.textContent = css;
         container.shadowRoot.appendChild(globalStyle);
       }
@@ -655,8 +690,8 @@ export class ShadowDOMManager {
   cleanup(): void {
     // Destroy all containers
     const containerIds = Array.from(this.containers.keys());
-    containerIds.forEach(id => {
-      const pluginId = id.replace('raycast-plugin-', '');
+    containerIds.forEach((id) => {
+      const pluginId = id.replace("raycast-plugin-", "");
       this.destroyContainer(pluginId);
     });
 
@@ -669,3 +704,4 @@ export class ShadowDOMManager {
 // ============================================================================
 
 export const shadowDOMManager = ShadowDOMManager.getInstance();
+

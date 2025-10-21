@@ -3,13 +3,10 @@
 /** user-defined commands **/
 
 export const commands = {
-  async greet(name: string): Promise<string> {
+  async greet(name: string): Promise {
     return await TAURI_INVOKE("greet", { name });
   },
-  async executeCommand(
-    command: string,
-    args: string[],
-  ): Promise<Result<string, string>> {
+  async executeCommand(command: string, args: string[]): Promise {
     try {
       return {
         status: "ok",
@@ -20,13 +17,10 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async getSystemInfo(): Promise<SystemInfo> {
+  async getSystemInfo(): Promise {
     return await TAURI_INVOKE("get_system_info");
   },
-  async createPluginWindow(
-    windowId: string,
-    config: JsonValue,
-  ): Promise<Result<null, string>> {
+  async createPluginWindow(windowId: string, config: JsonValue): Promise {
     try {
       return {
         status: "ok",
@@ -37,10 +31,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async updatePluginWindow(
-    windowId: string,
-    config: JsonValue,
-  ): Promise<Result<null, string>> {
+  async updatePluginWindow(windowId: string, config: JsonValue): Promise {
     try {
       return {
         status: "ok",
@@ -51,7 +42,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async getApplications(): Promise<Result<AppInfoWrapper[], string>> {
+  async getApplications(): Promise {
     try {
       return { status: "ok", data: await TAURI_INVOKE("get_applications") };
     } catch (e) {
@@ -59,7 +50,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async getFrontmostApp(): Promise<Result<AppInfoWrapper | null, string>> {
+  async getFrontmostApp(): Promise {
     try {
       return { status: "ok", data: await TAURI_INVOKE("get_frontmost_app") };
     } catch (e) {
@@ -67,7 +58,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async refreshApplicationsList(): Promise<Result<null, string>> {
+  async refreshApplicationsList(): Promise {
     try {
       return {
         status: "ok",
@@ -78,7 +69,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async refreshApplicationsListInBg(): Promise<Result<null, string>> {
+  async refreshApplicationsListInBg(): Promise {
     try {
       return {
         status: "ok",
@@ -92,7 +83,7 @@ export const commands = {
   /**
    * Hide All Apps Except Frontmost (macOS only)
    */
-  async hideAllAppsExceptFrontmost(): Promise<Result<null, string>> {
+  async hideAllAppsExceptFrontmost(): Promise {
     try {
       return {
         status: "ok",
@@ -103,7 +94,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async closePluginWindow(windowId: string): Promise<Result<null, string>> {
+  async closePluginWindow(windowId: string): Promise {
     try {
       return {
         status: "ok",
@@ -114,7 +105,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async focusPluginWindow(windowId: string): Promise<Result<null, string>> {
+  async focusPluginWindow(windowId: string): Promise {
     try {
       return {
         status: "ok",
@@ -125,10 +116,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async setWindowFullscreen(
-    windowId: string,
-    fullscreen: boolean,
-  ): Promise<Result<null, string>> {
+  async setWindowFullscreen(windowId: string, fullscreen: boolean): Promise {
     try {
       return {
         status: "ok",
@@ -142,7 +130,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async requestScreenshotPermission(): Promise<Result<boolean, string>> {
+  async requestScreenshotPermission(): Promise {
     try {
       return {
         status: "ok",
@@ -153,7 +141,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async toggleWindowVisibility(): Promise<Result<null, string>> {
+  async toggleWindowVisibility(): Promise {
     try {
       return {
         status: "ok",
@@ -164,9 +152,66 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async hideWindow(): Promise<Result<null, string>> {
+  async hideWindow(): Promise {
     try {
       return { status: "ok", data: await TAURI_INVOKE("hide_window") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async initializeAgent(config: AgentConfig, apiKey: string | null): Promise {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("initialize_agent", { config, apiKey }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async chatWithAgent(message: string): Promise {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("chat_with_agent", { message }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getConversationHistory(): Promise {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_conversation_history"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async clearConversation(): Promise {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("clear_conversation") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async isAgentInitialized(): Promise {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("is_agent_initialized") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getAgentConfig(): Promise {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_agent_config") };
     } catch (e) {
       if (e instanceof Error) throw e;
       else return { status: "error", error: e as any };
@@ -186,12 +231,24 @@ export const events = __makeEvents__<{
 
 /** user-defined types **/
 
+export type AgentConfig = {
+  model: string;
+  preamble: string | null;
+  temperature: number | null;
+  max_tokens: number | null;
+};
+export type AgentResponse = {
+  response: string;
+  model_used: string;
+  tokens_used: number | null;
+};
 export type AppInfoWrapper = {
   name: string;
   bundle_id: string;
   path: string | null;
   icon: string | null;
 };
+export type ChatMessage = { role: string; content: string; timestamp: string };
 export type DemoEvent = string;
 export type JsonValue =
   | null
@@ -212,28 +269,22 @@ import * as TAURI_API_EVENT from "@tauri-apps/api/event";
 import { type WebviewWindow as __WebviewWindow__ } from "@tauri-apps/api/webviewWindow";
 
 type __EventObj__<T> = {
-  listen: (
-    cb: TAURI_API_EVENT.EventCallback<T>,
-  ) => ReturnType<typeof TAURI_API_EVENT.listen<T>>;
-  once: (
-    cb: TAURI_API_EVENT.EventCallback<T>,
-  ) => ReturnType<typeof TAURI_API_EVENT.once<T>>;
+  listen: (cb: TAURI_API_EVENT.EventCallback) => ReturnType;
+  once: (cb: TAURI_API_EVENT.EventCallback) => ReturnType;
   emit: null extends T
-    ? (payload?: T) => ReturnType<typeof TAURI_API_EVENT.emit>
-    : (payload: T) => ReturnType<typeof TAURI_API_EVENT.emit>;
+    ? (payload?: T) => ReturnType
+    : (payload: T) => ReturnType;
 };
 
 export type Result<T, E> =
   | { status: "ok"; data: T }
   | { status: "error"; error: E };
 
-function __makeEvents__<T extends Record<string, any>>(
-  mappings: Record<keyof T, string>,
-) {
+function __makeEvents__<T extends Record>(mappings: Record) {
   return new Proxy(
     {} as unknown as {
-      [K in keyof T]: __EventObj__<T[K]> & {
-        (handle: __WebviewWindow__): __EventObj__<T[K]>;
+      [K in keyof T]: __EventObj__ & {
+        (handle: __WebviewWindow__): __EventObj__;
       };
     },
     {
@@ -246,7 +297,7 @@ function __makeEvents__<T extends Record<string, any>>(
             once: (arg: any) => window.once(name, arg),
             emit: (arg: any) => window.emit(name, arg),
           }),
-          get: (_, command: keyof __EventObj__<any>) => {
+          get: (_, command: keyof __EventObj__) => {
             switch (command) {
               case "listen":
                 return (arg: any) => TAURI_API_EVENT.listen(name, arg);

@@ -26,6 +26,7 @@
     "@tauri-apps/plugin-shell": "2.3.1",
     "@tauri-apps/plugin-store": "^2.4.0",
     "cmdk-solid": "^1.1.2",
+    "events": "^3.3.0",
     "solid-js": "^1.9.9",
     "tailwindcss": "^4.1.14",
     "vinxi": "^0.5.8"

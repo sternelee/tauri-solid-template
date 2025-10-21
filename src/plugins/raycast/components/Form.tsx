@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For, Show, JSX } from 'solid-js';
+import { createSignal, createEffect, For, Show, JSX } from "solid-js";
 import {
   FormProps,
   FormTextFieldProps,
@@ -9,8 +9,8 @@ import {
   FormDescriptionProps,
   FormLinkAccessoryProps,
   FormValues,
-  ImageLike
-} from '../types';
+  ImageLike,
+} from "../types";
 
 // ============================================================================
 // Form Component
@@ -28,7 +28,7 @@ export function Form(props: FormProps): JSX.Element {
       try {
         await props.onSubmit(formValues());
       } catch (error) {
-        console.error('Form submission error:', error);
+        console.error("Form submission error:", error);
       } finally {
         setIsSubmitting(false);
       }
@@ -36,14 +36,14 @@ export function Form(props: FormProps): JSX.Element {
   };
 
   const updateFormValue = (id: string, value: any) => {
-    setFormValues(prev => ({ ...prev, [id]: value }));
+    setFormValues((prev) => ({ ...prev, [id]: value }));
   };
 
   return (
     <div class="raycast-form h-full bg-white dark:bg-gray-900">
       {/* Navigation Title */}
       <Show when={props.navigationTitle}>
-        <div class="raycast-form-header px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="raycast-form-header border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
             {props.navigationTitle}
           </h1>
@@ -51,18 +51,16 @@ export function Form(props: FormProps): JSX.Element {
       </Show>
 
       <form
-        class="raycast-form-content flex-1 overflow-y-auto p-6 space-y-6"
+        class="raycast-form-content flex-1 space-y-6 overflow-y-auto p-6"
         onSubmit={handleSubmit}
         noValidate
       >
         {/* Form Fields */}
-        <div class="raycast-form-fields space-y-4">
-          {props.children}
-        </div>
+        <div class="raycast-form-fields space-y-4">{props.children}</div>
 
         {/* Actions */}
         <Show when={props.actions}>
-          <div class="raycast-form-actions pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div class="raycast-form-actions border-t border-gray-200 pt-6 dark:border-gray-700">
             {props.actions}
           </div>
         </Show>
@@ -70,10 +68,12 @@ export function Form(props: FormProps): JSX.Element {
 
       {/* Loading Overlay */}
       <Show when={isSubmitting()}>
-        <div class="absolute inset-0 bg-white dark:bg-gray-900 bg-opacity-75 flex items-center justify-center">
+        <div class="bg-opacity-75 absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
           <div class="text-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Submitting...</p>
+            <div class="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+              Submitting...
+            </p>
           </div>
         </div>
       </Show>
@@ -86,7 +86,9 @@ export function Form(props: FormProps): JSX.Element {
 // ============================================================================
 
 export function FormTextField(props: FormTextFieldProps): JSX.Element {
-  const [value, setValue] = createSignal(props.value || props.defaultValue || '');
+  const [value, setValue] = createSignal(
+    props.value || props.defaultValue || "",
+  );
   const [isFocused, setIsFocused] = createSignal(false);
   const [hasError, setHasError] = createSignal(!!props.error);
 
@@ -128,10 +130,10 @@ export function FormTextField(props: FormTextFieldProps): JSX.Element {
       <Show when={props.title}>
         <label
           for={props.id}
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {props.title}
-          {props.required && <span class="text-red-500 ml-1">*</span>}
+          {props.required && <span class="ml-1 text-red-500">*</span>}
         </label>
       </Show>
 
@@ -144,16 +146,13 @@ export function FormTextField(props: FormTextFieldProps): JSX.Element {
           value={value()}
           placeholder={props.placeholder}
           required={props.required}
-          class={`
-            w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
-            focus:outline-none focus:ring-2 transition-colors
-            ${hasError()
-              ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
+          class={`w-full rounded-md border bg-white px-3 py-2 text-gray-900 transition-colors focus:ring-2 focus:outline-none dark:bg-gray-800 dark:text-gray-100 ${
+            hasError()
+              ? "border-red-300 focus:ring-red-500 dark:border-red-600"
               : isFocused()
-                ? 'border-blue-300 dark:border-blue-600 focus:ring-blue-500'
-                : 'border-gray-300 dark:border-gray-600'
-            }
-          `}
+                ? "border-blue-300 focus:ring-blue-500 dark:border-blue-600"
+                : "border-gray-300 dark:border-gray-600"
+          } `}
           onInput={handleInput}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -161,15 +160,13 @@ export function FormTextField(props: FormTextFieldProps): JSX.Element {
 
         {/* Focus indicator */}
         <Show when={isFocused()}>
-          <div class="absolute inset-0 rounded-md ring-2 ring-blue-500 ring-opacity-50 pointer-events-none"></div>
+          <div class="ring-opacity-50 pointer-events-none absolute inset-0 rounded-md ring-2 ring-blue-500"></div>
         </Show>
       </div>
 
       {/* Error Message */}
       <Show when={props.error}>
-        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-          {props.error}
-        </p>
+        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{props.error}</p>
       </Show>
 
       {/* Info Message */}
@@ -187,7 +184,9 @@ export function FormTextField(props: FormTextFieldProps): JSX.Element {
 // ============================================================================
 
 export function FormTextArea(props: FormTextAreaProps): JSX.Element {
-  const [value, setValue] = createSignal(props.value || props.defaultValue || '');
+  const [value, setValue] = createSignal(
+    props.value || props.defaultValue || "",
+  );
   const [isFocused, setIsFocused] = createSignal(false);
   const [hasError, setHasError] = createSignal(!!props.error);
 
@@ -229,10 +228,10 @@ export function FormTextArea(props: FormTextAreaProps): JSX.Element {
       <Show when={props.title}>
         <label
           for={props.id}
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {props.title}
-          {props.required && <span class="text-red-500 ml-1">*</span>}
+          {props.required && <span class="ml-1 text-red-500">*</span>}
         </label>
       </Show>
 
@@ -245,16 +244,13 @@ export function FormTextArea(props: FormTextAreaProps): JSX.Element {
           placeholder={props.placeholder}
           required={props.required}
           rows={4}
-          class={`
-            w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
-            focus:outline-none focus:ring-2 transition-colors resize-vertical
-            ${hasError()
-              ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
+          class={`resize-vertical w-full rounded-md border bg-white px-3 py-2 text-gray-900 transition-colors focus:ring-2 focus:outline-none dark:bg-gray-800 dark:text-gray-100 ${
+            hasError()
+              ? "border-red-300 focus:ring-red-500 dark:border-red-600"
               : isFocused()
-                ? 'border-blue-300 dark:border-blue-600 focus:ring-blue-500'
-                : 'border-gray-300 dark:border-gray-600'
-            }
-          `}
+                ? "border-blue-300 focus:ring-blue-500 dark:border-blue-600"
+                : "border-gray-300 dark:border-gray-600"
+          } `}
           onInput={handleInput}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -262,14 +258,16 @@ export function FormTextArea(props: FormTextAreaProps): JSX.Element {
 
         {/* Focus indicator */}
         <Show when={isFocused()}>
-          <div class="absolute inset-0 rounded-md ring-2 ring-blue-500 ring-opacity-50 pointer-events-none"></div>
+          <div class="ring-opacity-50 pointer-events-none absolute inset-0 rounded-md ring-2 ring-blue-500"></div>
         </Show>
       </div>
 
       {/* Markdown Preview */}
       <Show when={props.enableMarkdown && value()}>
-        <div class="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-          <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Preview:</div>
+        <div class="mt-2 rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+          <div class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+            Preview:
+          </div>
           <div class="prose dark:prose-invert prose-sm max-w-none">
             <MarkdownPreview content={value()} />
           </div>
@@ -278,9 +276,7 @@ export function FormTextArea(props: FormTextAreaProps): JSX.Element {
 
       {/* Error Message */}
       <Show when={props.error}>
-        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-          {props.error}
-        </p>
+        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{props.error}</p>
       </Show>
 
       {/* Info Message */}
@@ -298,7 +294,9 @@ export function FormTextArea(props: FormTextAreaProps): JSX.Element {
 // ============================================================================
 
 export function FormDropdown(props: FormDropdownProps): JSX.Element {
-  const [selectedValue, setSelectedValue] = createSignal(props.value || props.defaultValue || '');
+  const [selectedValue, setSelectedValue] = createSignal(
+    props.value || props.defaultValue || "",
+  );
   const [isOpen, setIsOpen] = createSignal(false);
   const [isFocused, setIsFocused] = createSignal(false);
   const [hasError, setHasError] = createSignal(!!props.error);
@@ -340,10 +338,10 @@ export function FormDropdown(props: FormDropdownProps): JSX.Element {
       <Show when={props.title}>
         <label
           for={props.id}
-          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
         >
           {props.title}
-          {props.required && <span class="text-red-500 ml-1">*</span>}
+          {props.required && <span class="ml-1 text-red-500">*</span>}
         </label>
       </Show>
 
@@ -352,41 +350,41 @@ export function FormDropdown(props: FormDropdownProps): JSX.Element {
         <button
           type="button"
           id={props.id}
-          class={`
-            w-full px-3 py-2 text-left border rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 
-            focus:outline-none focus:ring-2 transition-colors
-            ${hasError()
-              ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
+          class={`w-full rounded-md border bg-white px-3 py-2 text-left text-gray-900 transition-colors focus:ring-2 focus:outline-none dark:bg-gray-800 dark:text-gray-100 ${
+            hasError()
+              ? "border-red-300 focus:ring-red-500 dark:border-red-600"
               : isFocused()
-                ? 'border-blue-300 dark:border-blue-600 focus:ring-blue-500'
-                : 'border-gray-300 dark:border-gray-600'
-            }
-          `}
+                ? "border-blue-300 focus:ring-blue-500 dark:border-blue-600"
+                : "border-gray-300 dark:border-gray-600"
+          } `}
           onClick={() => setIsOpen(!isOpen())}
           onFocus={handleFocus}
           onBlur={handleBlur}
         >
           <span class="block truncate">
-            {selectedValue() || props.placeholder || 'Select an option...'}
+            {selectedValue() || props.placeholder || "Select an option..."}
           </span>
-          <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <svg
-              class={`w-5 h-5 text-gray-400 transition-transform ${isOpen() ? 'rotate-180' : ''}`}
+              class={`h-5 w-5 text-gray-400 transition-transform ${isOpen() ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </span>
         </button>
 
         {/* Dropdown Menu */}
         <Show when={isOpen()}>
-          <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto">
-            <div class="py-1">
-              {props.children}
-            </div>
+          <div class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800">
+            <div class="py-1">{props.children}</div>
           </div>
         </Show>
 
@@ -398,16 +396,14 @@ export function FormDropdown(props: FormDropdownProps): JSX.Element {
           tabIndex={-1}
           required={props.required}
         >
-          <option value="">{props.placeholder || 'Select an option...'}</option>
+          <option value="">{props.placeholder || "Select an option..."}</option>
           {/* Options would be populated by children */}
         </select>
       </div>
 
       {/* Error Message */}
       <Show when={props.error}>
-        <p class="mt-1 text-sm text-red-600 dark:text-red-400">
-          {props.error}
-        </p>
+        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{props.error}</p>
       </Show>
 
       {/* Info Message */}
@@ -427,22 +423,24 @@ export function FormDropdown(props: FormDropdownProps): JSX.Element {
 export function FormDropdownItem(props: FormDropdownItemProps): JSX.Element {
   const handleClick = () => {
     // This would be handled by the parent dropdown
-    console.log('Dropdown item selected:', props.value);
+    console.log("Dropdown item selected:", props.value);
   };
 
   return (
     <button
       type="button"
-      class="raycast-form-dropdown-item w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center transition-colors"
+      class="raycast-form-dropdown-item flex w-full items-center px-3 py-2 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
       onClick={handleClick}
       value={props.value}
     >
       <Show when={props.icon}>
         <div class="mr-3 flex-shrink-0">
-          <ImageComponent image={props.icon!} class="w-4 h-4" />
+          <ImageComponent image={props.icon!} class="h-4 w-4" />
         </div>
       </Show>
-      <span class="text-gray-900 dark:text-gray-100 truncate">{props.title}</span>
+      <span class="truncate text-gray-900 dark:text-gray-100">
+        {props.title}
+      </span>
     </button>
   );
 }
@@ -451,17 +449,17 @@ export function FormDropdownItem(props: FormDropdownItemProps): JSX.Element {
 // Form Dropdown Section Component
 // ============================================================================
 
-export function FormDropdownSection(props: FormDropdownSectionProps): JSX.Element {
+export function FormDropdownSection(
+  props: FormDropdownSectionProps,
+): JSX.Element {
   return (
     <div class="raycast-form-dropdown-section">
       <Show when={props.title}>
-        <div class="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
+        <div class="bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:bg-gray-700 dark:text-gray-400">
           {props.title}
         </div>
       </Show>
-      <div class="raycast-form-dropdown-section-content">
-        {props.children}
-      </div>
+      <div class="raycast-form-dropdown-section-content">{props.children}</div>
     </div>
   );
 }
@@ -474,11 +472,11 @@ export function FormDescription(props: FormDescriptionProps): JSX.Element {
   return (
     <div class="raycast-form-description">
       <Show when={props.title}>
-        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+        <h3 class="mb-2 text-lg font-medium text-gray-900 dark:text-gray-100">
           {props.title}
         </h3>
       </Show>
-      <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+      <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
         {props.text}
       </p>
     </div>
@@ -495,11 +493,21 @@ export function FormLinkAccessory(props: FormLinkAccessoryProps): JSX.Element {
       href={props.target}
       target="_blank"
       rel="noopener noreferrer"
-      class="raycast-form-link-accessory inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+      class="raycast-form-link-accessory inline-flex items-center text-sm text-blue-600 hover:underline dark:text-blue-400"
     >
       {props.text}
-      <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      <svg
+        class="ml-1 h-3 w-3"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+        />
       </svg>
     </a>
   );
@@ -513,59 +521,64 @@ function MarkdownPreview(props: { content: string }): JSX.Element {
   // Simple markdown preview
   const parseMarkdown = (content: string): string => {
     return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">$1</code>')
-      .replace(/\n/g, '<br>');
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(
+        /`([^`]+)`/g,
+        '<code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">$1</code>',
+      )
+      .replace(/\n/g, "<br>");
   };
 
-  return (
-    <div innerHTML={parseMarkdown(props.content)} />
-  );
+  return <div innerHTML={parseMarkdown(props.content)} />;
 }
 
-function ImageComponent(props: { image: ImageLike; class?: string }): JSX.Element {
+function ImageComponent(props: {
+  image: ImageLike;
+  class?: string;
+}): JSX.Element {
   const getImageSrc = (image: ImageLike): string => {
-    if (typeof image === 'string') {
+    if (typeof image === "string") {
       return image;
     }
 
-    if (typeof image === 'object' && image !== null) {
-      if ('source' in image) {
-        if (typeof image.source === 'string') {
+    if (typeof image === "object" && image !== null) {
+      if ("source" in image) {
+        if (typeof image.source === "string") {
           return image.source;
         }
         // Handle themeable source
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        return isDark ? (image.source as any).dark : (image.source as any).light;
+        const isDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        return isDark
+          ? (image.source as any).dark
+          : (image.source as any).light;
       }
 
-      if ('fileIcon' in image) {
+      if ("fileIcon" in image) {
         return getFileIcon(image.fileIcon);
       }
     }
 
-    return '';
+    return "";
   };
 
   const src = getImageSrc(props.image);
 
   // Check if it's an emoji
-  if (src.length <= 4 && /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]/u.test(src)) {
-    return (
-      <span class={`raycast-icon-emoji ${props.class || ''}`}>
-        {src}
-      </span>
-    );
+  if (
+    src.length <= 4 &&
+    /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]/u.test(
+      src,
+    )
+  ) {
+    return <span class={`raycast-icon-emoji ${props.class || ""}`}>{src}</span>;
   }
 
   // Regular image
   return (
-    <img
-      src={src}
-      alt=""
-      class={`raycast-icon-image ${props.class || ''}`}
-    />
+    <img src={src} alt="" class={`raycast-icon-image ${props.class || ""}`} />
   );
 }
 
@@ -574,32 +587,32 @@ function ImageComponent(props: { image: ImageLike; class?: string }): JSX.Elemen
 // ============================================================================
 
 function getFileIcon(filePath: string): string {
-  const extension = filePath.split('.').pop()?.toLowerCase();
+  const extension = filePath.split(".").pop()?.toLowerCase();
 
   const iconMap: Record<string, string> = {
-    pdf: '📄',
-    doc: '📝',
-    docx: '📝',
-    xls: '📊',
-    xlsx: '📊',
-    ppt: '📽️',
-    pptx: '📽️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    png: '🖼️',
-    gif: '🖼️',
-    mp4: '🎬',
-    mov: '🎬',
-    avi: '🎬',
-    mp3: '🎵',
-    wav: '🎵',
-    flac: '🎵',
-    zip: '🗜️',
-    rar: '🗜️',
-    '7z': '🗜️'
+    pdf: "📄",
+    doc: "📝",
+    docx: "📝",
+    xls: "📊",
+    xlsx: "📊",
+    ppt: "📽️",
+    pptx: "📽️",
+    jpg: "🖼️",
+    jpeg: "🖼️",
+    png: "🖼️",
+    gif: "🖼️",
+    mp4: "🎬",
+    mov: "🎬",
+    avi: "🎬",
+    mp3: "🎵",
+    wav: "🎵",
+    flac: "🎵",
+    zip: "🗜️",
+    rar: "🗜️",
+    "7z": "🗜️",
   };
 
-  return iconMap[extension || ''] || '📄';
+  return iconMap[extension || ""] || "📄";
 }
 
 // ============================================================================
@@ -608,7 +621,7 @@ function getFileIcon(filePath: string): string {
 
 export class FormValidator {
   static validateRequired(value: any, fieldName: string): string | null {
-    if (!value || (typeof value === 'string' && value.trim() === '')) {
+    if (!value || (typeof value === "string" && value.trim() === "")) {
       return `${fieldName} is required`;
     }
     return null;
@@ -617,7 +630,7 @@ export class FormValidator {
   static validateEmail(email: string): string | null {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
+      return "Please enter a valid email address";
     }
     return null;
   }
@@ -627,7 +640,7 @@ export class FormValidator {
       new URL(url);
       return null;
     } catch {
-      return 'Please enter a valid URL';
+      return "Please enter a valid URL";
     }
   }
 
@@ -645,3 +658,4 @@ export class FormValidator {
     return null;
   }
 }
+

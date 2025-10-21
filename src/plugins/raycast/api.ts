@@ -377,6 +377,72 @@ export class APIValidatorImpl implements APIValidator {
 }
 
 // ============================================================================
+// System Initialization and Management
+// ============================================================================
+
+let globalAPIFactory: RaycastAPIFactory | null = null;
+let globalContextManager: APIContextManager | null = null;
+let globalInjector: APIInjector | null = null;
+
+export function initializeRaycastAPISystem(
+  componentFactory: any,
+  utilityFactory: any
+): void {
+  globalAPIFactory = createRaycastAPIFactory(componentFactory, utilityFactory);
+  globalContextManager = createAPIContextManager(globalAPIFactory);
+  globalInjector = createAPIInjector(globalContextManager);
+}
+
+export function getRaycastAPISystem(): {
+  factory: RaycastAPIFactory;
+  contextManager: APIContextManager;
+  injector: APIInjector;
+  validateManifest: (manifest: any) => { isValid: boolean; errors: string[] };
+  getSystemInfo: () => { version: string; features: string[] };
+} {
+  if (!globalAPIFactory || !globalContextManager || !globalInjector) {
+    throw new Error('Raycast API system not initialized. Call initializeRaycastAPISystem() first.');
+  }
+
+  return {
+    factory: globalAPIFactory,
+    contextManager: globalContextManager,
+    injector: globalInjector,
+    validateManifest: (manifest: any) => {
+      // Basic validation
+      const errors: string[] = [];
+      if (!manifest.name) errors.push('Missing manifest name');
+      if (!manifest.commands || !Array.isArray(manifest.commands)) {
+        errors.push('Missing or invalid commands array');
+      }
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
+    },
+    getSystemInfo: () => ({
+      version: '1.0.0',
+      features: ['list', 'detail', 'form', 'grid', 'actions', 'ai', 'clipboard']
+    })
+  };
+}
+
+export function createRaycastAPI(pluginId: string): RaycastAPI {
+  const system = getRaycastAPISystem();
+  return system.contextManager.createContext(pluginId);
+}
+
+export function injectRaycastAPI(pluginId: string, target: any): void {
+  const system = getRaycastAPISystem();
+  system.injector.inject(pluginId, target);
+}
+
+export function destroyRaycastAPI(pluginId: string): void {
+  const system = getRaycastAPISystem();
+  system.contextManager.destroyContext(pluginId);
+}
+
+// ============================================================================
 // Exports
 // ============================================================================
 

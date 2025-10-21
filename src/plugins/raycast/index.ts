@@ -1,49 +1,36 @@
 // ============================================================================
 // Raycast Plugin System - Main Entry Point
 // ============================================================================
+// Complete Raycast API compatibility system based on design.md specifications
 
-import { APIInjectorImpl } from './api';
-
-import { APIContextManagerImpl } from './api';
-
-import { RaycastAPIFactoryImpl } from './api';
-
-import { APIValidatorImpl } from './api';
-
-import { CompatibilityLayerImpl } from './api';
-
-// Core Types
-export * from './types';
-export * from './context';
+// Core API System
 export * from './api';
+
+// Component System
+export * from './components';
+
+// Mapping System
 export * from './mapping';
 
-// Component exports (avoiding duplicates)
-export type { 
-  ComponentRenderer,
-  ComponentFactory,
-  ComponentMapping,
-  ComponentMappingRegistry,
-  ComponentValidator,
-  ComponentRegistry,
-  ComponentBuilder
-} from './components';
+// Shadow DOM System
+export * from './shadow';
 
-export {
-  ComponentMappingRegistryImpl,
-  ComponentValidatorImpl,
-  ComponentRegistryImpl,
-  ComponentBuilderImpl,
-  ComponentError,
-  ComponentRenderError,
-  ComponentValidationError,
-  componentMappingRegistry,
-  componentValidator,
-  componentRegistry,
-  createComponentBuilder
-} from './components';
+// Context and Execution
+export * from './context';
 
-// Key type re-exports for convenience
+// Types and Interfaces
+export * from './types';
+
+// Hooks
+export * from './hooks';
+
+// Constants
+export * from './constants';
+
+// Enhanced Plugin Manager
+export { RaycastPluginManager } from './RaycastPluginManager';
+
+// Re-export key types for convenience
 export type {
   RaycastAPI,
   RaycastManifest,
@@ -54,45 +41,11 @@ export type {
   NavigationManager,
   NavigationHook,
   RaycastAPIFactory,
-  APIContextManager
+  APIContextManager,
+  ExtendedPluginInstance,
+  ExtendedPluginMeta,
+  ExtendedCommand
 } from './types';
-
-// Re-export key classes
-export {
-  PluginExecutionContextImpl,
-  PluginStateContextImpl,
-  NavigationManagerImpl,
-  RaycastPluginImpl,
-  contextManager,
-  createPluginExecutionContext,
-  createPluginStateContext,
-  createNavigationManager,
-  createRaycastPlugin
-} from './context';
-
-export {
-  ComponentMappingRegistryImpl,
-  ComponentValidatorImpl,
-  ComponentRegistryImpl,
-  ComponentBuilderImpl,
-  componentMappingRegistry,
-  componentValidator,
-  componentRegistry,
-  createComponentBuilder
-} from './components';
-
-export {
-  RaycastAPIFactoryImpl,
-  APIContextManagerImpl,
-  APIInjectorImpl,
-  CompatibilityLayerImpl,
-  APIValidatorImpl,
-  createRaycastAPIFactory,
-  createAPIContextManager,
-  createAPIInjector,
-  createCompatibilityLayer,
-  createAPIValidator
-} from './api';
 
 // ============================================================================
 // Raycast System Configuration

@@ -1,5 +1,5 @@
-import { createSignal, Show, For, JSX } from 'solid-js';
-import { 
+import { createSignal, Show, For, JSX } from "solid-js";
+import {
   ActionProps,
   ActionPanelProps,
   ActionPanelSectionProps,
@@ -11,8 +11,8 @@ import {
   ActionSubmitFormProps,
   KeyboardShortcut,
   ImageLike,
-  FormValues
-} from '../types';
+  FormValues,
+} from "../types";
 
 // ============================================================================
 // Action Component
@@ -31,7 +31,7 @@ export function Action(props: ActionProps): JSX.Element {
     try {
       await props.onAction();
     } catch (error) {
-      console.error('Action execution failed:', error);
+      console.error("Action execution failed:", error);
     } finally {
       setIsLoading(false);
       setTimeout(() => setIsPressed(false), 150);
@@ -39,24 +39,26 @@ export function Action(props: ActionProps): JSX.Element {
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleClick();
     }
   };
 
   const getActionClasses = () => {
-    const baseClasses = 'raycast-action inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    
-    const styleClasses = props.style === 'destructive' 
-      ? 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500'
-      : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500';
-    
-    const stateClasses = isPressed() 
-      ? 'transform scale-95' 
-      : isLoading() 
-        ? 'opacity-75 cursor-not-allowed' 
-        : 'hover:transform hover:scale-105';
+    const baseClasses =
+      "raycast-action inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2";
+
+    const styleClasses =
+      props.style === "destructive"
+        ? "bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+        : "bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 focus:ring-blue-500";
+
+    const stateClasses = isPressed()
+      ? "transform scale-95"
+      : isLoading()
+        ? "opacity-75 cursor-not-allowed"
+        : "hover:transform hover:scale-105";
 
     return `${baseClasses} ${styleClasses} ${stateClasses}`;
   };
@@ -72,13 +74,13 @@ export function Action(props: ActionProps): JSX.Element {
     >
       {/* Loading Spinner */}
       <Show when={isLoading()}>
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current"></div>
       </Show>
 
       {/* Icon */}
       <Show when={props.icon && !isLoading()}>
         <div class="mr-2">
-          <ImageComponent image={props.icon!} class="w-4 h-4" />
+          <ImageComponent image={props.icon!} class="h-4 w-4" />
         </div>
       </Show>
 
@@ -104,7 +106,7 @@ export function ActionPanel(props: ActionPanelProps): JSX.Element {
 
   return (
     <Show when={isVisible()}>
-      <div class="raycast-action-panel bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3">
+      <div class="raycast-action-panel border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
         <Show when={props.title}>
           <div class="raycast-action-panel-header mb-3">
             <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -112,7 +114,7 @@ export function ActionPanel(props: ActionPanelProps): JSX.Element {
             </h3>
           </div>
         </Show>
-        
+
         <div class="raycast-action-panel-content flex flex-wrap gap-2">
           {props.children}
         </div>
@@ -125,17 +127,19 @@ export function ActionPanel(props: ActionPanelProps): JSX.Element {
 // Action Panel Section Component
 // ============================================================================
 
-export function ActionPanelSection(props: ActionPanelSectionProps): JSX.Element {
+export function ActionPanelSection(
+  props: ActionPanelSectionProps,
+): JSX.Element {
   return (
     <div class="raycast-action-panel-section">
       <Show when={props.title}>
         <div class="raycast-action-panel-section-header mb-2">
-          <h4 class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+          <h4 class="text-xs font-medium tracking-wider text-gray-600 uppercase dark:text-gray-400">
             {props.title}
           </h4>
         </div>
       </Show>
-      
+
       <div class="raycast-action-panel-section-content flex flex-wrap gap-2">
         {props.children}
       </div>
@@ -147,7 +151,9 @@ export function ActionPanelSection(props: ActionPanelSectionProps): JSX.Element 
 // Action Panel Submenu Component
 // ============================================================================
 
-export function ActionPanelSubmenu(props: ActionPanelSubmenuProps): JSX.Element {
+export function ActionPanelSubmenu(
+  props: ActionPanelSubmenuProps,
+): JSX.Element {
   const [isOpen, setIsOpen] = createSignal(false);
 
   const handleToggle = () => {
@@ -155,10 +161,10 @@ export function ActionPanelSubmenu(props: ActionPanelSubmenuProps): JSX.Element 
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleToggle();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setIsOpen(false);
     }
   };
@@ -167,34 +173,37 @@ export function ActionPanelSubmenu(props: ActionPanelSubmenuProps): JSX.Element 
     <div class="raycast-action-panel-submenu relative">
       <button
         type="button"
-        class="raycast-action-submenu-trigger inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="raycast-action-submenu-trigger inline-flex items-center rounded-md bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
         title={props.shortcut ? formatShortcut(props.shortcut) : undefined}
       >
         <Show when={props.icon}>
           <div class="mr-2">
-            <ImageComponent image={props.icon!} class="w-4 h-4" />
+            <ImageComponent image={props.icon!} class="h-4 w-4" />
           </div>
         </Show>
-        
+
         <span>{props.title}</span>
-        
-        <svg 
-          class={`ml-2 w-4 h-4 transition-transform ${isOpen() ? 'rotate-180' : ''}`}
-          fill="none" 
-          stroke="currentColor" 
+
+        <svg
+          class={`ml-2 h-4 w-4 transition-transform ${isOpen() ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
       <Show when={isOpen()}>
-        <div class="raycast-action-submenu-content absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-2 min-w-48 z-10">
-          <div class="space-y-1">
-            {props.children}
-          </div>
+        <div class="raycast-action-submenu-content absolute bottom-full left-0 z-10 mb-2 min-w-48 rounded-md border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          <div class="space-y-1">{props.children}</div>
         </div>
       </Show>
     </div>
@@ -212,19 +221,18 @@ export function ActionPush(props: ActionPushProps): JSX.Element {
     if (isNavigating()) return;
 
     setIsNavigating(true);
-    
+
     try {
       // Call the onPush callback if provided
       props.onPush?.();
-      
+
       // TODO: Integrate with navigation manager to push the target component
-      console.log('Pushing navigation to:', props.target);
-      
+      console.log("Pushing navigation to:", props.target);
+
       // Simulate navigation delay
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
-      console.error('Navigation push failed:', error);
+      console.error("Navigation push failed:", error);
     } finally {
       setIsNavigating(false);
     }
@@ -233,26 +241,36 @@ export function ActionPush(props: ActionPushProps): JSX.Element {
   return (
     <button
       type="button"
-      class="raycast-action-push inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+      class="raycast-action-push inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-all duration-150 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
       onClick={handlePush}
       disabled={isNavigating()}
       title={props.shortcut ? formatShortcut(props.shortcut) : undefined}
     >
       <Show when={isNavigating()}>
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
       </Show>
 
       <Show when={props.icon && !isNavigating()}>
         <div class="mr-2">
-          <ImageComponent image={props.icon!} class="w-4 h-4" />
+          <ImageComponent image={props.icon!} class="h-4 w-4" />
         </div>
       </Show>
 
       <span>{props.title}</span>
 
       <Show when={!isNavigating()}>
-        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        <svg
+          class="ml-2 h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </Show>
     </button>
@@ -263,7 +281,9 @@ export function ActionPush(props: ActionPushProps): JSX.Element {
 // Action Copy to Clipboard Component
 // ============================================================================
 
-export function ActionCopyToClipboard(props: ActionCopyToClipboardProps): JSX.Element {
+export function ActionCopyToClipboard(
+  props: ActionCopyToClipboardProps,
+): JSX.Element {
   const [isCopying, setIsCopying] = createSignal(false);
   const [isCopied, setIsCopied] = createSignal(false);
 
@@ -271,45 +291,45 @@ export function ActionCopyToClipboard(props: ActionCopyToClipboardProps): JSX.El
     if (isCopying()) return;
 
     setIsCopying(true);
-    
+
     try {
       const textToCopy = String(props.content);
-      
+
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(textToCopy);
       } else {
         // Fallback for non-secure contexts
-        const textArea = document.createElement('textarea');
+        const textArea = document.createElement("textarea");
         textArea.value = textToCopy;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        document.execCommand('copy');
+        document.execCommand("copy");
         textArea.remove();
       }
-      
+
       setIsCopied(true);
-      
+
       // Reset copied state after 2 seconds
       setTimeout(() => setIsCopied(false), 2000);
-      
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      console.error("Failed to copy to clipboard:", error);
     } finally {
       setIsCopying(false);
     }
   };
 
   const getButtonClasses = () => {
-    const baseClasses = 'raycast-action-copy inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2';
-    
+    const baseClasses =
+      "raycast-action-copy inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2";
+
     if (isCopied()) {
       return `${baseClasses} bg-green-600 text-white focus:ring-green-500`;
     }
-    
+
     return `${baseClasses} bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500`;
   };
 
@@ -319,37 +339,57 @@ export function ActionCopyToClipboard(props: ActionCopyToClipboardProps): JSX.El
       class={getButtonClasses()}
       onClick={handleCopy}
       disabled={isCopying()}
-      title={`Copy ${props.concealed ? '[Hidden]' : String(props.content)} ${props.shortcut ? `(${formatShortcut(props.shortcut)})` : ''}`}
+      title={`Copy ${props.concealed ? "[Hidden]" : String(props.content)} ${props.shortcut ? `(${formatShortcut(props.shortcut)})` : ""}`}
     >
       <Show when={isCopying()}>
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
       </Show>
 
       <Show when={!isCopying()}>
         <div class="mr-2">
-          <Show 
+          <Show
             when={isCopied()}
             fallback={
-              <Show 
+              <Show
                 when={props.icon}
                 fallback={
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <svg
+                    class="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                 }
               >
-                <ImageComponent image={props.icon!} class="w-4 h-4" />
+                <ImageComponent image={props.icon!} class="h-4 w-4" />
               </Show>
             }
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </Show>
         </div>
       </Show>
 
-      <span>{isCopied() ? 'Copied!' : props.title}</span>
+      <span>{isCopied() ? "Copied!" : props.title}</span>
     </button>
   );
 }
@@ -365,19 +405,18 @@ export function ActionPaste(props: ActionPasteProps): JSX.Element {
     if (isPasting()) return;
 
     setIsPasting(true);
-    
+
     try {
       // Simulate paste action with the provided content
-      console.log('Pasting content:', props.content);
-      
+      console.log("Pasting content:", props.content);
+
       // In a real implementation, this would paste to the active input or trigger a paste event
-      const event = new CustomEvent('raycast:paste', {
-        detail: { content: props.content }
+      const event = new CustomEvent("raycast:paste", {
+        detail: { content: props.content },
       });
       window.dispatchEvent(event);
-      
     } catch (error) {
-      console.error('Failed to paste:', error);
+      console.error("Failed to paste:", error);
     } finally {
       setIsPasting(false);
     }
@@ -386,25 +425,35 @@ export function ActionPaste(props: ActionPasteProps): JSX.Element {
   return (
     <button
       type="button"
-      class="raycast-action-paste inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-purple-600 hover:bg-purple-700 text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
+      class="raycast-action-paste inline-flex items-center rounded-md bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition-all duration-150 hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
       onClick={handlePaste}
       disabled={isPasting()}
       title={props.shortcut ? formatShortcut(props.shortcut) : undefined}
     >
       <Show when={isPasting()}>
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
       </Show>
 
       <Show when={props.icon && !isPasting()}>
         <div class="mr-2">
-          <ImageComponent image={props.icon!} class="w-4 h-4" />
+          <ImageComponent image={props.icon!} class="h-4 w-4" />
         </div>
       </Show>
 
       <Show when={!props.icon && !isPasting()}>
         <div class="mr-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            />
           </svg>
         </div>
       </Show>
@@ -418,23 +467,24 @@ export function ActionPaste(props: ActionPasteProps): JSX.Element {
 // Action Open in Browser Component
 // ============================================================================
 
-export function ActionOpenInBrowser(props: ActionOpenInBrowserProps): JSX.Element {
+export function ActionOpenInBrowser(
+  props: ActionOpenInBrowserProps,
+): JSX.Element {
   const [isOpening, setIsOpening] = createSignal(false);
 
   const handleOpen = async () => {
     if (isOpening()) return;
 
     setIsOpening(true);
-    
+
     try {
       // Open URL in new tab/window
-      window.open(props.url, '_blank', 'noopener,noreferrer');
-      
+      window.open(props.url, "_blank", "noopener,noreferrer");
+
       // Brief delay for visual feedback
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
+      await new Promise((resolve) => setTimeout(resolve, 200));
     } catch (error) {
-      console.error('Failed to open URL:', error);
+      console.error("Failed to open URL:", error);
     } finally {
       setIsOpening(false);
     }
@@ -443,25 +493,35 @@ export function ActionOpenInBrowser(props: ActionOpenInBrowserProps): JSX.Elemen
   return (
     <button
       type="button"
-      class="raycast-action-browser inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md bg-green-600 hover:bg-green-700 text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+      class="raycast-action-browser inline-flex items-center rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-all duration-150 hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
       onClick={handleOpen}
       disabled={isOpening()}
-      title={`Open ${props.url} ${props.shortcut ? `(${formatShortcut(props.shortcut)})` : ''}`}
+      title={`Open ${props.url} ${props.shortcut ? `(${formatShortcut(props.shortcut)})` : ""}`}
     >
       <Show when={isOpening()}>
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
       </Show>
 
       <Show when={props.icon && !isOpening()}>
         <div class="mr-2">
-          <ImageComponent image={props.icon!} class="w-4 h-4" />
+          <ImageComponent image={props.icon!} class="h-4 w-4" />
         </div>
       </Show>
 
       <Show when={!props.icon && !isOpening()}>
         <div class="mr-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
           </svg>
         </div>
       </Show>
@@ -469,8 +529,18 @@ export function ActionOpenInBrowser(props: ActionOpenInBrowserProps): JSX.Elemen
       <span>{props.title}</span>
 
       <Show when={!isOpening()}>
-        <svg class="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        <svg
+          class="ml-1 h-3 w-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+          />
         </svg>
       </Show>
     </button>
@@ -488,21 +558,20 @@ export function ActionSubmitForm(props: ActionSubmitFormProps): JSX.Element {
     if (isSubmitting() || !props.onSubmit) return;
 
     setIsSubmitting(true);
-    
+
     try {
       // Collect form data from the nearest form element
-      const form = document.querySelector('form');
+      const form = document.querySelector("form");
       const formData = new FormData(form || undefined);
       const values: FormValues = {};
-      
+
       formData.forEach((value, key) => {
         values[key] = value;
       });
-      
+
       await props.onSubmit(values);
-      
     } catch (error) {
-      console.error('Form submission failed:', error);
+      console.error("Form submission failed:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -511,22 +580,22 @@ export function ActionSubmitForm(props: ActionSubmitFormProps): JSX.Element {
   return (
     <button
       type="submit"
-      class="raycast-action-submit inline-flex items-center px-4 py-2 text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+      class="raycast-action-submit inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-all duration-150 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
       onClick={handleSubmit}
       disabled={isSubmitting()}
       title={props.shortcut ? formatShortcut(props.shortcut) : undefined}
     >
       <Show when={isSubmitting()}>
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+        <div class="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
       </Show>
 
       <Show when={props.icon && !isSubmitting()}>
         <div class="mr-2">
-          <ImageComponent image={props.icon!} class="w-4 h-4" />
+          <ImageComponent image={props.icon!} class="h-4 w-4" />
         </div>
       </Show>
 
-      <span>{isSubmitting() ? 'Submitting...' : props.title}</span>
+      <span>{isSubmitting() ? "Submitting..." : props.title}</span>
     </button>
   );
 }
@@ -535,65 +604,71 @@ export function ActionSubmitForm(props: ActionSubmitFormProps): JSX.Element {
 // Helper Components
 // ============================================================================
 
-function KeyboardShortcutDisplay(props: { shortcut: KeyboardShortcut }): JSX.Element {
+function KeyboardShortcutDisplay(props: {
+  shortcut: KeyboardShortcut;
+}): JSX.Element {
   return (
     <div class="raycast-keyboard-shortcut inline-flex items-center space-x-1">
       <For each={props.shortcut.modifiers}>
         {(modifier) => (
-          <kbd class="inline-flex items-center justify-center w-5 h-5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded border border-gray-300 dark:border-gray-600">
+          <kbd class="inline-flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-gray-100 text-xs font-medium text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
             {getModifierSymbol(modifier)}
           </kbd>
         )}
       </For>
-      <kbd class="inline-flex items-center justify-center px-2 h-5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded border border-gray-300 dark:border-gray-600">
+      <kbd class="inline-flex h-5 items-center justify-center rounded border border-gray-300 bg-gray-100 px-2 text-xs font-medium text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
         {props.shortcut.key.toUpperCase()}
       </kbd>
     </div>
   );
 }
 
-function ImageComponent(props: { image: ImageLike; class?: string }): JSX.Element {
+function ImageComponent(props: {
+  image: ImageLike;
+  class?: string;
+}): JSX.Element {
   const getImageSrc = (image: ImageLike): string => {
-    if (typeof image === 'string') {
+    if (typeof image === "string") {
       return image;
     }
-    
-    if (typeof image === 'object' && image !== null) {
-      if ('source' in image) {
-        if (typeof image.source === 'string') {
+
+    if (typeof image === "object" && image !== null) {
+      if ("source" in image) {
+        if (typeof image.source === "string") {
           return image.source;
         }
         // Handle themeable source
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        return isDark ? (image.source as any).dark : (image.source as any).light;
+        const isDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        return isDark
+          ? (image.source as any).dark
+          : (image.source as any).light;
       }
-      
-      if ('fileIcon' in image) {
+
+      if ("fileIcon" in image) {
         return getFileIcon(image.fileIcon);
       }
     }
-    
-    return '';
+
+    return "";
   };
 
   const src = getImageSrc(props.image);
-  
+
   // Check if it's an emoji
-  if (src.length <= 4 && /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]/u.test(src)) {
-    return (
-      <span class={`raycast-icon-emoji ${props.class || ''}`}>
-        {src}
-      </span>
-    );
+  if (
+    src.length <= 4 &&
+    /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]/u.test(
+      src,
+    )
+  ) {
+    return <span class={`raycast-icon-emoji ${props.class || ""}`}>{src}</span>;
   }
-  
+
   // Regular image
   return (
-    <img
-      src={src}
-      alt=""
-      class={`raycast-icon-image ${props.class || ''}`}
-    />
+    <img src={src} alt="" class={`raycast-icon-image ${props.class || ""}`} />
   );
 }
 
@@ -603,47 +678,47 @@ function ImageComponent(props: { image: ImageLike; class?: string }): JSX.Elemen
 
 function getModifierSymbol(modifier: string): string {
   const symbolMap: Record<string, string> = {
-    'cmd': '⌘',
-    'ctrl': '⌃',
-    'opt': '⌥',
-    'shift': '⇧'
+    cmd: "⌘",
+    ctrl: "⌃",
+    opt: "⌥",
+    shift: "⇧",
   };
-  
+
   return symbolMap[modifier] || modifier;
 }
 
 function formatShortcut(shortcut: KeyboardShortcut): string {
   const modifiers = shortcut.modifiers.map(getModifierSymbol);
-  return [...modifiers, shortcut.key.toUpperCase()].join('');
+  return [...modifiers, shortcut.key.toUpperCase()].join("");
 }
 
 function getFileIcon(filePath: string): string {
-  const extension = filePath.split('.').pop()?.toLowerCase();
-  
+  const extension = filePath.split(".").pop()?.toLowerCase();
+
   const iconMap: Record<string, string> = {
-    pdf: '📄',
-    doc: '📝',
-    docx: '📝',
-    xls: '📊',
-    xlsx: '📊',
-    ppt: '📽️',
-    pptx: '📽️',
-    jpg: '🖼️',
-    jpeg: '🖼️',
-    png: '🖼️',
-    gif: '🖼️',
-    mp4: '🎬',
-    mov: '🎬',
-    avi: '🎬',
-    mp3: '🎵',
-    wav: '🎵',
-    flac: '🎵',
-    zip: '🗜️',
-    rar: '🗜️',
-    '7z': '🗜️'
+    pdf: "📄",
+    doc: "📝",
+    docx: "📝",
+    xls: "📊",
+    xlsx: "📊",
+    ppt: "📽️",
+    pptx: "📽️",
+    jpg: "🖼️",
+    jpeg: "🖼️",
+    png: "🖼️",
+    gif: "🖼️",
+    mp4: "🎬",
+    mov: "🎬",
+    avi: "🎬",
+    mp3: "🎵",
+    wav: "🎵",
+    flac: "🎵",
+    zip: "🗜️",
+    rar: "🗜️",
+    "7z": "🗜️",
   };
-  
-  return iconMap[extension || ''] || '📄';
+
+  return iconMap[extension || ""] || "📄";
 }
 
 // ============================================================================
@@ -654,27 +729,21 @@ export class ActionUtils {
   static createActionGroup(actions: JSX.Element[]): JSX.Element {
     return (
       <div class="raycast-action-group flex flex-wrap gap-2">
-        <For each={actions}>
-          {(action) => action}
-        </For>
+        <For each={actions}>{(action) => action}</For>
       </div>
     );
   }
 
   static createPrimarySecondaryActions(
-    primary: JSX.Element, 
-    secondary: JSX.Element[]
+    primary: JSX.Element,
+    secondary: JSX.Element[],
   ): JSX.Element {
     return (
       <div class="raycast-primary-secondary-actions flex items-center gap-3">
-        <div class="raycast-primary-action">
-          {primary}
-        </div>
+        <div class="raycast-primary-action">{primary}</div>
         <Show when={secondary.length > 0}>
           <div class="raycast-secondary-actions flex gap-2">
-            <For each={secondary}>
-              {(action) => action}
-            </For>
+            <For each={secondary}>{(action) => action}</For>
           </div>
         </Show>
       </div>
@@ -682,21 +751,21 @@ export class ActionUtils {
   }
 
   static createContextualActions(
-    context: 'list' | 'detail' | 'form' | 'grid',
-    actions: JSX.Element[]
+    context: "list" | "detail" | "form" | "grid",
+    actions: JSX.Element[],
   ): JSX.Element {
     const contextClasses = {
-      list: 'raycast-list-actions',
-      detail: 'raycast-detail-actions', 
-      form: 'raycast-form-actions',
-      grid: 'raycast-grid-actions'
+      list: "raycast-list-actions",
+      detail: "raycast-detail-actions",
+      form: "raycast-form-actions",
+      grid: "raycast-grid-actions",
     };
 
     return (
-      <div class={`raycast-contextual-actions ${contextClasses[context]} flex gap-2`}>
-        <For each={actions}>
-          {(action) => action}
-        </For>
+      <div
+        class={`raycast-contextual-actions ${contextClasses[context]} flex gap-2`}
+      >
+        <For each={actions}>{(action) => action}</For>
       </div>
     );
   }
@@ -707,15 +776,16 @@ export class ActionUtils {
 // ============================================================================
 
 export const ActionStyle = {
-  Regular: 'regular' as const,
-  Destructive: 'destructive' as const
+  Regular: "regular" as const,
+  Destructive: "destructive" as const,
 };
 
 export const CommonShortcuts = {
-  ENTER: { modifiers: [], key: 'Enter' } as KeyboardShortcut,
-  CMD_ENTER: { modifiers: ['cmd'], key: 'Enter' } as KeyboardShortcut,
-  CMD_C: { modifiers: ['cmd'], key: 'c' } as KeyboardShortcut,
-  CMD_V: { modifiers: ['cmd'], key: 'v' } as KeyboardShortcut,
-  CMD_O: { modifiers: ['cmd'], key: 'o' } as KeyboardShortcut,
-  ESC: { modifiers: [], key: 'Escape' } as KeyboardShortcut
+  ENTER: { modifiers: [], key: "Enter" } as KeyboardShortcut,
+  CMD_ENTER: { modifiers: ["cmd"], key: "Enter" } as KeyboardShortcut,
+  CMD_C: { modifiers: ["cmd"], key: "c" } as KeyboardShortcut,
+  CMD_V: { modifiers: ["cmd"], key: "v" } as KeyboardShortcut,
+  CMD_O: { modifiers: ["cmd"], key: "o" } as KeyboardShortcut,
+  ESC: { modifiers: [], key: "Escape" } as KeyboardShortcut,
 };
+

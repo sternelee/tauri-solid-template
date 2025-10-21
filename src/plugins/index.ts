@@ -4,5 +4,9 @@ export { definePlugin, usePluginContext } from "./PluginSDK";
 export { windowManager } from "./WindowManager";
 export * from "./types";
 
+// Raycast Plugin System
+export { RaycastPluginManager } from "./RaycastPluginManager";
+export * from "./raycast";
+
 // Auto-load built-in plugins
 import "./example-screenshot/index";

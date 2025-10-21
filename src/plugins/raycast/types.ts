@@ -462,6 +462,7 @@ export interface AskResult extends Promise<string> {
   off(event: 'data', listener: (chunk: string) => void): this;
   off(event: 'end', listener: (fullText: string) => void): this;
   off(event: 'error', listener: (error: Error) => void): this;
+  [Symbol.toStringTag]: string;
 }
 
 export interface AIAPI {
@@ -574,8 +575,8 @@ export interface PluginExecutionContext {
   pluginId: string;
   api: RaycastAPI;
   state: PluginStateContext;
-  navigation: NavigationManager;
-  shadowRoot: ShadowRoot;
+  navigation: NavigationContext;
+  shadowRoot: ShadowRoot | null;
   cleanup: () => void;
 }
 
@@ -583,15 +584,28 @@ export interface PluginStateContext {
   reactState: Map<string, any>;
   persistentState: Map<string, any>;
   hooks: Map<string, any>;
+  cleanup: () => void;
 }
 
-export interface NavigationManager {
+export interface NavigationContext {
+  pluginId: string;
   push(component: ReactElement, title?: string): void;
   pop(): void;
   popToRoot(): void;
   getCurrentView(): ReactElement | null;
   getNavigationStack(): NavigationEntry[];
+  getStackSize(): number;
+  canPop(): boolean;
+  clear(): void;
+}
+
+export interface NavigationManager {
+  createPluginContext(pluginId: string): NavigationContext;
   createNavigationHook(pluginId: string): NavigationHook;
+  cleanupPluginContext(pluginId: string): void;
+  getPluginContext(pluginId: string): NavigationContext | undefined;
+  getAllContexts(): Map<string, NavigationContext>;
+  cleanup(): void;
 }
 
 export interface NavigationEntry {

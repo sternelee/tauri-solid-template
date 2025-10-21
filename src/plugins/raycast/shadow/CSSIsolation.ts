@@ -1,4 +1,4 @@
-import { RaycastTheme } from '../components';
+import { RaycastTheme } from "../components";
 
 // ============================================================================
 // CSS Isolation and Theme Injection System
@@ -15,7 +15,7 @@ export interface CSSIsolationConfig {
 
 export class CSSIsolationManager {
   private static instance: CSSIsolationManager;
-  private baseCSS: string = '';
+  private baseCSS: string = "";
   private themeCSS: Map<string, string> = new Map();
   private componentCSS: Map<string, string> = new Map();
 
@@ -37,7 +37,7 @@ export class CSSIsolationManager {
 
   generateIsolatedCSS(
     theme: RaycastTheme,
-    config: CSSIsolationConfig = this.getDefaultConfig()
+    config: CSSIsolationConfig = this.getDefaultConfig(),
   ): string {
     const cssBlocks: string[] = [];
 
@@ -71,7 +71,7 @@ export class CSSIsolationManager {
       cssBlocks.push(config.customCSS);
     }
 
-    return cssBlocks.join('\n\n');
+    return cssBlocks.join("\n\n");
   }
 
   private generateResetCSS(): string {
@@ -98,8 +98,8 @@ export class CSSIsolationManager {
       dl, dt, dd, ol, ul, li,
       fieldset, form, label, legend,
       table, caption, tbody, tfoot, thead, tr, th, td,
-      article, aside, canvas, details, embed, 
-      figure, figcaption, footer, header, hgroup, 
+      article, aside, canvas, details, embed,
+      figure, figcaption, footer, header, hgroup,
       menu, nav, output, ruby, section, summary,
       time, mark, audio, video {
         margin: 0;
@@ -201,7 +201,7 @@ export class CSSIsolationManager {
   private generateComponentStyles(): string {
     return `
       /* Raycast Component Styles */
-      
+
       /* List Components */
       .raycast-list {
         display: flex;
@@ -542,7 +542,7 @@ export class CSSIsolationManager {
   private generateResponsiveCSS(): string {
     return `
       /* Raycast Responsive Styles */
-      
+
       /* Mobile First Approach */
       @media (max-width: 640px) {
         :host {
@@ -638,11 +638,11 @@ export class CSSIsolationManager {
 
   private generateComponentCSS(): void {
     // Generate CSS for each component type
-    this.componentCSS.set('List', this.generateListCSS());
-    this.componentCSS.set('Detail', this.generateDetailCSS());
-    this.componentCSS.set('Form', this.generateFormCSS());
-    this.componentCSS.set('Grid', this.generateGridCSS());
-    this.componentCSS.set('Action', this.generateActionCSS());
+    this.componentCSS.set("List", this.generateListCSS());
+    this.componentCSS.set("Detail", this.generateDetailCSS());
+    this.componentCSS.set("Form", this.generateFormCSS());
+    this.componentCSS.set("Grid", this.generateGridCSS());
+    this.componentCSS.set("Action", this.generateActionCSS());
   }
 
   private generateListCSS(): string {
@@ -860,25 +860,27 @@ export class CSSIsolationManager {
   // ========================================
 
   injectCSS(shadowRoot: ShadowRoot, css: string, id?: string): void {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     if (id) {
-      style.setAttribute('data-raycast-styles', id);
+      style.setAttribute("data-raycast-styles", id);
     }
     style.textContent = css;
     shadowRoot.appendChild(style);
   }
 
   updateTheme(shadowRoot: ShadowRoot, theme: RaycastTheme): void {
-    const existingThemeStyle = shadowRoot.querySelector('style[data-raycast-styles="theme"]');
+    const existingThemeStyle = shadowRoot.querySelector(
+      'style[data-raycast-styles="theme"]',
+    );
     if (existingThemeStyle) {
       existingThemeStyle.textContent = this.generateThemeVariables(theme);
     } else {
-      this.injectCSS(shadowRoot, this.generateThemeVariables(theme), 'theme');
+      this.injectCSS(shadowRoot, this.generateThemeVariables(theme), "theme");
     }
   }
 
   getComponentCSS(componentType: string): string {
-    return this.componentCSS.get(componentType) || '';
+    return this.componentCSS.get(componentType) || "";
   }
 
   private getDefaultConfig(): CSSIsolationConfig {
@@ -887,7 +889,7 @@ export class CSSIsolationManager {
       enableThemeVariables: true,
       enableComponentStyles: true,
       enableAnimations: true,
-      enableResponsive: true
+      enableResponsive: true,
     };
   }
 }
@@ -900,20 +902,20 @@ export class CSSUtils {
   static sanitizeCSS(css: string): string {
     // Basic CSS sanitization to prevent XSS
     return css
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/expression\s*\(/gi, '')
-      .replace(/behavior\s*:/gi, '')
-      .replace(/@import/gi, '');
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/javascript:/gi, "")
+      .replace(/expression\s*\(/gi, "")
+      .replace(/behavior\s*:/gi, "")
+      .replace(/@import/gi, "");
   }
 
   static minifyCSS(css: string): string {
     return css
-      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
-      .replace(/\s+/g, ' ') // Collapse whitespace
-      .replace(/;\s*}/g, '}') // Remove last semicolon in blocks
-      .replace(/\s*{\s*/g, '{') // Clean up braces
-      .replace(/;\s*/g, ';') // Clean up semicolons
+      .replace(/\/\*[\s\S]*?\*\//g, "") // Remove comments
+      .replace(/\s+/g, " ") // Collapse whitespace
+      .replace(/;\s*}/g, "}") // Remove last semicolon in blocks
+      .replace(/\s*{\s*/g, "{") // Clean up braces
+      .replace(/;\s*/g, ";") // Clean up semicolons
       .trim();
   }
 
@@ -929,7 +931,10 @@ export class CSSUtils {
     return variables;
   }
 
-  static applyCSSVariables(element: HTMLElement, variables: Record<string, string>): void {
+  static applyCSSVariables(
+    element: HTMLElement,
+    variables: Record<string, string>,
+  ): void {
     Object.entries(variables).forEach(([property, value]) => {
       element.style.setProperty(property, value);
     });
@@ -941,3 +946,4 @@ export class CSSUtils {
 // ============================================================================
 
 export const cssIsolationManager = CSSIsolationManager.getInstance();
+
