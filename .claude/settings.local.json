@@ -19,7 +19,10 @@
       "Bash(npx tsc --noEmit)",
       "Bash(cargo run:*)",
       "Bash(npx tsc:*)",
-      "Read(//Users/sternelee/www/github/jan-dev/src-tauri/src/core/chat/**)"
+      "Read(//Users/sternelee/www/github/jan-dev/src-tauri/src/core/chat/**)",
+      "Bash(gtimeout:*)",
+      "Bash(cat:*)",
+      "Bash(TAURI_SKIP_TARGET_CHECK=true cargo build:*)"
     ],
     "deny": [],
     "ask": []

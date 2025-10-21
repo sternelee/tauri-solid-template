@@ -42,6 +42,29 @@ specta-typescript = "0.0.7"
 log = "0.4.22"
 anyhow = "1.0"
 
+# Rig AI agent dependencies
+rig-core = { version = "0.22.0", features = ["derive", "audio", "image", "reqwest-rustls"] }
+tokio = { version = "1.45.1", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+thiserror = "1.0"
+
+# Additional dependencies for enhanced AI features
+base64 = "0.22"
+image = { version = "0.25" }
+mime_guess = "2.0"
+url = "2.5"
+walkdir = "2.5"
+sysinfo = "0.32"
+dirs-next = "2.0"
+serde_yaml = "0.9"
+toml = "0.8"
+async-trait = "0.1"
+hostname = "0.4"
+
 
 # Optimize for smaller binary size
 [profile.release]

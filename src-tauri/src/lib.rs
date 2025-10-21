@@ -1,6 +1,7 @@
 use tauri::Manager;
 use tauri_specta::Event;
 pub mod apps;
+pub mod rig_agent;
 
 // demo command
 #[tauri::command]
@@ -170,9 +171,37 @@ pub fn run() {
             set_window_fullscreen,
             request_screenshot_permission,
             toggle_window_visibility,
-            hide_window
+            hide_window,
+            // Enhanced rig agent commands
+            rig_agent::commands::initialize_agent,
+            rig_agent::commands::chat_with_agent,
+            rig_agent::commands::get_conversation_history,
+            rig_agent::commands::clear_conversation,
+            rig_agent::commands::list_conversations,
+            rig_agent::commands::get_agent_status,
+            rig_agent::commands::get_available_tools,
+            // New enhanced commands with multimodal and tool support (temporarily commented for compilation)
+            // rig_agent::enhanced_commands::initialize_enhanced_agent,
+            // rig_agent::enhanced_commands::enhanced_chat_with_agent,
+            // rig_agent::enhanced_commands::enhanced_chat_streaming,
+            // rig_agent::enhanced_commands::process_image_for_vision,
+            // rig_agent::enhanced_commands::generate_text_embeddings,
+            // rig_agent::enhanced_commands::execute_tool,
+            // rig_agent::enhanced_commands::get_available_providers,
+            // rig_agent::enhanced_commands::get_provider_template,
+            // Legacy compatibility commands (temporarily removed for compilation)
+            // rig_agent::initialize_agent_legacy,
+            // rig_agent::chat_with_agent_legacy,
+            // rig_agent::get_conversation_history_legacy,
+            // rig_agent::clear_conversation_legacy,
+            // rig_agent::is_agent_initialized,
+            // rig_agent::get_agent_config
         ])
-        .events(tauri_specta::collect_events![crate::DemoEvent]);
+        .events(tauri_specta::collect_events![
+            crate::DemoEvent,
+            rig_agent::commands::ChatEvent,
+            // rig_agent::enhanced_commands::EnhancedChatEvent // Temporarily commented
+        ]);
 
     #[cfg(debug_assertions)]
     {
@@ -199,6 +228,7 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(apps::ApplicationsState::default())
+        .manage(rig_agent::AgentState::default())
         .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
             specta_builder.mount_events(app);
