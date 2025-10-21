@@ -33,6 +33,7 @@ export default function CommandPalette() {
   const [systemApps, setSystemApps] = createSignal<CommandItem[]>([]);
   const [appsLoading, setAppsLoading] = createSignal(false);
   const [appsLoaded, setAppsLoaded] = createSignal(false);
+  const [iconCache, setIconCache] = createSignal<Map<string, string>>(new Map());
   const [globalShortcutsRegistered, setGlobalShortcutsRegistered] =
     createSignal(false);
 
@@ -114,6 +115,32 @@ export default function CommandPalette() {
     setPluginCommands(commands);
   };
 
+  // Get application icon with caching
+  const getAppIcon = async (app: any): Promise<string> => {
+    // Check cache first
+    const cache = iconCache();
+    if (cache.has(app.bundle_id)) {
+      return cache.get(app.bundle_id)!;
+    }
+
+    try {
+      // Try to get the icon data URL
+      const result = await commands.getAppIconDataUrl(app.icon || null);
+      if (result.status === "ok" && result.data) {
+        // Cache the result
+        const newCache = new Map(cache);
+        newCache.set(app.bundle_id, result.data);
+        setIconCache(newCache);
+        return result.data;
+      }
+    } catch (error) {
+      console.warn(`Failed to get icon for ${app.name}:`, error);
+    }
+
+    // Fallback to emoji
+    return "📱";
+  };
+
   const loadSystemApplications = async () => {
     // Prevent multiple simultaneous loads
     if (appsLoading() || appsLoaded()) {
@@ -130,11 +157,12 @@ export default function CommandPalette() {
       console.log("getApplications result:", result);
       if (result.status === "ok") {
         console.log(`Processing ${result.data.length} applications`);
-        const apps = result.data.map((app, index) => ({
+        const apps = result.data.map((app, index) => {
+        const appItem: any = {
           id: `system-app-${index}`,
           title: app.name,
           subtitle: app.bundle_id,
-          icon: "📱", // Default icon for apps
+          icon: "📱", // Default icon for apps (will be updated asynchronously)
           keywords: [app.name.toLowerCase(), app.bundle_id.toLowerCase()],
           type: "app" as const,
           action: async () => {
@@ -173,7 +201,26 @@ export default function CommandPalette() {
               console.error(`Failed to open ${app.name}:`, error);
             }
           },
-        }));
+        };
+
+        // Load icon asynchronously
+        getAppIcon(app).then((iconUrl) => {
+          appItem.icon = iconUrl;
+          // Update the apps signal to trigger re-render
+          setSystemApps(prev => {
+            const newApps = [...prev];
+            const appIndex = newApps.findIndex(a => a.id === appItem.id);
+            if (appIndex !== -1) {
+              newApps[appIndex] = { ...newApps[appIndex], icon: iconUrl };
+            }
+            return newApps;
+          });
+        }).catch(() => {
+          // Keep default emoji if icon loading fails
+        });
+
+        return appItem;
+      });
         setSystemApps(apps);
         setAppsLoaded(true);
         console.log(`Successfully loaded ${apps.length} applications`);
@@ -587,7 +634,13 @@ export default function CommandPalette() {
                       onSelect={() => handleSelect(item)}
                       class="raycast-item"
                     >
-                      <div class="raycast-item-icon">{item.icon}</div>
+                      <div class="raycast-item-icon">
+                      {typeof item.icon === "string" && item.icon.startsWith("data:") ? (
+                        <img src={item.icon} alt="" class="raycast-app-icon" />
+                      ) : (
+                        item.icon
+                      )}
+                    </div>
                       <div class="raycast-item-content">
                         <div class="raycast-item-title">{item.title}</div>
                         {item.subtitle && (
@@ -816,6 +869,13 @@ export default function CommandPalette() {
           margin-right: 12px;
           font-size: 16px;
           flex-shrink: 0;
+        }
+
+        .raycast-app-icon {
+          width: 24px;
+          height: 24px;
+          object-fit: contain;
+          border-radius: 4px;
         }
 
         .raycast-item-content {

@@ -22,7 +22,11 @@
       "Read(//Users/sternelee/www/github/jan-dev/src-tauri/src/core/chat/**)",
       "Bash(gtimeout:*)",
       "Bash(cat:*)",
-      "Bash(TAURI_SKIP_TARGET_CHECK=true cargo build:*)"
+      "Bash(TAURI_SKIP_TARGET_CHECK=true cargo build:*)",
+      "Read(//System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/Resources/**)",
+      "WebSearch",
+      "Bash(timeout:*)",
+      "Read(//Users/sternelee/www/github/kunkun/packages/tauri-plugins/jarvis/src/utils/**)"
     ],
     "deny": [],
     "ask": []

@@ -54,6 +54,10 @@ export const tauriCommands = {
     return await invoke("hide_all_apps_except_frontmost");
   },
 
+  async getAppIconDataUrl(iconPath: string | null): Promise<string | null> {
+    return await invoke("get_app_icon_data_url", { iconPath });
+  },
+
   // Launch application using shell command
   async launchApplication(appPath: string): Promise<string> {
   if (navigator.platform.includes("Mac")) {

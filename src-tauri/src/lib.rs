@@ -166,6 +166,7 @@ pub fn run() {
             apps::refresh_applications_list,
             apps::refresh_applications_list_in_bg,
             apps::hide_all_apps_except_frontmost,
+            apps::get_app_icon_data_url,
             close_plugin_window,
             focus_plugin_window,
             set_window_fullscreen,

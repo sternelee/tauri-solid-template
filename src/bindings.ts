@@ -103,6 +103,22 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Get application icon as web-compatible data URL
+   */
+  async getAppIconDataUrl(
+    iconPath: string | null,
+  ): Promise<Result<string | null, string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_app_icon_data_url", { iconPath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async closePluginWindow(windowId: string): Promise<Result<null, string>> {
     try {
       return {
@@ -267,13 +283,20 @@ export const events = __makeEvents__<{
 
 /** user-defined types **/
 
+export type AIProvider = "OpenAI" | "Anthropic" | "Google" | "Ollama" | "Local";
 export type AgentConfig = {
+  provider: AIProvider;
   model: string;
   preamble: string | null;
   temperature: number | null;
   max_tokens: number | null;
   max_iterations: number | null;
   stream_events: boolean | null;
+  api_key: string | null;
+  base_url: string | null;
+  enable_vision: boolean | null;
+  enable_tools: boolean | null;
+  enable_embeddings: boolean | null;
 };
 export type AgentStatus = {
   initialized: boolean;
@@ -298,8 +321,11 @@ export type ChatMessage = {
 export type ChatRequest = {
   message: string;
   conversation_id: string | null;
+  content_parts: ContentPart[] | null;
   tools: ToolDefinition[] | null;
   parameters: { [key in string]: JsonValue } | null;
+  use_vision: boolean | null;
+  enable_tool_calling: boolean | null;
 };
 export type ChatResponse = {
   content: string;
@@ -319,6 +345,9 @@ export type ChatStreamEvent =
   | { Complete: { response: ChatResponse } }
   | { Error: { error: string } }
   | "Cancelled";
+export type ContentPart =
+  | { Text: { text: string } }
+  | { Image: { image: ImageContent } };
 export type Conversation = {
   id: string;
   messages: ChatMessage[];
@@ -327,6 +356,14 @@ export type Conversation = {
   metadata: { [key in string]: JsonValue };
 };
 export type DemoEvent = string;
+export type ImageContent = {
+  url: string | null;
+  base64_data: string | null;
+  media_type: string | null;
+  width: number | null;
+  height: number | null;
+  description: string | null;
+};
 export type JsonValue =
   | null
   | boolean
@@ -339,6 +376,7 @@ export type ToolDefinition = {
   name: string;
   description: string;
   parameters: JsonValue;
+  enabled: boolean | null;
 };
 
 /** tauri-specta globals **/
