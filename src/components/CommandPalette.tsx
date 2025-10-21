@@ -36,6 +36,8 @@ export default function CommandPalette() {
   const [iconCache, setIconCache] = createSignal<Map<string, string>>(new Map());
   const [globalShortcutsRegistered, setGlobalShortcutsRegistered] =
     createSignal(false);
+  const [fileSearchResults, setFileSearchResults] = createSignal<any[]>([]);
+  const [fileSearchLoading, setFileSearchLoading] = createSignal(false);
 
   // Initialize plugins on mount
   onMount(async () => {
@@ -232,6 +234,85 @@ export default function CommandPalette() {
     } finally {
       setAppsLoading(false);
     }
+  };
+
+  // File search function
+  const performFileSearch = async (searchPattern: string) => {
+    if (!searchPattern || fileSearchLoading()) return;
+
+    setFileSearchLoading(true);
+    try {
+      const result = await commands.searchFiles({
+        pattern: searchPattern,
+        max_results: 20,
+        file_extensions: null,
+        include_hidden: false
+      }, null);
+
+      if (result.status === "ok") {
+        const fileItems = result.data.map((file, index) => ({
+          id: `file-search-${index}`,
+          title: file.path.split('/').pop() || file.path,
+          subtitle: `${file.path}${file.line_number ? `:${file.line_number}` : ''}`,
+          icon: getFileIcon(file.file_type),
+          keywords: [file.path, file.content || ''].join(' ').toLowerCase(),
+          type: "action" as const,
+          action: async () => {
+            try {
+              // Open the file at the specific line number if available
+              if (file.line_number) {
+                await openPath(`${file.path}:${file.line_number}`);
+              } else {
+                await openPath(file.path);
+              }
+              setOpen(false);
+              setSearch("");
+            } catch (error) {
+              console.error("Failed to open file:", error);
+            }
+          },
+        }));
+        setFileSearchResults(fileItems);
+      } else {
+        console.error("File search failed:", result.error);
+        setFileSearchResults([]);
+      }
+    } catch (error) {
+      console.error("File search error:", error);
+      setFileSearchResults([]);
+    } finally {
+      setFileSearchLoading(false);
+    }
+  };
+
+  // Get file icon based on file type
+  const getFileIcon = (fileType: string): string => {
+    const iconMap: Record<string, string> = {
+      "Rust": "🦀",
+      "JavaScript": "🟨",
+      "React": "⚛️",
+      "TypeScript": "🔷",
+      "Python": "🐍",
+      "Java": "☕",
+      "C++": "🔧",
+      "C": "⚙️",
+      "Go": "🐹",
+      "PHP": "🐘",
+      "Ruby": "💎",
+      "Swift": "🦉",
+      "HTML": "🌐",
+      "CSS": "🎨",
+      "JSON": "📄",
+      "YAML": "📝",
+      "Markdown": "📖",
+      "Text": "📄",
+      "SQL": "🗃️",
+      "Shell": "💻",
+      "Docker": "🐳",
+      "Git": "📦",
+      "Unknown": "📄"
+    };
+    return iconMap[fileType] || "📄";
   };
 
   // Commands with real Tauri integration - using createMemo for reactive updates
@@ -470,6 +551,11 @@ export default function CommandPalette() {
           },
         ],
       },
+      // Add file search results when searching with #
+      ...(search().startsWith('#') && fileSearchResults().length > 0 ? [{
+        heading: "File Search Results",
+        items: fileSearchResults(),
+      }] : []),
       {
         heading: "Plugins",
         items: pluginCommands(),
@@ -549,6 +635,18 @@ export default function CommandPalette() {
     }
   });
 
+  // File search effect - trigger when search starts with #
+  createEffect(() => {
+    const searchValue = search();
+    if (searchValue.startsWith('#') && searchValue.length > 1) {
+      const searchPattern = searchValue.slice(1); // Remove the # prefix
+      performFileSearch(searchPattern);
+    } else {
+      // Clear file search results when not searching with #
+      setFileSearchResults([]);
+    }
+  });
+
   const handleSelect = (item: CommandItem) => {
     item.action();
     setOpen(false);
@@ -587,7 +685,7 @@ export default function CommandPalette() {
               <Command.Input
                 value={search()}
                 onValueChange={setSearch}
-                placeholder="Search for apps and commands..."
+                placeholder="Search for apps and commands... (use # to search files)"
                 class="raycast-input"
               />
               <div class="raycast-shortcuts">

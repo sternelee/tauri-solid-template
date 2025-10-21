@@ -188,6 +188,37 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  /**
+   * Search for files using ripgrep command
+   */
+  async searchFiles(
+    options: SearchOptions,
+    searchPath: string | null,
+  ): Promise<Result<SearchResult[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("search_files", { options, searchPath }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  /**
+   * Get common search directories
+   */
+  async getSearchDirectories(): Promise<Result<string[], string>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_search_directories"),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async initializeAgent(
     config: AgentConfig,
     apiKey: string | null,
@@ -371,6 +402,18 @@ export type JsonValue =
   | string
   | JsonValue[]
   | { [key in string]: JsonValue };
+export type SearchOptions = {
+  pattern: string;
+  max_results: number | null;
+  file_extensions: string[] | null;
+  include_hidden: boolean | null;
+};
+export type SearchResult = {
+  path: string;
+  line_number: number | null;
+  content: string | null;
+  file_type: string;
+};
 export type SystemInfo = { os: string; arch: string };
 export type ToolDefinition = {
   name: string;

@@ -2,6 +2,7 @@ use tauri::Manager;
 use tauri_specta::Event;
 pub mod apps;
 pub mod rig_agent;
+pub mod search;
 
 // demo command
 #[tauri::command]
@@ -173,6 +174,9 @@ pub fn run() {
             request_screenshot_permission,
             toggle_window_visibility,
             hide_window,
+            // File search commands
+            search::search_files,
+            search::get_search_directories,
             // Enhanced rig agent commands
             rig_agent::commands::initialize_agent,
             rig_agent::commands::chat_with_agent,
