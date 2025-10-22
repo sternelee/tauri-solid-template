@@ -165,38 +165,31 @@ pub async fn get_system_text_selection(
     app: AppHandle,
     state: State<'_, TextSelectionState>,
 ) -> Result<Option<TextSelection>, String> {
-    use arboard::Clipboard;
+    // Use the clipboard-x plugin to read text
+    match tauri_plugin_clipboard_x::read_text().await {
+        Ok(text) => {
+            if !text.trim().is_empty() {
+                let selection = TextSelection {
+                    text: text.clone(),
+                    selected_text: text.clone(),
+                    rect: SelectionRect {
+                        x: 100.0,
+                        y: 100.0,
+                        width: 200.0,
+                        height: 30.0,
+                        screen: None,
+                    },
+                    timestamp: Timestamp::from(chrono::Utc::now()),
+                    source_app: None,
+                    context_type: detect_context_type(&text),
+                };
 
-    // Try to get text from clipboard as a proxy for system selection
-    match Clipboard::new() {
-        Ok(mut _clipboard) => match _clipboard.get_text() {
-            Ok(text) => {
-                if !text.trim().is_empty() {
-                    let selection = TextSelection {
-                        text: text.clone(),
-                        selected_text: text.clone(),
-                        rect: SelectionRect {
-                            x: 100.0,
-                            y: 100.0,
-                            width: 200.0,
-                            height: 30.0,
-                            screen: None,
-                        },
-                        timestamp: Timestamp::from(chrono::Utc::now()),
-                        source_app: None,
-                        context_type: detect_context_type(&text),
-                    };
-
-                    state.set_selection(selection.clone());
-                    return Ok(Some(selection));
-                }
+                state.set_selection(selection.clone());
+                return Ok(Some(selection));
             }
-            Err(e) => {
-                return Err(format!("Failed to read clipboard: {}", e));
-            }
-        },
+        }
         Err(e) => {
-            return Err(format!("Failed to initialize clipboard: {}", e));
+            return Err(format!("Failed to read clipboard: {}", e));
         }
     }
 
@@ -549,32 +542,20 @@ pub async fn replace_original_text(
     translated_text: String,
     app: tauri::AppHandle,
 ) -> Result<String, String> {
-    use arboard::Clipboard;
-
-    match Clipboard::new() {
-        Ok(mut _clipboard) => {
-            // In a real implementation, this would:
-            // 1. Use system accessibility APIs to find and replace the original text
-            // 2. Or use clipboard monitoring + keyboard shortcuts to replace text
-
-            // For now, we'll put the translated text in clipboard
-            // and instruct the user to manually paste it
-            match _clipboard.set_text(&translated_text) {
-                Ok(_) => {
-                    // Show a notification that text has been copied
-                    if let Err(e) = show_notification(
-                        &app,
-                        "文本已复制",
-                        "翻译结果已复制到剪贴板，请手动粘贴替换原文",
-                    ) {
-                        println!("Failed to show notification: {}", e);
-                    }
-                    Ok("翻译结果已复制到剪贴板，请手动粘贴替换原文".to_string())
-                }
-                Err(e) => Err(format!("Failed to copy text to clipboard: {}", e)),
+    // Use the clipboard-x plugin to write text
+    match tauri_plugin_clipboard_x::write_text(translated_text.clone()).await {
+        Ok(_) => {
+            // Show a notification that text has been copied
+            if let Err(e) = show_notification(
+                &app,
+                "文本已复制",
+                "翻译结果已复制到剪贴板，请手动粘贴替换原文",
+            ) {
+                println!("Failed to show notification: {}", e);
             }
+            Ok("翻译结果已复制到剪贴板，请手动粘贴替换原文".to_string())
         }
-        Err(e) => Err(format!("Failed to access clipboard: {}", e)),
+        Err(e) => Err(format!("Failed to copy text to clipboard: {}", e)),
     }
 }
 

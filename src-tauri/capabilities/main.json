@@ -16,6 +16,7 @@
     "global-shortcut:default",
     "global-shortcut:allow-register",
     "opener:allow-open-path",
-    "cache:default"
+    "cache:default",
+    "clipboard-x:default"
   ]
 }

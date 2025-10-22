@@ -29,7 +29,7 @@ tauri-plugin-os = "2"
 tauri-plugin-notification = "2"
 tauri-plugin-store = "2"
 tauri-plugin-global-shortcut = "2"
-tauri-plugin-clipboard-manager = "2"
+tauri-plugin-clipboard-x = "2"
 tauri-plugin-screenshots = "2"
 tauri-plugin-biometry = "0.2"
 tauri-plugin-mic-recorder = "2.0.0"
@@ -94,7 +94,6 @@ tauri-icns = "0.1.0"
 
 # Additional dependencies for text selection and window management
 open = "5.3"
-arboard = "3.4"
 
 # Screenshot dependencies - now using tauri-plugin-screenshots
 

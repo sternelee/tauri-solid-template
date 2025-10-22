@@ -28,7 +28,11 @@
       "Bash(timeout:*)",
       "Read(//Users/sternelee/www/github/kunkun/packages/tauri-plugins/jarvis/src/utils/**)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:crates.io)",
+      "mcp__mcphub__tavily-mcp-tavily-search",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(pnpm install)"
     ],
     "deny": [],
     "ask": []

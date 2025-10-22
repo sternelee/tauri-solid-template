@@ -5,7 +5,7 @@ import { arch, platform, version } from "@tauri-apps/plugin-os";
 import { sendNotification } from "@tauri-apps/plugin-notification";
 import { Store } from "@tauri-apps/plugin-store";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
-import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { readText, writeText } from "tauri-plugin-clipboard-x-api";
 
 // Application types
 export interface Application {

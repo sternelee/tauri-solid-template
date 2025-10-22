@@ -274,7 +274,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_clipboard_x::init())
         .plugin(tauri_plugin_screenshots::init())
         .manage(apps::ApplicationsState::default())
         .manage(rig_agent::AgentState::default())
