@@ -15,12 +15,22 @@ pub use rig::providers::openai as openai_provider;
 pub mod agent;
 pub mod commands;
 pub mod tools;
+pub mod chat_commands;
+pub mod image_generation;
+pub mod embeddings;
+pub mod providers;
+pub mod context;
 // pub mod enhanced_agent; // Temporarily commented
 // pub mod enhanced_commands; // Temporarily commented
 
 pub use agent::*;
 pub use commands::*;
 pub use tools::*;
+pub use chat_commands::*;
+pub use image_generation::*;
+pub use embeddings::*;
+pub use providers::*;
+pub use context::*;
 // pub use enhanced_agent::*; // Temporarily commented
 // pub use enhanced_commands::*; // Temporarily commented
 
@@ -33,26 +43,45 @@ pub type OpenAIAgent = rig::agent::Agent<
 #[derive(Clone)]
 pub enum DynamicAgent {
     OpenAI(OpenAIAgent),
-    // Anthropic(rig::agent::Agent<rig::providers::anthropic::Client>),
-    // Add more providers as needed
+    Anthropic(rig::agent::Agent<rig::providers::anthropic::completion::CompletionModel<reqwest::Client>>),
+    Gemini(rig::agent::Agent<rig::providers::gemini::completion::CompletionModel>),
+    Groq(rig::agent::Agent<rig::providers::groq::CompletionModel<reqwest::Client>>),
+    Cohere(rig::agent::Agent<rig::providers::cohere::completion::CompletionModel>),
+    Mistral(rig::agent::Agent<rig::providers::mistral::CompletionModel>),
+    Together(rig::agent::Agent<rig::providers::together::completion::CompletionModel>),
+    HuggingFace(rig::agent::Agent<rig::providers::huggingface::completion::CompletionModel>),
 }
 
 // Dynamic client type
 #[derive(Clone)]
 pub enum DynamicClient {
-    OpenAI(openai::Client),
-    // Anthropic(rig::providers::anthropic::Client),
-    // Add more providers as needed
+    OpenAI(rig::providers::openai::Client),
+    Anthropic(rig::providers::anthropic::Client),
+    Gemini(rig::providers::gemini::Client),
+    Groq(rig::providers::groq::Client),
+    Cohere(rig::providers::cohere::Client),
+    Mistral(rig::providers::mistral::Client),
+    Together(rig::providers::together::Client),
+    HuggingFace(rig::providers::huggingface::Client),
 }
 
 // AI Provider types
 #[derive(Serialize, Deserialize, Type, Clone, Debug)]
 pub enum AIProvider {
     OpenAI,
+    OpenAIAzure,
     Anthropic,
+    AnthropicVertex,
     Google,
+    GoogleGemini,
     Ollama,
+    Groq,
+    Cohere,
+    Mistral,
+    TogetherAI,
+    HuggingFace,
     Local,
+    Custom,
 }
 
 // Agent configuration structure following the jan-dev pattern
@@ -70,6 +99,21 @@ pub struct AgentConfig {
     pub enable_vision: Option<bool>,
     pub enable_tools: Option<bool>,
     pub enable_embeddings: Option<bool>,
+    // Provider-specific configurations
+    pub azure_endpoint: Option<String>,
+    pub azure_deployment: Option<String>,
+    pub azure_api_version: Option<String>,
+    pub anthropic_version: Option<String>,
+    pub google_project_id: Option<String>,
+    pub google_location: Option<String>,
+    pub ollama_host: Option<String>,
+    pub ollama_port: Option<u16>,
+    pub groq_model: Option<String>,
+    pub cohere_model: Option<String>,
+    pub mistral_model: Option<String>,
+    pub together_model: Option<String>,
+    pub huggingface_model: Option<String>,
+    pub custom_config: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl Default for AgentConfig {
@@ -87,6 +131,21 @@ impl Default for AgentConfig {
             enable_vision: Some(false),
             enable_tools: Some(true),
             enable_embeddings: Some(false),
+            // Provider-specific defaults
+            azure_endpoint: None,
+            azure_deployment: None,
+            azure_api_version: Some("2023-12-01-preview".to_string()),
+            anthropic_version: Some("2023-06-01".to_string()),
+            google_project_id: None,
+            google_location: Some("us-central1".to_string()),
+            ollama_host: Some("localhost".to_string()),
+            ollama_port: Some(11434),
+            groq_model: Some("llama3-8b-8192".to_string()),
+            cohere_model: Some("command".to_string()),
+            mistral_model: Some("mistral-tiny".to_string()),
+            together_model: Some("meta-llama/Llama-2-7b-chat-hf".to_string()),
+            huggingface_model: Some("microsoft/DialoGPT-medium".to_string()),
+            custom_config: None,
         }
     }
 }
@@ -133,6 +192,45 @@ pub enum ContentPart {
     Image { image: ImageContent },
 }
 
+// Source reference for context
+#[derive(Serialize, Deserialize, Type, Clone, Debug)]
+pub struct SourceReference {
+    pub id: String,
+    pub source_type: SourceType,
+    pub path: String,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub metadata: Option<std::collections::HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Serialize, Deserialize, Type, Clone, Debug)]
+#[serde(tag = "type")]
+pub enum SourceType {
+    #[serde(rename = "file")]
+    File {
+        file_type: Option<String>, // e.g., "txt", "md", "pdf", "code"
+        size: Option<f64>,
+        last_modified: Option<String>,
+    },
+    #[serde(rename = "app")]
+    App {
+        bundle_id: Option<String>,
+        app_name: Option<String>,
+        version: Option<String>,
+    },
+    #[serde(rename = "url")]
+    Url {
+        url: String,
+        title: Option<String>,
+    },
+    #[serde(rename = "conversation")]
+    Conversation {
+        conversation_id: String,
+        title: Option<String>,
+        message_count: Option<u32>,
+    },
+}
+
 // Chat request structure following clean API design
 #[derive(Serialize, Deserialize, Type, Debug)]
 pub struct ChatRequest {
@@ -143,6 +241,7 @@ pub struct ChatRequest {
     pub parameters: Option<std::collections::HashMap<String, serde_json::Value>>,
     pub use_vision: Option<bool>,
     pub enable_tool_calling: Option<bool>,
+    pub sources: Option<Vec<SourceReference>>, // Context sources (@ and # references)
 }
 
 // Embedding request structure

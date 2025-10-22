@@ -1,8 +1,11 @@
 use tauri::Manager;
 use tauri_specta::Event;
 pub mod apps;
+pub mod database;
 pub mod rig_agent;
 pub mod search;
+pub mod settings;
+pub mod text_selection;
 
 // demo command
 #[tauri::command]
@@ -142,6 +145,7 @@ pub struct SystemInfo {
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, specta::Type, Event)]
 pub struct DemoEvent(String);
 
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(debug_assertions)]
@@ -177,7 +181,33 @@ pub fn run() {
             // File search commands
             search::search_files,
             search::get_search_directories,
-            // Enhanced rig agent commands
+            // Enhanced rig agent commands with database integration
+            rig_agent::chat_commands::initialize_agent_with_db,
+            rig_agent::chat_commands::chat_with_agent_db,
+            rig_agent::chat_commands::get_conversation_history_db,
+            rig_agent::chat_commands::list_conversations_db,
+            rig_agent::chat_commands::delete_conversation_db,
+            rig_agent::chat_commands::update_conversation_title_db,
+            rig_agent::chat_commands::search_conversations_db,
+            rig_agent::chat_commands::get_enhanced_agent_status,
+            rig_agent::chat_commands::create_conversation_with_db,
+            rig_agent::chat_commands::execute_tool_command,
+            rig_agent::chat_commands::get_available_tools_command,
+            rig_agent::chat_commands::generate_image_enhanced,
+            rig_agent::chat_commands::create_embeddings_for_search,
+            rig_agent::chat_commands::semantic_search_conversation,
+            // Provider management commands
+            rig_agent::providers::get_available_providers,
+            rig_agent::providers::get_provider_models,
+            // Image generation commands
+            rig_agent::generate_image_command,
+            rig_agent::create_image_variation_command,
+            rig_agent::edit_image_command,
+            // Embedding commands
+            rig_agent::create_embeddings_command,
+            rig_agent::semantic_search_command,
+            rig_agent::calculate_similarity_command,
+            // Legacy rig agent commands
             rig_agent::commands::initialize_agent,
             rig_agent::commands::chat_with_agent,
             rig_agent::commands::get_conversation_history,
@@ -200,7 +230,20 @@ pub fn run() {
             // rig_agent::get_conversation_history_legacy,
             // rig_agent::clear_conversation_legacy,
             // rig_agent::is_agent_initialized,
-            // rig_agent::get_agent_config
+            // rig_agent::get_agent_config,
+            // Text selection toolbar commands
+            text_selection::get_system_text_selection,
+            text_selection::get_toolbar_actions,
+            text_selection::execute_toolbar_action,
+            text_selection::get_toolbar_config,
+            text_selection::update_toolbar_config,
+            text_selection::show_toolbar,
+            text_selection::hide_toolbar,
+            text_selection::replace_original_text,
+            // Settings commands
+            settings::get_settings,
+            settings::save_settings,
+            settings::reset_settings,
         ])
         .events(tauri_specta::collect_events![
             crate::DemoEvent,
@@ -234,9 +277,18 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .manage(apps::ApplicationsState::default())
         .manage(rig_agent::AgentState::default())
+        .manage(settings::SettingsState::new())
+        .manage(text_selection::init_text_selection_system())
         .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
             specta_builder.mount_events(app);
+
+            // Initialize database
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                let db = database::Database::new(&app_handle).await.expect("Failed to initialize database");
+                app_handle.manage(db);
+            });
 
             // listen to demo event
             DemoEvent::listen(app, |event| {

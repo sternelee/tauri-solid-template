@@ -4,12 +4,14 @@ import {
   onCleanup,
   createEffect,
   createMemo,
+  Show,
 } from "solid-js";
 import { Command } from "cmdk-solid";
 import { pluginManager } from "../plugins/PluginManager";
 import { commands } from "../bindings";
-import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
+import AIChatInterface from "./AIChatInterface";
 
 interface CommandItem {
   id: string;
@@ -19,11 +21,6 @@ interface CommandItem {
   keywords?: string[];
   type: "app" | "action" | "web" | "plugin";
   action: () => void | Promise<void>;
-}
-
-interface CommandGroup {
-  heading: string;
-  items: CommandItem[];
 }
 
 export default function CommandPalette() {
@@ -39,11 +36,24 @@ export default function CommandPalette() {
   const [fileSearchResults, setFileSearchResults] = createSignal<any[]>([]);
   const [fileSearchLoading, setFileSearchLoading] = createSignal(false);
 
+  // New states for AI Chat integration
+  const [currentMode, setCurrentMode] = createSignal<"command" | "chat">("command");
+  const [isAIChatReady, setIsAIChatReady] = createSignal(false);
+
   // Initialize plugins on mount
   onMount(async () => {
     console.log("CommandPalette mounting...");
 
     try {
+      // Check if AI agent is available
+      try {
+        const agentStatus = await commands.getAgentStatus();
+        setIsAIChatReady(agentStatus.status === "ok");
+      } catch (error) {
+        console.log("AI agent not available:", error);
+        setIsAIChatReady(false);
+      }
+
       // Load example screenshot plugin
       // await pluginManager.loadPlugin('./plugins/example-screenshot/index.tsx');
 
@@ -55,6 +65,7 @@ export default function CommandPalette() {
         await register("alt+k", async () => {
           console.log("Alt+K global shortcut triggered");
           setOpen(true);
+          setCurrentMode("command");
           // Auto-focus input after a short delay
           setTimeout(() => {
             const input = document.querySelector(
@@ -75,6 +86,23 @@ export default function CommandPalette() {
             console.error("Failed to toggle window visibility:", error);
           }
         });
+
+        // Add Alt+C for AI Chat
+        if (isAIChatReady()) {
+          await register("alt+c", async () => {
+            console.log("Alt+C global shortcut triggered - open AI Chat");
+            setOpen(true);
+            setCurrentMode("chat");
+            setTimeout(() => {
+              const input = document.querySelector(
+                ".chat-input",
+              ) as HTMLTextAreaElement;
+              if (input) {
+                input.focus();
+              }
+            }, 100);
+          });
+        }
 
         setGlobalShortcutsRegistered(true);
         console.log("Global shortcuts registered successfully");
@@ -471,6 +499,21 @@ export default function CommandPalette() {
             },
           },
           {
+            id: "action-ai-chat",
+            title: "AI Chat",
+            subtitle: isAIChatReady() ? "Chat with AI assistant" : "AI not available",
+            icon: isAIChatReady() ? "🤖" : "❌",
+            keywords: ["ai", "chat", "assistant", "gpt"],
+            type: "action" as const,
+            action: async () => {
+              if (isAIChatReady()) {
+                setCurrentMode("chat");
+              } else {
+                alert("AI Chat is not available. Please check your AI configuration.");
+              }
+            },
+          },
+          {
             id: "action-settings",
             title: "Settings",
             subtitle: "Open application settings",
@@ -478,8 +521,16 @@ export default function CommandPalette() {
             keywords: ["preferences", "config"],
             type: "action" as const,
             action: async () => {
-              console.log("Settings - feature coming soon...");
-              // TODO: Open settings panel
+              try {
+                const result = await commands.openSettingsWindow();
+                if (result.status === "ok") {
+                  console.log("Settings window opened successfully");
+                } else {
+                  console.error("Failed to open settings window:", result.error);
+                }
+              } catch (error) {
+                console.error("Failed to open settings:", error);
+              }
             },
           },
           {
@@ -513,7 +564,7 @@ export default function CommandPalette() {
             type: "web" as const,
             action: async () => {
               try {
-                await open("https://www.google.com");
+                await openPath("https://www.google.com");
               } catch (error) {
                 console.error("Failed to open Google:", error);
               }
@@ -528,7 +579,7 @@ export default function CommandPalette() {
             type: "web" as const,
             action: async () => {
               try {
-                await open("https://github.com");
+                await openPath("https://github.com");
               } catch (error) {
                 console.error("Failed to open GitHub:", error);
               }
@@ -543,7 +594,7 @@ export default function CommandPalette() {
             type: "web" as const,
             action: async () => {
               try {
-                await open("https://cmdk-solid.vercel.app/");
+                await openPath("https://cmdk-solid.vercel.app/");
               } catch (error) {
                 console.error("Failed to open CMDK docs:", error);
               }
@@ -568,14 +619,47 @@ export default function CommandPalette() {
     if ((e.metaKey || e.ctrlKey) && e.key === "k") {
       e.preventDefault();
       setOpen(true);
+      setCurrentMode("command");
     }
-    // Escape to close or hide window
+
+    // Tab to switch between Command and Chat modes
+    if (e.key === "Tab" && open()) {
+      e.preventDefault();
+      if (currentMode() === "command" && isAIChatReady()) {
+        setCurrentMode("chat");
+        // Focus chat input after mode switch
+        setTimeout(() => {
+          const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
+          if (chatInput) {
+            chatInput.focus();
+          }
+        }, 100);
+      } else {
+        setCurrentMode("command");
+        // Focus command input after mode switch
+        setTimeout(() => {
+          const commandInput = document.querySelector(".raycast-input") as HTMLInputElement;
+          if (commandInput) {
+            commandInput.focus();
+            commandInput.select();
+          }
+        }, 100);
+      }
+    }
+
+    // Escape to close or hide window, or return to command mode
     if (e.key === "Escape") {
       e.preventDefault();
       if (open()) {
-        // If command palette is open, just close it
-        setOpen(false);
-        setSearch("");
+        if (currentMode() === "chat") {
+          // Return to command mode instead of closing
+          setCurrentMode("command");
+          setSearch("");
+        } else {
+          // If in command mode, close the palette
+          setOpen(false);
+          setSearch("");
+        }
       } else {
         // If command palette is already closed, hide the window
         commands.hideWindow();
@@ -649,8 +733,11 @@ export default function CommandPalette() {
 
   const handleSelect = (item: CommandItem) => {
     item.action();
-    setOpen(false);
-    setSearch("");
+    // Don't close if switching to chat mode
+    if (item.id !== "action-ai-chat") {
+      setOpen(false);
+      setSearch("");
+    }
   };
 
   return (
@@ -658,122 +745,168 @@ export default function CommandPalette() {
       {/* Plugin Container */}
       <div id="plugin-container" class="plugin-container"></div>
 
-      <Command.Dialog
-        open={open()}
-        onOpenChange={setOpen}
-        class="raycast-dialog"
-      >
+      <div class={`raycast-dialog ${open() ? "open" : ""}`}>
         {/* Backdrop */}
-        <div class="raycast-backdrop" />
+        <div class="raycast-backdrop" onClick={() => setOpen(false)} />
 
-        {/* Command Palette */}
+        {/* Main Container */}
         <div class="raycast-container">
-          <Command class="raycast-palette">
-            {/* Search Input */}
-            <div class="raycast-search">
-              <div class="raycast-search-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <Command.Input
-                value={search()}
-                onValueChange={setSearch}
-                placeholder="Search for apps and commands... (use # to search files)"
-                class="raycast-input"
-              />
-              <div class="raycast-shortcuts">
-                <kbd class="raycast-kbd raycast-kbd-primary">
-                  <span>⌘</span>
-                  <span>K</span>
-                </kbd>
-                <span class="raycast-shortcut-separator">or</span>
-                <kbd class="raycast-kbd">
-                  <span>ESC</span>
-                </kbd>
-              </div>
+          {/* Mode Indicator and Switcher */}
+          <div class="mode-switcher">
+            <div class="mode-tabs">
+              <button
+                class={`mode-tab ${currentMode() === "command" ? "active" : ""}`}
+                onClick={() => setCurrentMode("command")}
+              >
+                <span class="mode-icon">🔍</span>
+                <span class="mode-label">Commands</span>
+              </button>
+              <Show when={isAIChatReady()}>
+                <button
+                  class={`mode-tab ${currentMode() === "chat" ? "active" : ""}`}
+                  onClick={() => setCurrentMode("chat")}
+                >
+                  <span class="mode-icon">🤖</span>
+                  <span class="mode-label">AI Chat</span>
+                </button>
+              </Show>
             </div>
+            <div class="shortcuts-hint">
+              <kbd class="raycast-kbd raycast-kbd-small">
+                <span>Tab</span>
+              </kbd>
+              <span class="hint-text">to switch</span>
+            </div>
+          </div>
 
-            {/* Command List */}
-            <Command.List class="raycast-list">
-              {/* Empty State */}
-              <Command.Empty class="raycast-empty">
-                <div class="raycast-empty-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          {/* Content based on mode */}
+          <Show when={currentMode() === "command"}>
+            <Command class="raycast-palette">
+              {/* Search Input */}
+              <div class="raycast-search">
+                <div class="raycast-search-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path
-                      d="M9.75 9.75L14.25 14.25M14.25 9.75L9.75 14.25M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                      d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
                       stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
                     />
                   </svg>
                 </div>
-                <div class="raycast-empty-text">No results found</div>
-                <div class="raycast-empty-subtitle">
-                  Try searching for something else
+                <Command.Input
+                  value={search()}
+                  onValueChange={setSearch}
+                  placeholder="Search for apps and commands... (use # to search files)"
+                  class="raycast-input"
+                />
+                <div class="raycast-shortcuts">
+                  <kbd class="raycast-kbd raycast-kbd-primary">
+                    <span>⌘</span>
+                    <span>K</span>
+                  </kbd>
+                  <span class="raycast-shortcut-separator">or</span>
+                  <kbd class="raycast-kbd">
+                    <span>ESC</span>
+                  </kbd>
                 </div>
-              </Command.Empty>
+              </div>
 
-              {/* Command Groups */}
-              {commandGroups().map((group) => (
-                <Command.Group key={group.heading} heading={group.heading}>
-                  <div class="raycast-group-header">{group.heading}</div>
-                  {group.items.map((item) => (
-                    <Command.Item
-                      key={item.id}
-                      value={`${item.title} ${item.subtitle || ""} ${item.keywords?.join(" ") || ""}`}
-                      onSelect={() => handleSelect(item)}
-                      class="raycast-item"
-                    >
-                      <div class="raycast-item-icon">
-                      {typeof item.icon === "string" && item.icon.startsWith("data:") ? (
-                        <img src={item.icon} alt="" class="raycast-app-icon" />
-                      ) : (
-                        item.icon
-                      )}
-                    </div>
-                      <div class="raycast-item-content">
-                        <div class="raycast-item-title">{item.title}</div>
-                        {item.subtitle && (
-                          <div class="raycast-item-subtitle">
-                            {item.subtitle}
-                          </div>
+              {/* Command List */}
+              <Command.List class="raycast-list">
+                {/* Empty State */}
+                <Command.Empty class="raycast-empty">
+                  <div class="raycast-empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M9.75 9.75L14.25 14.25M14.25 9.75L9.75 14.25M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div class="raycast-empty-text">No results found</div>
+                  <div class="raycast-empty-subtitle">
+                    Try searching for something else
+                  </div>
+                </Command.Empty>
+
+                {/* Command Groups */}
+                {commandGroups().map((group) => (
+                  <Command.Group heading={group.heading}>
+                    <div class="raycast-group-header">{group.heading}</div>
+                    {group.items.map((item) => (
+                      <Command.Item
+                        value={`${item.title} ${item.subtitle || ""} ${item.keywords?.join(" ") || ""}`}
+                        onSelect={() => handleSelect(item)}
+                        class="raycast-item"
+                      >
+                        <div class="raycast-item-icon">
+                        {typeof item.icon === "string" && item.icon.startsWith("data:") ? (
+                          <img src={item.icon} alt="" class="raycast-app-icon" />
+                        ) : (
+                          item.icon
                         )}
                       </div>
-                      {item.shortcut && (
-                        <div class="raycast-item-shortcut">
-                          <kbd class="raycast-kbd raycast-kbd-small">
-                            {item.shortcut.split("+").map((key, index) => (
-                              <span key={index}>
-                                {key === "Cmd"
-                                  ? "⌘"
-                                  : key === "Shift"
-                                    ? "⇧"
-                                    : key === "Alt"
-                                      ? "⌥"
-                                      : key === "Ctrl"
-                                        ? "⌃"
-                                        : key.toUpperCase()}
-                              </span>
-                            ))}
-                          </kbd>
+                        <div class="raycast-item-content">
+                          <div class="raycast-item-title">{item.title}</div>
+                          {item.subtitle && (
+                            <div class="raycast-item-subtitle">
+                              {item.subtitle}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </Command.Item>
-                  ))}
-                </Command.Group>
-              ))}
-            </Command.List>
-          </Command>
+                        {item.shortcut && (
+                          <div class="raycast-item-shortcut">
+                            <kbd class="raycast-kbd raycast-kbd-small">
+                              {item.shortcut.split("+").map((key: string) => (
+                                <span>
+                                  {key === "Cmd"
+                                    ? "⌘"
+                                    : key === "Shift"
+                                      ? "⇧"
+                                      : key === "Alt"
+                                        ? "⌥"
+                                        : key === "Ctrl"
+                                          ? "⌃"
+                                          : key.toUpperCase()}
+                                </span>
+                              ))}
+                            </kbd>
+                          </div>
+                        )}
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
+                ))}
+              </Command.List>
+            </Command>
+          </Show>
+
+          <Show when={currentMode() === "chat" && isAIChatReady()}>
+            <AIChatInterface />
+          </Show>
+
+          <Show when={currentMode() === "chat" && !isAIChatReady()}>
+            <div class="ai-unavailable">
+              <div class="ai-unavailable-icon">⚠️</div>
+              <div class="ai-unavailable-title">AI Chat Unavailable</div>
+              <div class="ai-unavailable-subtitle">
+                Please configure your AI provider settings to use this feature.
+              </div>
+              <button
+                class="ai-unavailable-button"
+                onClick={() => setCurrentMode("command")}
+              >
+                Back to Commands
+              </button>
+            </div>
+          </Show>
         </div>
-      </Command.Dialog>
+      </div>
 
       {/* Raycast-style CSS */}
       <style jsx global>{`
@@ -783,8 +916,16 @@ export default function CommandPalette() {
           inset: 0;
           z-index: 9999;
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: center;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+
+        .raycast-dialog.open {
+          opacity: 1;
+          visibility: visible;
         }
 
         .raycast-backdrop {
@@ -798,7 +939,76 @@ export default function CommandPalette() {
         .raycast-container {
           position: relative;
           width: 100%;
-          max-width: 100%;
+          max-width: 680px;
+          max-height: 80vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Mode Switcher */
+        .mode-switcher {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 20px;
+          background: rgba(23, 23, 23, 0.95);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-bottom: none;
+          border-radius: 16px 16px 0 0;
+        }
+
+        .mode-tabs {
+          display: flex;
+          gap: 4px;
+          background: rgba(255, 255, 255, 0.05);
+          padding: 4px;
+          border-radius: 8px;
+        }
+
+        .mode-tab {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          background: transparent;
+          border: none;
+          border-radius: 6px;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .mode-tab:hover {
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .mode-tab.active {
+          background: rgba(59, 130, 246, 0.2);
+          color: #60a5fa;
+        }
+
+        .mode-icon {
+          font-size: 14px;
+        }
+
+        .mode-label {
+          font-weight: 500;
+        }
+
+        .shortcuts-hint {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: rgba(255, 255, 255, 0.4);
+          font-size: 12px;
+        }
+
+        .hint-text {
+          font-weight: 400;
         }
 
         .raycast-palette {
@@ -806,13 +1016,17 @@ export default function CommandPalette() {
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
+          border-top: none;
+          border-radius: 0 0 16px 16px;
           box-shadow:
             0 20px 25px -5px rgba(0, 0, 0, 0.1),
             0 10px 10px -5px rgba(0, 0, 0, 0.04),
             0 0 0 1px rgba(255, 255, 255, 0.05);
           overflow: hidden;
           animation: raycast-enter 0.15s ease-out;
+          display: flex;
+          flex-direction: column;
+          max-height: 60vh;
         }
 
         @keyframes raycast-enter {
@@ -1079,6 +1293,113 @@ export default function CommandPalette() {
 
         .raycast-input:focus-visible {
           outline: none;
+        }
+
+        /* AI Chat Unavailable State */
+        .ai-unavailable {
+          background: rgba(23, 23, 23, 0.95);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: none;
+          border-radius: 0 0 16px 16px;
+          padding: 48px 32px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .ai-unavailable-icon {
+          font-size: 48px;
+          opacity: 0.6;
+        }
+
+        .ai-unavailable-title {
+          font-size: 20px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.9);
+          margin: 0;
+        }
+
+        .ai-unavailable-subtitle {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.6);
+          line-height: 1.5;
+          max-width: 300px;
+          margin: 0;
+        }
+
+        .ai-unavailable-button {
+          background: rgba(59, 130, 246, 0.2);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          color: #60a5fa;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .ai-unavailable-button:hover {
+          background: rgba(59, 130, 246, 0.3);
+          transform: translateY(-1px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+          .raycast-dialog {
+            padding-top: 8vh;
+          }
+
+          .raycast-container {
+            margin: 0 12px;
+            max-width: calc(100% - 24px);
+          }
+
+          .mode-switcher {
+            padding: 10px 16px;
+          }
+
+          .mode-tab {
+            padding: 5px 10px;
+            font-size: 12px;
+          }
+
+          .mode-icon {
+            font-size: 12px;
+          }
+
+          .shortcuts-hint {
+            display: none;
+          }
+
+          .raycast-search {
+            padding: 12px 16px;
+          }
+
+          .raycast-item {
+            padding: 12px 16px;
+            margin: 0 4px;
+          }
+
+          .raycast-group-header {
+            padding: 8px 16px 4px;
+          }
+
+          .ai-unavailable {
+            padding: 32px 24px;
+          }
+
+          .ai-unavailable-title {
+            font-size: 18px;
+          }
+
+          .ai-unavailable-subtitle {
+            font-size: 13px;
+          }
         }
       `}</style>
     </>
