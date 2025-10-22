@@ -13,24 +13,24 @@ pub use rig::providers::anthropic as anthropic_provider;
 pub use rig::providers::openai as openai_provider;
 
 pub mod agent;
-pub mod commands;
-pub mod tools;
 pub mod chat_commands;
-pub mod image_generation;
-pub mod embeddings;
-pub mod providers;
+pub mod commands;
 pub mod context;
+pub mod embeddings;
+pub mod image_generation;
+pub mod providers;
+pub mod tools;
 // pub mod enhanced_agent; // Temporarily commented
 // pub mod enhanced_commands; // Temporarily commented
 
 pub use agent::*;
-pub use commands::*;
-pub use tools::*;
 pub use chat_commands::*;
-pub use image_generation::*;
-pub use embeddings::*;
-pub use providers::*;
+pub use commands::*;
 pub use context::*;
+pub use embeddings::*;
+pub use image_generation::*;
+pub use providers::*;
+pub use tools::*;
 // pub use enhanced_agent::*; // Temporarily commented
 // pub use enhanced_commands::*; // Temporarily commented
 
@@ -43,7 +43,9 @@ pub type OpenAIAgent = rig::agent::Agent<
 #[derive(Clone)]
 pub enum DynamicAgent {
     OpenAI(OpenAIAgent),
-    Anthropic(rig::agent::Agent<rig::providers::anthropic::completion::CompletionModel<reqwest::Client>>),
+    Anthropic(
+        rig::agent::Agent<rig::providers::anthropic::completion::CompletionModel<reqwest::Client>>,
+    ),
     Gemini(rig::agent::Agent<rig::providers::gemini::completion::CompletionModel>),
     Groq(rig::agent::Agent<rig::providers::groq::CompletionModel<reqwest::Client>>),
     Cohere(rig::agent::Agent<rig::providers::cohere::completion::CompletionModel>),
@@ -219,10 +221,7 @@ pub enum SourceType {
         version: Option<String>,
     },
     #[serde(rename = "url")]
-    Url {
-        url: String,
-        title: Option<String>,
-    },
+    Url { url: String, title: Option<String> },
     #[serde(rename = "conversation")]
     Conversation {
         conversation_id: String,

@@ -33,7 +33,7 @@ pub struct TextSelectionToolbarConfig {
     pub enabled: bool,
     pub shortcut: String,
     pub auto_hide: bool,
-    pub auto_hide_delay: u64,
+    pub auto_hide_delay: f64,
     pub opacity: f64,
     pub position: String, // "cursor" or "center"
     pub enabled_actions: Vec<String>,
@@ -46,7 +46,10 @@ impl Default for SettingsData {
         shortcuts.insert("openSettings".to_string(), "CmdOrCtrl+,".to_string());
         shortcuts.insert("quitApp".to_string(), "CmdOrCtrl+Q".to_string());
         shortcuts.insert("focusSearch".to_string(), "CmdOrCtrl+F".to_string());
-        shortcuts.insert("textSelectionToolbar".to_string(), "CmdOrCtrl+Shift+Space".to_string());
+        shortcuts.insert(
+            "textSelectionToolbar".to_string(),
+            "CmdOrCtrl+Shift+Space".to_string(),
+        );
 
         Self {
             language: "zh-CN".to_string(),
@@ -70,7 +73,7 @@ impl Default for SettingsData {
                 enabled: true,
                 shortcut: "CmdOrCtrl+Shift+Space".to_string(),
                 auto_hide: true,
-                auto_hide_delay: 5000,
+                auto_hide_delay: 5000.0,
                 opacity: 0.95,
                 position: "cursor".to_string(),
                 enabled_actions: vec![
@@ -93,37 +96,55 @@ impl SettingsState {
         Self(RwLock::new(SettingsData::default()))
     }
 
-    pub async fn load_settings(&self) -> Result<SettingsData, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn load_settings(
+        &self,
+    ) -> Result<SettingsData, Box<dyn std::error::Error + Send + Sync>> {
         // Try to load from app data directory
         let settings = self.0.read().await;
         Ok(settings.clone())
     }
 
-    pub async fn save_settings(&self, settings: SettingsData) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn save_settings(
+        &self,
+        settings: SettingsData,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut current_settings = self.0.write().await;
         *current_settings = settings;
         Ok(())
     }
 
-    pub async fn update_theme(&self, theme: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn update_theme(
+        &self,
+        theme: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut settings = self.0.write().await;
         settings.theme = theme;
         Ok(())
     }
 
-    pub async fn update_language(&self, language: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn update_language(
+        &self,
+        language: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut settings = self.0.write().await;
         settings.language = language;
         Ok(())
     }
 
-    pub async fn update_ai_provider(&self, config: AIProviderConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn update_ai_provider(
+        &self,
+        config: AIProviderConfig,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut settings = self.0.write().await;
         settings.ai_provider = config;
         Ok(())
     }
 
-    pub async fn update_shortcut(&self, action: String, shortcut: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn update_shortcut(
+        &self,
+        action: String,
+        shortcut: String,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut settings = self.0.write().await;
         settings.shortcuts.insert(action, shortcut);
         Ok(())
@@ -147,13 +168,21 @@ impl SettingsState {
 
 // Tauri commands
 #[tauri::command]
+#[specta::specta]
 pub async fn get_settings(state: State<'_, SettingsState>) -> Result<SettingsData, String> {
     state.load_settings().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn save_settings(state: State<'_, SettingsState>, settings: SettingsData) -> Result<(), String> {
-    state.save_settings(settings).await.map_err(|e| e.to_string())
+#[specta::specta]
+pub async fn save_settings(
+    state: State<'_, SettingsState>,
+    settings: SettingsData,
+) -> Result<(), String> {
+    state
+        .save_settings(settings)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -162,35 +191,63 @@ pub async fn update_theme(state: State<'_, SettingsState>, theme: String) -> Res
 }
 
 #[tauri::command]
-pub async fn update_language(state: State<'_, SettingsState>, language: String) -> Result<(), String> {
-    state.update_language(language).await.map_err(|e| e.to_string())
+pub async fn update_language(
+    state: State<'_, SettingsState>,
+    language: String,
+) -> Result<(), String> {
+    state
+        .update_language(language)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn update_ai_provider_config(state: State<'_, SettingsState>, config: AIProviderConfig) -> Result<(), String> {
-    state.update_ai_provider(config).await.map_err(|e| e.to_string())
+pub async fn update_ai_provider_config(
+    state: State<'_, SettingsState>,
+    config: AIProviderConfig,
+) -> Result<(), String> {
+    state
+        .update_ai_provider(config)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn get_ai_provider_config(state: State<'_, SettingsState>) -> Result<AIProviderConfig, String> {
+pub async fn get_ai_provider_config(
+    state: State<'_, SettingsState>,
+) -> Result<AIProviderConfig, String> {
     Ok(state.get_ai_provider().await)
 }
 
 #[tauri::command]
-pub async fn update_shortcut(state: State<'_, SettingsState>, action: String, shortcut: String) -> Result<(), String> {
-    state.update_shortcut(action, shortcut).await.map_err(|e| e.to_string())
+pub async fn update_shortcut(
+    state: State<'_, SettingsState>,
+    action: String,
+    shortcut: String,
+) -> Result<(), String> {
+    state
+        .update_shortcut(action, shortcut)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn reset_to_defaults(state: State<'_, SettingsState>) -> Result<(), String> {
     let default_settings = SettingsData::default();
-    state.save_settings(default_settings).await.map_err(|e| e.to_string())
+    state
+        .save_settings(default_settings)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn reset_settings(state: State<'_, SettingsState>) -> Result<SettingsData, String> {
     let default_settings = SettingsData::default();
-    state.save_settings(default_settings.clone()).await.map_err(|e| e.to_string())?;
+    state
+        .save_settings(default_settings.clone())
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(default_settings)
 }
 
@@ -198,7 +255,11 @@ pub async fn reset_settings(state: State<'_, SettingsState>) -> Result<SettingsD
 pub async fn toggle_auto_start(enable: bool) -> Result<(), String> {
     // TODO: Implement auto-start functionality
     // This would use platform-specific APIs to add/remove the app from startup
-    println!("Auto-start {}: {}", if enable { "enabled" } else { "disabled" }, "not implemented yet");
+    println!(
+        "Auto-start {}: {}",
+        if enable { "enabled" } else { "disabled" },
+        "not implemented yet"
+    );
     Ok(())
 }
 
@@ -278,9 +339,15 @@ pub async fn export_settings(state: State<'_, SettingsState>) -> Result<String, 
 }
 
 #[tauri::command]
-pub async fn import_settings(state: State<'_, SettingsState>, settings_json: String) -> Result<(), String> {
+pub async fn import_settings(
+    state: State<'_, SettingsState>,
+    settings_json: String,
+) -> Result<(), String> {
     let settings: SettingsData = serde_json::from_str(&settings_json).map_err(|e| e.to_string())?;
-    state.save_settings(settings).await.map_err(|e| e.to_string())
+    state
+        .save_settings(settings)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

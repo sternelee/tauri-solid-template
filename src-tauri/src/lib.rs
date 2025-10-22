@@ -145,7 +145,6 @@ pub struct SystemInfo {
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, specta::Type, Event)]
 pub struct DemoEvent(String);
 
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(debug_assertions)]
@@ -157,7 +156,7 @@ pub fn run() {
 
     #[cfg(debug_assertions)]
     let devtools = tauri_plugin_devtools::init();
-    let mut builder = tauri::Builder::default();
+    let mut builder = tauri::Builder::default().plugin(tauri_plugin_cache::init());
 
     let specta_builder = tauri_specta::Builder::<tauri::Wry>::new()
         .commands(tauri_specta::collect_commands![
@@ -181,6 +180,7 @@ pub fn run() {
             // File search commands
             search::search_files,
             search::get_search_directories,
+            search::search_screenshots,
             // Enhanced rig agent commands with database integration
             rig_agent::chat_commands::initialize_agent_with_db,
             rig_agent::chat_commands::chat_with_agent_db,
@@ -275,6 +275,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_screenshots::init())
         .manage(apps::ApplicationsState::default())
         .manage(rig_agent::AgentState::default())
         .manage(settings::SettingsState::new())
@@ -286,7 +287,9 @@ pub fn run() {
             // Initialize database
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                let db = database::Database::new(&app_handle).await.expect("Failed to initialize database");
+                let db = database::Database::new(&app_handle)
+                    .await
+                    .expect("Failed to initialize database");
                 app_handle.manage(db);
             });
 

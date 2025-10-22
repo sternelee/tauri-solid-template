@@ -23,7 +23,8 @@ impl ContextProcessor {
                 sources.push(file_ref);
 
                 // Replace @file with a placeholder in the processed message
-                processed_message = processed_message.replace(&format!("@{}", path_str), &format!("[FILE: {}]", path_str));
+                processed_message = processed_message
+                    .replace(&format!("@{}", path_str), &format!("[FILE: {}]", path_str));
             }
         }
 
@@ -38,7 +39,8 @@ impl ContextProcessor {
                 sources.push(app_ref);
 
                 // Replace #app with a placeholder in the processed message
-                processed_message = processed_message.replace(&format!("#{}", app_str), &format!("[APP: {}]", app_str));
+                processed_message = processed_message
+                    .replace(&format!("#{}", app_str), &format!("[APP: {}]", app_str));
             }
         }
 
@@ -48,7 +50,8 @@ impl ContextProcessor {
     /// Create a file source reference
     fn create_file_reference(file_path: &str) -> SourceReference {
         let path_obj = Path::new(file_path);
-        let extension = path_obj.extension()
+        let extension = path_obj
+            .extension()
             .and_then(|ext| ext.to_str())
             .map(|s| s.to_lowercase());
 
@@ -56,11 +59,12 @@ impl ContextProcessor {
             id: uuid::Uuid::new_v4().to_string(),
             source_type: SourceType::File {
                 file_type: extension.clone(),
-                size: None, // Will be populated asynchronously
+                size: None,          // Will be populated asynchronously
                 last_modified: None, // Will be populated asynchronously
             },
             path: file_path.to_string(),
-            name: path_obj.file_name()
+            name: path_obj
+                .file_name()
                 .and_then(|name| name.to_str())
                 .map(|s| s.to_string()),
             description: Some(format!("File: {}", file_path)),
@@ -95,7 +99,9 @@ impl ContextProcessor {
     }
 
     /// Process sources to generate context for AI
-    pub async fn process_sources_for_context(sources: &[SourceReference]) -> Result<String, AgentError> {
+    pub async fn process_sources_for_context(
+        sources: &[SourceReference],
+    ) -> Result<String, AgentError> {
         let mut context_parts = Vec::new();
 
         for source in sources {
@@ -116,9 +122,16 @@ impl ContextProcessor {
                     let context = format!("[URL Reference: {}]\n{}: {}", title_str, title_str, url);
                     context_parts.push(context);
                 }
-                SourceType::Conversation { conversation_id, title, .. } => {
+                SourceType::Conversation {
+                    conversation_id,
+                    title,
+                    ..
+                } => {
                     let title_str = title.as_deref().unwrap_or("Previous Conversation");
-                    let context = format!("[Conversation Reference: {}]\nConversation ID: {}\nTitle: {}", title_str, conversation_id, title_str);
+                    let context = format!(
+                        "[Conversation Reference: {}]\nConversation ID: {}\nTitle: {}",
+                        title_str, conversation_id, title_str
+                    );
                     context_parts.push(context);
                 }
             }
@@ -136,29 +149,37 @@ impl ContextProcessor {
         let path = Path::new(&source.path);
 
         if !path.exists() {
-            return Ok(format!("[File Reference: {}]\nFile not found at path: {}", source.name.as_deref().unwrap_or(&source.path), source.path));
+            return Ok(format!(
+                "[File Reference: {}]\nFile not found at path: {}",
+                source.name.as_deref().unwrap_or(&source.path),
+                source.path
+            ));
         }
 
         // Read file metadata
-        let metadata = fs::metadata(path).await
+        let metadata = fs::metadata(path)
+            .await
             .map_err(|e| AgentError::Custom(format!("Failed to read file metadata: {}", e)))?;
 
         let file_size = metadata.len();
-        let last_modified = metadata.modified()
+        let last_modified = metadata
+            .modified()
             .ok()
             .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
             .map(|d| d.as_secs());
 
         // Determine file type and process accordingly
-        let extension = path.extension()
+        let extension = path
+            .extension()
             .and_then(|ext| ext.to_str())
             .map(|s| s.to_lowercase())
             .unwrap_or_else(|| "txt".to_string());
 
         match extension.as_str() {
-            "txt" | "md" | "json" | "yaml" | "yml" | "toml" | "xml" | "csv" | "log" | "conf" | "config" |
-            "rs" | "js" | "ts" | "py" | "java" | "cpp" | "c" | "h" | "hpp" | "go" | "php" | "rb" | "swift" |
-            "kt" | "scala" | "sh" | "bat" | "ps1" | "sql" | "html" | "css" | "scss" | "less" => {
+            "txt" | "md" | "json" | "yaml" | "yml" | "toml" | "xml" | "csv" | "log" | "conf"
+            | "config" | "rs" | "js" | "ts" | "py" | "java" | "cpp" | "c" | "h" | "hpp" | "go"
+            | "php" | "rb" | "swift" | "kt" | "scala" | "sh" | "bat" | "ps1" | "sql" | "html"
+            | "css" | "scss" | "less" => {
                 // Text-based files - read content directly
                 Self::read_text_file(&source.path, file_size).await
             }
@@ -257,7 +278,8 @@ impl ContextProcessor {
         match fs::read_to_string(file_path).await {
             Ok(content) => {
                 let char_count = content.chars().count();
-                if char_count > 10000 { // 10k character limit
+                if char_count > 10000 {
+                    // 10k character limit
                     let truncated = content.chars().take(10000).collect::<String>();
                     Ok(format!(
                         "[File Reference: {}]\nFile size: {} bytes, {} characters (truncated to 10k)\nContent:\n{}\n... (content truncated)",
@@ -269,17 +291,13 @@ impl ContextProcessor {
                 } else {
                     Ok(format!(
                         "[File Reference: {}]\nFile size: {} bytes, {} characters\nContent:\n{}",
-                        file_path,
-                        file_size,
-                        char_count,
-                        content
+                        file_path, file_size, char_count, content
                     ))
                 }
             }
             Err(e) => Ok(format!(
                 "[File Reference: {}]\nError reading file: {}",
-                file_path,
-                e
+                file_path, e
             )),
         }
     }
@@ -293,14 +311,16 @@ impl ContextProcessor {
         // 4. Return the embedding vectors
 
         // For now, return a placeholder embedding
-        let content = fs::read_to_string(file_path).await
+        let content = fs::read_to_string(file_path)
+            .await
             .map_err(|e| AgentError::Custom(format!("Failed to read file for embedding: {}", e)))?;
 
         // Simple hash-based embedding (placeholder)
         let mut embedding = Vec::new();
         let hash = content.chars().map(|c| c as u32).sum::<u32>();
 
-        for i in 0..1536 { // Common embedding dimension
+        for i in 0..1536 {
+            // Common embedding dimension
             embedding.push(((hash.wrapping_mul(i as u32 + 1)) % 1000) as f32 / 1000.0);
         }
 
@@ -308,7 +328,10 @@ impl ContextProcessor {
     }
 
     /// Search for similar files based on embeddings (placeholder)
-    pub async fn search_similar_files(query_embedding: &[f32], file_paths: &[String]) -> Result<Vec<(String, f32)>, AgentError> {
+    pub async fn search_similar_files(
+        query_embedding: &[f32],
+        file_paths: &[String],
+    ) -> Result<Vec<(String, f32)>, AgentError> {
         // In a real implementation, this would:
         // 1. Load pre-computed embeddings for files
         // 2. Calculate cosine similarity between query and each file

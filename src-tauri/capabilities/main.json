@@ -2,7 +2,9 @@
   "identifier": "main",
   "description": "permissions for desktop app",
   "local": true,
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "dialog:default",
     "dialog:allow-ask",
@@ -13,6 +15,7 @@
     "fs:default",
     "global-shortcut:default",
     "global-shortcut:allow-register",
-    "opener:allow-open-path"
+    "opener:allow-open-path",
+    "cache:default"
   ]
 }

@@ -81,14 +81,18 @@ impl ProviderFactory {
                 Ok(DynamicClient::HuggingFace(client))
             }
 
-            _ => Err(AgentError::ConfigurationError(
-                format!("Provider {:?} not yet implemented", config.provider)
-            ))
+            _ => Err(AgentError::ConfigurationError(format!(
+                "Provider {:?} not yet implemented",
+                config.provider
+            ))),
         }
     }
 
     // Create an agent based on provider configuration
-    pub async fn create_agent(client: &DynamicClient, config: &AgentConfig) -> Result<DynamicAgent, AgentError> {
+    pub async fn create_agent(
+        client: &DynamicClient,
+        config: &AgentConfig,
+    ) -> Result<DynamicAgent, AgentError> {
         let model = config.model.clone();
         let temperature = config.temperature.unwrap_or(0.7) as f64;
 
@@ -231,9 +235,7 @@ impl ProviderFactory {
                 "meta-llama/Llama-3.1-70B-Instruct".to_string(),
                 "mistralai/Mixtral-8x7B-Instruct-v0.1".to_string(),
             ],
-            _ => vec![
-                "model-not-available".to_string(),
-            ],
+            _ => vec!["model-not-available".to_string()],
         }
     }
 
@@ -241,18 +243,19 @@ impl ProviderFactory {
     pub fn validate_config(config: &AgentConfig) -> Result<(), AgentError> {
         // All rig providers can handle API key from config or environment
         match config.provider {
-            AIProvider::OpenAI |
-            AIProvider::Anthropic |
-            AIProvider::Google |
-            AIProvider::Groq |
-            AIProvider::Cohere |
-            AIProvider::Mistral |
-            AIProvider::TogetherAI |
-            AIProvider::HuggingFace => Ok(()),
+            AIProvider::OpenAI
+            | AIProvider::Anthropic
+            | AIProvider::Google
+            | AIProvider::Groq
+            | AIProvider::Cohere
+            | AIProvider::Mistral
+            | AIProvider::TogetherAI
+            | AIProvider::HuggingFace => Ok(()),
 
-            _ => Err(AgentError::ConfigurationError(
-                format!("Provider {:?} not yet implemented", config.provider)
-            )),
+            _ => Err(AgentError::ConfigurationError(format!(
+                "Provider {:?} not yet implemented",
+                config.provider
+            ))),
         }
     }
 }

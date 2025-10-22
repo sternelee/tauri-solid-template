@@ -1,10 +1,10 @@
 use super::*;
-use serde_json::{json, Value};
 use async_trait::async_trait;
+use base64::{engine::general_purpose, Engine as _};
+use dirs_next;
+use serde_json::{json, Value};
 use std::path::Path;
 use sysinfo::System;
-use dirs_next;
-use base64::{Engine as _, engine::general_purpose};
 
 // Tool trait for dynamic tool execution
 #[async_trait]
@@ -53,7 +53,10 @@ impl Tool for FileSystemTool {
             "exists" => self.file_exists(path).await,
             "delete" => self.delete_file(path).await,
             "create_dir" => self.create_directory(path).await,
-            _ => Err(AgentError::Custom(format!("Unknown operation: {}", operation))),
+            _ => Err(AgentError::Custom(format!(
+                "Unknown operation: {}",
+                operation
+            ))),
         }
     }
 
@@ -124,19 +127,25 @@ impl FileSystemTool {
         let path_obj = Path::new(path);
 
         if !path_obj.exists() {
-            return Err(AgentError::Custom(format!("Directory does not exist: {}", path)));
+            return Err(AgentError::Custom(format!(
+                "Directory does not exist: {}",
+                path
+            )));
         }
 
         let mut dir_entries = tokio::fs::read_dir(path)
             .await
             .map_err(|e| AgentError::Custom(format!("Failed to read directory: {}", e)))?;
 
-        while let Some(entry) = dir_entries.next_entry().await.map_err(|e| {
-            AgentError::Custom(format!("Failed to read directory entry: {}", e))
-        })? {
-            let metadata = entry.metadata().await.map_err(|e| {
-                AgentError::Custom(format!("Failed to read metadata: {}", e))
-            })?;
+        while let Some(entry) = dir_entries
+            .next_entry()
+            .await
+            .map_err(|e| AgentError::Custom(format!("Failed to read directory entry: {}", e)))?
+        {
+            let metadata = entry
+                .metadata()
+                .await
+                .map_err(|e| AgentError::Custom(format!("Failed to read metadata: {}", e)))?;
 
             let entry_info = json!({
                 "name": entry.file_name().to_string_lossy(),
@@ -215,7 +224,10 @@ impl Tool for SystemInfoTool {
             "disk" => self.get_disk_info().await,
             "network" => self.get_network_info().await,
             "processes" => self.get_process_info().await,
-            _ => Err(AgentError::Custom(format!("Unknown info_type: {}", info_type))),
+            _ => Err(AgentError::Custom(format!(
+                "Unknown info_type: {}",
+                info_type
+            ))),
         }
     }
 
@@ -328,24 +340,33 @@ impl Tool for ImageAnalysisTool {
                 let image_data = parameters
                     .get("image_data")
                     .and_then(|v| v.as_str())
-                    .ok_or_else(|| AgentError::Custom("Missing image_data parameter".to_string()))?;
+                    .ok_or_else(|| {
+                        AgentError::Custom("Missing image_data parameter".to_string())
+                    })?;
                 self.analyze_image(image_data).await
             }
             "extract_text" => {
                 let image_data = parameters
                     .get("image_data")
                     .and_then(|v| v.as_str())
-                    .ok_or_else(|| AgentError::Custom("Missing image_data parameter".to_string()))?;
+                    .ok_or_else(|| {
+                        AgentError::Custom("Missing image_data parameter".to_string())
+                    })?;
                 self.extract_text_from_image(image_data).await
             }
             "get_image_info" => {
                 let image_data = parameters
                     .get("image_data")
                     .and_then(|v| v.as_str())
-                    .ok_or_else(|| AgentError::Custom("Missing image_data parameter".to_string()))?;
+                    .ok_or_else(|| {
+                        AgentError::Custom("Missing image_data parameter".to_string())
+                    })?;
                 self.get_image_info(image_data).await
             }
-            _ => Err(AgentError::Custom(format!("Unknown operation: {}", operation))),
+            _ => Err(AgentError::Custom(format!(
+                "Unknown operation: {}",
+                operation
+            ))),
         }
     }
 
@@ -527,7 +548,10 @@ impl Tool for CodeExecutionTool {
                     .unwrap_or("text");
                 self.format_code(code, language).await
             }
-            _ => Err(AgentError::Custom(format!("Unknown operation: {}", operation))),
+            _ => Err(AgentError::Custom(format!(
+                "Unknown operation: {}",
+                operation
+            ))),
         }
     }
 
@@ -626,9 +650,7 @@ impl Tool for ApplicationLauncherTool {
                     .unwrap_or_default();
                 self.launch_application(app_path, args).await
             }
-            "get_installed_apps" => {
-                self.get_installed_applications().await
-            }
+            "get_installed_apps" => self.get_installed_applications().await,
             "find_app" => {
                 let app_name = parameters
                     .get("app_name")
@@ -636,7 +658,10 @@ impl Tool for ApplicationLauncherTool {
                     .ok_or_else(|| AgentError::Custom("Missing app_name parameter".to_string()))?;
                 self.find_application(app_name).await
             }
-            _ => Err(AgentError::Custom(format!("Unknown operation: {}", operation))),
+            _ => Err(AgentError::Custom(format!(
+                "Unknown operation: {}",
+                operation
+            ))),
         }
     }
 
@@ -684,7 +709,11 @@ impl ApplicationLauncherTool {
         tool.execute(parameters).await
     }
 
-    async fn launch_application(&self, app_path: &str, args: Vec<String>) -> Result<Value, AgentError> {
+    async fn launch_application(
+        &self,
+        app_path: &str,
+        args: Vec<String>,
+    ) -> Result<Value, AgentError> {
         #[cfg(target_os = "macos")]
         {
             // On macOS, use `open` command
@@ -705,10 +734,16 @@ impl ApplicationLauncherTool {
                         }))
                     } else {
                         let stderr = String::from_utf8_lossy(&output.stderr);
-                        Err(AgentError::Custom(format!("Failed to launch application: {}", stderr)))
+                        Err(AgentError::Custom(format!(
+                            "Failed to launch application: {}",
+                            stderr
+                        )))
                     }
                 }
-                Err(e) => Err(AgentError::Custom(format!("Error launching application: {}", e))),
+                Err(e) => Err(AgentError::Custom(format!(
+                    "Error launching application: {}",
+                    e
+                ))),
             }
         }
 
@@ -727,7 +762,10 @@ impl ApplicationLauncherTool {
                     "app_path": app_path,
                     "args": args.clone()
                 })),
-                Err(e) => Err(AgentError::Custom(format!("Error launching application: {}", e))),
+                Err(e) => Err(AgentError::Custom(format!(
+                    "Error launching application: {}",
+                    e
+                ))),
             }
         }
 
@@ -758,7 +796,10 @@ impl ApplicationLauncherTool {
                             "app_path": app_path,
                             "args": args.clone()
                         })),
-                        Err(fallback_e) => Err(AgentError::Custom(format!("Failed to launch application: {} (xdg-open error: {})", e, fallback_e))),
+                        Err(fallback_e) => Err(AgentError::Custom(format!(
+                            "Failed to launch application: {} (xdg-open error: {})",
+                            e, fallback_e
+                        ))),
                     }
                 }
             }
@@ -774,7 +815,9 @@ impl ApplicationLauncherTool {
             if let Ok(mut entries) = tokio::fs::read_dir("/Applications").await {
                 while let Ok(Some(entry)) = entries.next_entry().await {
                     if let Ok(metadata) = entry.metadata().await {
-                        if metadata.is_file() && entry.path().extension().map_or(false, |ext| ext == "app") {
+                        if metadata.is_file()
+                            && entry.path().extension().map_or(false, |ext| ext == "app")
+                        {
                             let app_name = entry.file_name().to_string_lossy().into_owned();
                             let app_path = entry.path().to_string_lossy().into_owned();
 
@@ -795,15 +838,21 @@ impl ApplicationLauncherTool {
             let program_dirs = vec![
                 "C:\\Program Files",
                 "C:\\Program Files (x86)",
-                format!("{}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
-                        dirs_next::home_dir().unwrap_or_else(|| Path::new("")).to_string_lossy())
+                format!(
+                    "{}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs",
+                    dirs_next::home_dir()
+                        .unwrap_or_else(|| Path::new(""))
+                        .to_string_lossy()
+                ),
             ];
 
             for dir in program_dirs {
                 if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
                     while let Ok(Some(entry)) = entries.next_entry().await {
                         if let Ok(metadata) = entry.metadata().await {
-                            if metadata.is_file() && entry.path().extension().map_or(false, |ext| ext == "exe") {
+                            if metadata.is_file()
+                                && entry.path().extension().map_or(false, |ext| ext == "exe")
+                            {
                                 let app_name = entry.file_name().to_string_lossy().into_owned();
                                 let app_path = entry.path().to_string_lossy().into_owned();
 
@@ -825,8 +874,12 @@ impl ApplicationLauncherTool {
             let app_dirs = vec![
                 "/usr/share/applications",
                 "/usr/local/share/applications",
-                format!("{}/.local/share/applications",
-                        dirs_next::home_dir().unwrap_or_else(|| Path::new("")).to_string_lossy())
+                format!(
+                    "{}/.local/share/applications",
+                    dirs_next::home_dir()
+                        .unwrap_or_else(|| Path::new(""))
+                        .to_string_lossy()
+                ),
             ];
 
             for dir in app_dirs {
@@ -902,13 +955,15 @@ impl ToolManager {
         vec![
             ToolDefinition {
                 name: "file_system".to_string(),
-                description: "Perform file system operations like read, write, list directories".to_string(),
+                description: "Perform file system operations like read, write, list directories"
+                    .to_string(),
                 parameters: FileSystemTool.parameters_schema(),
                 enabled: Some(true),
             },
             ToolDefinition {
                 name: "system_info".to_string(),
-                description: "Get system information like OS, architecture, memory usage".to_string(),
+                description: "Get system information like OS, architecture, memory usage"
+                    .to_string(),
                 parameters: SystemInfoTool.parameters_schema(),
                 enabled: Some(true),
             },

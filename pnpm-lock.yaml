@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@choochmeque/tauri-plugin-biometry-api':
+        specifier: ^0.2.4
+        version: 0.2.4
       '@solidjs/router':
         specifier: ^0.15.3
         version: 0.15.3(solid-js@1.9.9)
@@ -23,6 +26,9 @@ importers:
       '@tauri-apps/plugin-clipboard-manager':
         specifier: ^2.3.0
         version: 2.3.0
+      '@tauri-apps/plugin-dialog':
+        specifier: ^2.4.0
+        version: 2.4.0
       '@tauri-apps/plugin-fs':
         specifier: ^2.4.2
         version: 2.4.2
@@ -56,6 +62,18 @@ importers:
       tailwindcss:
         specifier: ^4.1.14
         version: 4.1.14
+      tauri-plugin-cache-api:
+        specifier: ^0.1.5
+        version: 0.1.5
+      tauri-plugin-clipboard-x-api:
+        specifier: ^2.0.1
+        version: 2.0.1
+      tauri-plugin-mic-recorder-api:
+        specifier: ^2.0.0
+        version: 2.0.0
+      tauri-plugin-screenshots-api:
+        specifier: ^2.2.0
+        version: 2.2.0
       vinxi:
         specifier: ^0.5.8
         version: 0.5.8(@types/node@24.8.1)(db0@0.3.4)(ioredis@5.8.1)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.0)
@@ -229,6 +247,9 @@ packages:
   '@babel/types@7.28.4':
     resolution: {integrity: sha512-bkFqkLhh3pMBUQQkpVgWDWq/lqzc2678eUyDlTBhRqhCHFguYYGM0Efga7tYk4TogG/3x0EEl66/OQ+WGbWB/Q==}
     engines: {node: '>=6.9.0'}
+
+  '@choochmeque/tauri-plugin-biometry-api@0.2.4':
+    resolution: {integrity: sha512-nSbSU97rGbP+Cvi0hi23ePmgUecjbqOdKeqEwNnVm3A+RKM8MWTK4Ns2DU7RAmQSZeIxjFDWpI97hrgCR7LgfQ==}
 
   '@cloudflare/kv-asset-handler@0.4.0':
     resolution: {integrity: sha512-+tv3z+SPp+gqTIcImN9o0hqE9xyfQjI1XD9pL6NuKjua9B1y7mNYv0S9cP+QEbA4ppVgGZEmKOvHX5G5Ei1CVA==}
@@ -1057,6 +1078,9 @@ packages:
 
   '@tauri-apps/plugin-clipboard-manager@2.3.0':
     resolution: {integrity: sha512-81NOBA2P+OTY8RLkBwyl9ZR/0CeggLub4F6zxcxUIfFOAqtky7J61+K/MkH2SC1FMxNBxrX0swDuKvkjkHadlA==}
+
+  '@tauri-apps/plugin-dialog@2.4.0':
+    resolution: {integrity: sha512-OvXkrEBfWwtd8tzVCEXIvRfNEX87qs2jv6SqmVPiHcJjBhSF/GUvjqUNIDmKByb5N8nvDqVUM7+g1sXwdC/S9w==}
 
   '@tauri-apps/plugin-fs@2.4.2':
     resolution: {integrity: sha512-YGhmYuTgXGsi6AjoV+5mh2NvicgWBfVJHHheuck6oHD+HC9bVWPaHvCP0/Aw4pHDejwrvT8hE3+zZAaWf+hrig==}
@@ -2693,6 +2717,18 @@ packages:
     resolution: {integrity: sha512-nlGpxf+hv0v7GkWBK2V9spgactGOp0qvfWRxUMjqHyzrt3SgwE48DIv/FhqPHJYLHpgW1opq3nERbz5Anq7n1g==}
     engines: {node: '>=18'}
 
+  tauri-plugin-cache-api@0.1.5:
+    resolution: {integrity: sha512-wNhvhanmB47d18hy7Xom3uY/LRzSM/E7z8SFELPffpVHvNcBLJyWqAqqNkj1WjT+4dr8J45YQmqJMCcKUi0Jyg==}
+
+  tauri-plugin-clipboard-x-api@2.0.1:
+    resolution: {integrity: sha512-et15SZlA0XiYzrXOXn9GekOP4WBV4wKEh7poapkiqpQjQVLyecFUjAzFVTSXOLmw3lNf7AdcpB3cBfMESx8duQ==}
+
+  tauri-plugin-mic-recorder-api@2.0.0:
+    resolution: {integrity: sha512-04wqYCX4WIlYd6KUY7aS3+W4B5RtnSoVczaQCBSXKpQkEx9XdaaBN05XCee2unxGva0btSXBItFqQSdosnS4jQ==}
+
+  tauri-plugin-screenshots-api@2.2.0:
+    resolution: {integrity: sha512-xNG5yH6kl+Mk/969tFimIxZa6y6eVgarbsEVAJIpERYBlYoNfWCDdI3nW111UOQjWi6zG/RkGjUMLlVy12a3Sg==}
+
   terracotta@1.0.6:
     resolution: {integrity: sha512-yVrmT/Lg6a3tEbeYEJH8ksb1PYkR5FA9k5gr1TchaSNIiA2ZWs5a+koEbePXwlBP0poaV7xViZ/v50bQFcMgqw==}
     engines: {node: '>=10'}
@@ -3269,6 +3305,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
+
+  '@choochmeque/tauri-plugin-biometry-api@0.2.4':
+    dependencies:
+      '@tauri-apps/api': 2.8.0
 
   '@cloudflare/kv-asset-handler@0.4.0':
     dependencies:
@@ -3988,6 +4028,10 @@ snapshots:
       '@tauri-apps/cli-win32-x64-msvc': 2.8.4
 
   '@tauri-apps/plugin-clipboard-manager@2.3.0':
+    dependencies:
+      '@tauri-apps/api': 2.8.0
+
+  '@tauri-apps/plugin-dialog@2.4.0':
     dependencies:
       '@tauri-apps/api': 2.8.0
 
@@ -5690,6 +5734,22 @@ snapshots:
       minipass: 7.1.2
       minizlib: 3.1.0
       yallist: 5.0.0
+
+  tauri-plugin-cache-api@0.1.5:
+    dependencies:
+      '@tauri-apps/api': 2.8.0
+
+  tauri-plugin-clipboard-x-api@2.0.1:
+    dependencies:
+      '@tauri-apps/api': 2.8.0
+
+  tauri-plugin-mic-recorder-api@2.0.0:
+    dependencies:
+      '@tauri-apps/api': 2.8.0
+
+  tauri-plugin-screenshots-api@2.2.0:
+    dependencies:
+      '@tauri-apps/api': 2.8.0
 
   terracotta@1.0.6(solid-js@1.9.9):
     dependencies:

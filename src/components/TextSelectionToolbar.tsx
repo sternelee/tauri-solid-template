@@ -28,6 +28,7 @@ const DEFAULT_ACTIONS: ActionConfig[] = [
   { id: 'search', label: '搜索', icon: '🔍', shortcut: 's', category: 'search' },
   { id: 'chat_with_file', label: 'Chat with file', icon: '💬', shortcut: 'c', category: 'file' },
   { id: 'open_file', label: '打开文件', icon: '📂', shortcut: 'o', category: 'file' },
+  { id: 'screenshot', label: '截图工具', icon: '📸', shortcut: 'r', category: 'other' },
 ];
 
 export default function TextSelectionToolbar(props: TextSelectionToolbarProps) {
@@ -104,6 +105,14 @@ export default function TextSelectionToolbar(props: TextSelectionToolbarProps) {
   // Handle action click
   const handleActionClick = async (actionId: string) => {
     try {
+      // Special handling for screenshot action
+      if (actionId === 'screenshot') {
+        // Navigate to screenshot page
+        window.location.href = '/screenshot';
+        props.onClose();
+        return;
+      }
+
       await commands.executeToolbarAction(actionId, props.selection);
       props.onAction(actionId);
       props.onClose();

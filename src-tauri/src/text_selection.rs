@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
-use std::sync::{Arc, Mutex};
 use specta::Type;
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 // Wrapper for DateTime<Utc> to implement specta::Type
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,7 +13,10 @@ impl Type for Timestamp {
         String::inline(type_map, generics)
     }
 
-    fn reference(type_map: &mut specta::TypeMap, generics: &[specta::DataType]) -> specta::datatype::reference::Reference {
+    fn reference(
+        type_map: &mut specta::TypeMap,
+        generics: &[specta::DataType],
+    ) -> specta::datatype::reference::Reference {
         // Delegate to String's Type implementation
         String::reference(type_map, generics)
     }
@@ -131,9 +134,7 @@ impl TextSelectionState {
     }
 
     pub fn get_selection(&self) -> Option<TextSelection> {
-        self.current_selection.lock()
-            .ok()
-            .and_then(|s| s.clone())
+        self.current_selection.lock().ok().and_then(|s| s.clone())
     }
 
     pub fn set_toolbar_visible(&self, visible: bool) {
@@ -143,9 +144,7 @@ impl TextSelectionState {
     }
 
     pub fn is_toolbar_visible(&self) -> bool {
-        self.toolbar_visible.lock()
-            .map(|v| *v)
-            .unwrap_or(false)
+        self.toolbar_visible.lock().map(|v| *v).unwrap_or(false)
     }
 
     pub fn set_toolbar_position(&self, rect: SelectionRect) {
@@ -155,9 +154,7 @@ impl TextSelectionState {
     }
 
     pub fn get_toolbar_position(&self) -> Option<SelectionRect> {
-        self.toolbar_position.lock()
-            .ok()
-            .and_then(|p| p.clone())
+        self.toolbar_position.lock().ok().and_then(|p| p.clone())
     }
 }
 
@@ -172,34 +169,32 @@ pub async fn get_system_text_selection(
 
     // Try to get text from clipboard as a proxy for system selection
     match Clipboard::new() {
-        Ok(mut _clipboard) => {
-            match _clipboard.get_text() {
-                Ok(text) => {
-                    if !text.trim().is_empty() {
-                        let selection = TextSelection {
-                            text: text.clone(),
-                            selected_text: text.clone(),
-                            rect: SelectionRect {
-                                x: 100.0,
-                                y: 100.0,
-                                width: 200.0,
-                                height: 30.0,
-                                screen: None,
-                            },
-                            timestamp: Timestamp::from(chrono::Utc::now()),
-                            source_app: None,
-                            context_type: detect_context_type(&text),
-                        };
+        Ok(mut _clipboard) => match _clipboard.get_text() {
+            Ok(text) => {
+                if !text.trim().is_empty() {
+                    let selection = TextSelection {
+                        text: text.clone(),
+                        selected_text: text.clone(),
+                        rect: SelectionRect {
+                            x: 100.0,
+                            y: 100.0,
+                            width: 200.0,
+                            height: 30.0,
+                            screen: None,
+                        },
+                        timestamp: Timestamp::from(chrono::Utc::now()),
+                        source_app: None,
+                        context_type: detect_context_type(&text),
+                    };
 
-                        state.set_selection(selection.clone());
-                        return Ok(Some(selection));
-                    }
-                }
-                Err(e) => {
-                    return Err(format!("Failed to read clipboard: {}", e));
+                    state.set_selection(selection.clone());
+                    return Ok(Some(selection));
                 }
             }
-        }
+            Err(e) => {
+                return Err(format!("Failed to read clipboard: {}", e));
+            }
+        },
         Err(e) => {
             return Err(format!("Failed to initialize clipboard: {}", e));
         }
@@ -211,9 +206,28 @@ pub async fn get_system_text_selection(
 // Detect the type of selected text
 fn detect_context_type(text: &str) -> SelectionContextType {
     if text.starts_with('/') || (text.contains('/') && text.contains('.')) {
-        if text.contains('.') && text.split('.').last().map_or(false, |ext| {
-            matches!(ext.to_lowercase().as_str(), "txt" | "doc" | "pdf" | "jpg" | "png" | "js" | "ts" | "py" | "java" | "cpp" | "html" | "css" | "json" | "xml" | "md")
-        }) {
+        if text.contains('.')
+            && text.split('.').last().map_or(false, |ext| {
+                matches!(
+                    ext.to_lowercase().as_str(),
+                    "txt"
+                        | "doc"
+                        | "pdf"
+                        | "jpg"
+                        | "png"
+                        | "js"
+                        | "ts"
+                        | "py"
+                        | "java"
+                        | "cpp"
+                        | "html"
+                        | "css"
+                        | "json"
+                        | "xml"
+                        | "md"
+                )
+            })
+        {
             SelectionContextType::FilePath
         } else if text.starts_with("http://") || text.starts_with("https://") {
             SelectionContextType::Url
@@ -222,9 +236,19 @@ fn detect_context_type(text: &str) -> SelectionContextType {
         }
     } else if text.contains('@') && text.contains('.') {
         SelectionContextType::Email
-    } else if text.chars().all(|c| c.is_ascii_digit() || c == '+' || c == '-' || c == '(' || c == ')' || c == ' ') && text.chars().filter(|c| c.is_ascii_digit()).count() >= 7 {
+    } else if text
+        .chars()
+        .all(|c| c.is_ascii_digit() || c == '+' || c == '-' || c == '(' || c == ')' || c == ' ')
+        && text.chars().filter(|c| c.is_ascii_digit()).count() >= 7
+    {
         SelectionContextType::PhoneNumber
-    } else if text.contains('\n') || (text.len() > 10 && (text.contains("function") || text.contains("class") || text.contains("import") || text.contains("export"))) {
+    } else if text.contains('\n')
+        || (text.len() > 10
+            && (text.contains("function")
+                || text.contains("class")
+                || text.contains("import")
+                || text.contains("export")))
+    {
         SelectionContextType::Code
     } else {
         SelectionContextType::Text
@@ -379,6 +403,11 @@ pub async fn execute_toolbar_action(
             }
             return Err("This action is only available for URLs".to_string());
         }
+        "screenshot" => {
+            // Create screenshot tool window
+            let window = create_screenshot_window(&app).await?;
+            return Ok(format!("Screenshot tool window created: {}", window));
+        }
         _ => {
             return Err(format!("Unknown action: {}", action_id));
         }
@@ -386,71 +415,122 @@ pub async fn execute_toolbar_action(
 }
 
 // Helper functions for creating windows
-async fn create_translation_window(app: &AppHandle, selection: &TextSelection) -> Result<String, String> {
+async fn create_translation_window(
+    app: &AppHandle,
+    selection: &TextSelection,
+) -> Result<String, String> {
     let window_id = format!("translation-{}", chrono::Utc::now().timestamp_millis());
 
-    let _window = tauri::WebviewWindowBuilder::new(app, &window_id, tauri::WebviewUrl::App("/toolbar/translate".into()))
-        .title("翻译")
-        .inner_size(600.0, 400.0)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(true)
-        .build()
-        .map_err(|e| format!("Failed to create translation window: {}", e))?;
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        &window_id,
+        tauri::WebviewUrl::App("/toolbar/translate".into()),
+    )
+    .title("翻译")
+    .inner_size(600.0, 400.0)
+    .resizable(true)
+    .decorations(true)
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Failed to create translation window: {}", e))?;
 
     // Store the selection data for the window to use
-    app.state::<TextSelectionState>().set_selection(selection.clone());
+    app.state::<TextSelectionState>()
+        .set_selection(selection.clone());
 
     Ok(window_id)
 }
 
-async fn create_polish_window(app: &AppHandle, selection: &TextSelection) -> Result<String, String> {
+async fn create_polish_window(
+    app: &AppHandle,
+    selection: &TextSelection,
+) -> Result<String, String> {
     let window_id = format!("polish-{}", chrono::Utc::now().timestamp_millis());
 
-    let _window = tauri::WebviewWindowBuilder::new(app, &window_id, tauri::WebviewUrl::App("/toolbar/polish".into()))
-        .title("文本润色")
-        .inner_size(600.0, 400.0)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(true)
-        .build()
-        .map_err(|e| format!("Failed to create polish window: {}", e))?;
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        &window_id,
+        tauri::WebviewUrl::App("/toolbar/polish".into()),
+    )
+    .title("文本润色")
+    .inner_size(600.0, 400.0)
+    .resizable(true)
+    .decorations(true)
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Failed to create polish window: {}", e))?;
 
-    app.state::<TextSelectionState>().set_selection(selection.clone());
+    app.state::<TextSelectionState>()
+        .set_selection(selection.clone());
 
     Ok(window_id)
 }
 
-async fn create_search_window(app: &AppHandle, selection: &TextSelection) -> Result<String, String> {
+async fn create_search_window(
+    app: &AppHandle,
+    selection: &TextSelection,
+) -> Result<String, String> {
     let window_id = format!("search-{}", chrono::Utc::now().timestamp_millis());
 
-    let _window = tauri::WebviewWindowBuilder::new(app, &window_id, tauri::WebviewUrl::App("/toolbar/search".into()))
-        .title("搜索")
-        .inner_size(800.0, 600.0)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(true)
-        .build()
-        .map_err(|e| format!("Failed to create search window: {}", e))?;
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        &window_id,
+        tauri::WebviewUrl::App("/toolbar/search".into()),
+    )
+    .title("搜索")
+    .inner_size(800.0, 600.0)
+    .resizable(true)
+    .decorations(true)
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Failed to create search window: {}", e))?;
 
-    app.state::<TextSelectionState>().set_selection(selection.clone());
+    app.state::<TextSelectionState>()
+        .set_selection(selection.clone());
 
     Ok(window_id)
 }
 
-async fn create_chat_with_file_window(app: &AppHandle, selection: &TextSelection) -> Result<String, String> {
+async fn create_chat_with_file_window(
+    app: &AppHandle,
+    selection: &TextSelection,
+) -> Result<String, String> {
     let window_id = format!("chat-file-{}", chrono::Utc::now().timestamp_millis());
 
-    let _window = tauri::WebviewWindowBuilder::new(app, &window_id, tauri::WebviewUrl::App("/toolbar/chat-file".into()))
-        .title("Chat with File")
-        .inner_size(1000.0, 700.0)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(true)
-        .build()
-        .map_err(|e| format!("Failed to create chat with file window: {}", e))?;
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        &window_id,
+        tauri::WebviewUrl::App("/toolbar/chat-file".into()),
+    )
+    .title("Chat with File")
+    .inner_size(1000.0, 700.0)
+    .resizable(true)
+    .decorations(true)
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Failed to create chat with file window: {}", e))?;
 
-    app.state::<TextSelectionState>().set_selection(selection.clone());
+    app.state::<TextSelectionState>()
+        .set_selection(selection.clone());
+
+    Ok(window_id)
+}
+
+async fn create_screenshot_window(app: &AppHandle) -> Result<String, String> {
+    let window_id = format!("screenshot-{}", chrono::Utc::now().timestamp_millis());
+
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        &window_id,
+        tauri::WebviewUrl::App("/screenshot".into()),
+    )
+    .title("截图工具")
+    .inner_size(800.0, 600.0)
+    .resizable(true)
+    .decorations(true)
+    .always_on_top(true)
+    .build()
+    .map_err(|e| format!("Failed to create screenshot window: {}", e))?;
 
     Ok(window_id)
 }
@@ -482,15 +562,19 @@ pub async fn replace_original_text(
             match _clipboard.set_text(&translated_text) {
                 Ok(_) => {
                     // Show a notification that text has been copied
-                    if let Err(e) = show_notification(&app, "文本已复制", "翻译结果已复制到剪贴板，请手动粘贴替换原文") {
+                    if let Err(e) = show_notification(
+                        &app,
+                        "文本已复制",
+                        "翻译结果已复制到剪贴板，请手动粘贴替换原文",
+                    ) {
                         println!("Failed to show notification: {}", e);
                     }
                     Ok("翻译结果已复制到剪贴板，请手动粘贴替换原文".to_string())
                 }
-                Err(e) => Err(format!("Failed to copy text to clipboard: {}", e))
+                Err(e) => Err(format!("Failed to copy text to clipboard: {}", e)),
             }
         }
-        Err(e) => Err(format!("Failed to access clipboard: {}", e))
+        Err(e) => Err(format!("Failed to access clipboard: {}", e)),
     }
 }
 

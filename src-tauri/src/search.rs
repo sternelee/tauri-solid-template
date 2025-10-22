@@ -243,6 +243,98 @@ fn detect_file_type(path: &str) -> String {
     }
 }
 
+/// Search for screenshot files
+#[tauri::command]
+#[specta::specta]
+pub fn search_screenshots(search_path: Option<String>) -> Result<Vec<SearchResult>, String> {
+    // Default to common screenshot directories if no path provided
+    let search_dirs = if let Some(path) = search_path {
+        vec![PathBuf::from(path)]
+    } else {
+        let mut dirs = Vec::new();
+
+        // Common screenshot directories
+        if let Some(home_dir) = dirs::home_dir() {
+            dirs.extend_from_slice(&[
+                home_dir.join("Desktop"),
+                home_dir.join("Downloads"),
+                home_dir.join("Documents"),
+                home_dir.join("Pictures"),
+                home_dir.join("Pictures").join("Screenshots"),
+            ]);
+        }
+
+        // Add current directory
+        if let Ok(current_dir) = std::env::current_dir() {
+            dirs.push(current_dir);
+        }
+
+        dirs
+    };
+
+    let mut results = Vec::new();
+
+    // Common screenshot file extensions and patterns
+    let screenshot_patterns = vec![
+        "*.png",
+        "*.jpg",
+        "*.jpeg",
+        "*.bmp",
+        "*.gif",
+        "*.webp",
+        "Screenshot*",
+        "screenshot*",
+        "Screen Shot*",
+        "screen capture*",
+        "*.screenshot",
+        "*.screen",
+        "*.capture",
+    ];
+
+    for search_dir in search_dirs {
+        if !search_dir.exists() || !search_dir.is_dir() {
+            continue;
+        }
+
+        // Search for screenshot files
+        for pattern in &screenshot_patterns {
+            let mut args = vec![
+                "--files".to_string(),      // Only show file names
+                "--no-heading".to_string(), // No file headings
+                "--glob".to_string(),
+                pattern.to_string(),
+            ];
+
+            args.push(search_dir.to_string_lossy().to_string());
+
+            // Execute ripgrep command
+            if let Ok(output) = Command::new("rg").args(&args).output() {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    for line in stdout.lines() {
+                        if !line.trim().is_empty() {
+                            let file_type = detect_file_type(line);
+                            results.push(SearchResult {
+                                path: line.to_string(),
+                                line_number: None,
+                                content: None,
+                                file_type,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Remove duplicates and limit results
+    results.sort_by(|a, b| a.path.cmp(&b.path));
+    results.dedup_by(|a, b| a.path == b.path);
+    results.truncate(50); // Limit to 50 results
+
+    Ok(results)
+}
+
 /// Get common search directories
 #[tauri::command]
 #[specta::specta]
@@ -322,4 +414,3 @@ pub fn get_search_directories() -> Result<Vec<String>, String> {
 
     Ok(directories)
 }
-

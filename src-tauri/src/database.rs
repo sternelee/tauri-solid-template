@@ -2,7 +2,7 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite, Row, migrate::MigrateDatabase, query};
+use sqlx::{migrate::MigrateDatabase, query, sqlite::SqlitePoolOptions, Pool, Row, Sqlite};
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 use uuid::Uuid;
@@ -17,7 +17,10 @@ impl Type for Timestamp {
         String::inline(type_map, generics)
     }
 
-    fn reference(type_map: &mut specta::TypeMap, generics: &[specta::DataType]) -> specta::datatype::reference::Reference {
+    fn reference(
+        type_map: &mut specta::TypeMap,
+        generics: &[specta::DataType],
+    ) -> specta::datatype::reference::Reference {
         // Delegate to String's Type implementation
         String::reference(type_map, generics)
     }
@@ -383,12 +386,14 @@ impl Database {
                 COUNT(m.id) as total_messages
             FROM conversations c
             LEFT JOIN messages m ON c.id = m.conversation_id
-            "#
+            "#,
         )
         .fetch_one(&self.pool)
         .await?;
 
-        let total_conversations: i64 = row.get::<Option<i64>, _>("total_conversations").unwrap_or(0);
+        let total_conversations: i64 = row
+            .get::<Option<i64>, _>("total_conversations")
+            .unwrap_or(0);
         let total_messages: i64 = row.get::<Option<i64>, _>("total_messages").unwrap_or(0);
 
         Ok((total_conversations as u32, total_messages as u32))

@@ -26,7 +26,9 @@
       "Read(//System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/Resources/**)",
       "WebSearch",
       "Bash(timeout:*)",
-      "Read(//Users/sternelee/www/github/kunkun/packages/tauri-plugins/jarvis/src/utils/**)"
+      "Read(//Users/sternelee/www/github/kunkun/packages/tauri-plugins/jarvis/src/utils/**)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

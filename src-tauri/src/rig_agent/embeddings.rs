@@ -1,6 +1,6 @@
 use super::*;
-use serde_json::{json, Value};
 use reqwest::Client;
+use serde_json::{json, Value};
 use std::collections::HashMap;
 
 // Enhanced embedding tool with vector operations
@@ -20,8 +20,12 @@ impl EmbeddingTool {
         }
     }
 
-    pub async fn create_embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AgentError> {
-        let url = self.base_url
+    pub async fn create_embeddings(
+        &self,
+        request: EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, AgentError> {
+        let url = self
+            .base_url
             .clone()
             .unwrap_or_else(|| "https://api.openai.com/v1/embeddings".to_string());
 
@@ -32,47 +36,56 @@ impl EmbeddingTool {
             "dimensions": request.dimensions,
         });
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
             .json(&payload)
             .send()
             .await
-            .map_err(|e| AgentError::ApiError(format!("Failed to send embedding request: {}", e)))?;
+            .map_err(|e| {
+                AgentError::ApiError(format!("Failed to send embedding request: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await
-                .map_err(|e| AgentError::ApiError(format!("Failed to read error response: {}", e)))?;
-            return Err(AgentError::ApiError(format!("Embedding creation failed: {}", error_text)));
+            let error_text = response.text().await.map_err(|e| {
+                AgentError::ApiError(format!("Failed to read error response: {}", e))
+            })?;
+            return Err(AgentError::ApiError(format!(
+                "Embedding creation failed: {}",
+                error_text
+            )));
         }
 
-        let result: EmbeddingResponse = response.json().await
-            .map_err(|e| AgentError::ApiError(format!("Failed to parse embedding response: {}", e)))?;
+        let result: EmbeddingResponse = response.json().await.map_err(|e| {
+            AgentError::ApiError(format!("Failed to parse embedding response: {}", e))
+        })?;
 
         Ok(result)
     }
 
     // Calculate cosine similarity between two embeddings
-    pub fn cosine_similarity(&self, embedding1: &[f32], embedding2: &[f32]) -> Result<f32, AgentError> {
+    pub fn cosine_similarity(
+        &self,
+        embedding1: &[f32],
+        embedding2: &[f32],
+    ) -> Result<f32, AgentError> {
         if embedding1.len() != embedding2.len() {
-            return Err(AgentError::Custom("Embeddings must have the same dimensions".to_string()));
+            return Err(AgentError::Custom(
+                "Embeddings must have the same dimensions".to_string(),
+            ));
         }
 
-        let dot_product: f32 = embedding1.iter()
+        let dot_product: f32 = embedding1
+            .iter()
             .zip(embedding2.iter())
             .map(|(a, b)| a * b)
             .sum();
 
-        let magnitude1: f32 = embedding1.iter()
-            .map(|x| x * x)
-            .sum::<f32>()
-            .sqrt();
+        let magnitude1: f32 = embedding1.iter().map(|x| x * x).sum::<f32>().sqrt();
 
-        let magnitude2: f32 = embedding2.iter()
-            .map(|x| x * x)
-            .sum::<f32>()
-            .sqrt();
+        let magnitude2: f32 = embedding2.iter().map(|x| x * x).sum::<f32>().sqrt();
 
         if magnitude1 == 0.0 || magnitude2 == 0.0 {
             return Ok(0.0);
@@ -82,12 +95,19 @@ impl EmbeddingTool {
     }
 
     // Calculate Euclidean distance between two embeddings
-    pub fn euclidean_distance(&self, embedding1: &[f32], embedding2: &[f32]) -> Result<f32, AgentError> {
+    pub fn euclidean_distance(
+        &self,
+        embedding1: &[f32],
+        embedding2: &[f32],
+    ) -> Result<f32, AgentError> {
         if embedding1.len() != embedding2.len() {
-            return Err(AgentError::Custom("Embeddings must have the same dimensions".to_string()));
+            return Err(AgentError::Custom(
+                "Embeddings must have the same dimensions".to_string(),
+            ));
         }
 
-        let distance_squared: f32 = embedding1.iter()
+        let distance_squared: f32 = embedding1
+            .iter()
             .zip(embedding2.iter())
             .map(|(a, b)| (a - b).powi(2))
             .sum();
@@ -163,7 +183,8 @@ impl EmbeddingTool {
         }
 
         // Find similarities
-        let candidate_embeddings: Vec<Vec<f32>> = doc_embeddings.iter()
+        let candidate_embeddings: Vec<Vec<f32>> = doc_embeddings
+            .iter()
             .map(|(_, embedding)| embedding.clone())
             .collect();
 
@@ -175,7 +196,11 @@ impl EmbeddingTool {
             .take(top_k.unwrap_or(5))
             .map(|(doc_index, similarity)| {
                 let original_index = doc_embeddings[doc_index].0;
-                (original_index, similarity, documents[original_index].clone())
+                (
+                    original_index,
+                    similarity,
+                    documents[original_index].clone(),
+                )
             })
             .collect();
 
@@ -252,7 +277,8 @@ impl VectorStore {
         let response = self.embedding_tool.create_embeddings(request).await?;
 
         if let Some(embedding_data) = response.data.first() {
-            self.embeddings.insert(id.clone(), embedding_data.embedding.clone());
+            self.embeddings
+                .insert(id.clone(), embedding_data.embedding.clone());
             if let Some(meta) = metadata {
                 self.metadata.insert(id, meta);
             } else {
@@ -323,8 +349,8 @@ pub async fn create_embeddings_command(
     app: tauri::AppHandle,
     request: EmbeddingRequest,
 ) -> Result<EmbeddingResponse, String> {
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OpenAI API key not found".to_string())?;
+    let api_key =
+        std::env::var("OPENAI_API_KEY").map_err(|_| "OpenAI API key not found".to_string())?;
 
     let tool = EmbeddingTool::new(api_key, None);
 
@@ -342,22 +368,24 @@ pub async fn semantic_search_command(
     model: Option<String>,
     top_k: Option<usize>,
 ) -> Result<Vec<(f64, f32, String)>, String> {
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OpenAI API key not found".to_string())?;
+    let api_key =
+        std::env::var("OPENAI_API_KEY").map_err(|_| "OpenAI API key not found".to_string())?;
 
     let tool = EmbeddingTool::new(api_key, None);
 
-    let results = tool.semantic_search(
-        &query,
-        &documents,
-        &model.unwrap_or_else(|| "text-embedding-3-small".to_string()),
-        top_k,
-    )
-    .await
-    .map_err(|e| e.to_string())?;
+    let results = tool
+        .semantic_search(
+            &query,
+            &documents,
+            &model.unwrap_or_else(|| "text-embedding-3-small".to_string()),
+            top_k,
+        )
+        .await
+        .map_err(|e| e.to_string())?;
 
     // Convert usize indices to f64 for frontend compatibility
-    Ok(results.into_iter()
+    Ok(results
+        .into_iter()
         .map(|(index, similarity, content)| (index as f64, similarity, content))
         .collect())
 }
@@ -368,8 +396,8 @@ pub async fn calculate_similarity_command(
     embedding1: Vec<f32>,
     embedding2: Vec<f32>,
 ) -> Result<f32, String> {
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OpenAI API key not found".to_string())?;
+    let api_key =
+        std::env::var("OPENAI_API_KEY").map_err(|_| "OpenAI API key not found".to_string())?;
 
     let tool = EmbeddingTool::new(api_key, None);
 

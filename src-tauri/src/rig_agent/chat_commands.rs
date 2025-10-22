@@ -1,8 +1,8 @@
 use super::*;
-use crate::database::{self, MessageContext, AppReference, FileReference};
+use crate::database::{self, AppReference, FileReference, MessageContext};
+use serde_json::{json, Value};
 use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
-use serde_json::{json, Value};
 
 // Enhanced event for streaming chat updates
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, specta::Type, Event)]
@@ -20,15 +20,16 @@ pub async fn initialize_agent_with_db(
     config: AgentConfig,
 ) -> Result<String, String> {
     // Validate configuration
-    super::providers::ProviderFactory::validate_config(&config)
-        .map_err(|e| e.to_string())?;
+    super::providers::ProviderFactory::validate_config(&config).map_err(|e| e.to_string())?;
 
     // Set up environment variables if provided
     if let Some(api_key) = &config.api_key {
         match config.provider {
             AIProvider::OpenAI => std::env::set_var("OPENAI_API_KEY", api_key),
             AIProvider::Anthropic => std::env::set_var("ANTHROPIC_API_KEY", api_key),
-            AIProvider::Google | AIProvider::GoogleGemini => std::env::set_var("GOOGLE_API_KEY", api_key),
+            AIProvider::Google | AIProvider::GoogleGemini => {
+                std::env::set_var("GOOGLE_API_KEY", api_key)
+            }
             AIProvider::Groq => std::env::set_var("GROQ_API_KEY", api_key),
             AIProvider::Cohere => std::env::set_var("COHERE_API_KEY", api_key),
             AIProvider::Mistral => std::env::set_var("MISTRAL_API_KEY", api_key),
@@ -109,7 +110,8 @@ pub async fn chat_with_agent_db(
 
     // Process sources using ContextProcessor if provided
     let sources_context = if let Some(sources) = &sources {
-        super::context::ContextProcessor::process_sources_for_context(sources).await
+        super::context::ContextProcessor::process_sources_for_context(sources)
+            .await
             .unwrap_or_else(|e| {
                 eprintln!("Error processing sources: {}", e);
                 String::new()
@@ -164,12 +166,14 @@ pub async fn chat_with_agent_db(
         &message,
         message_context.clone(),
         None,
-        &model
-    ).await
+        &model,
+    )
+    .await
     .map_err(|e| e.to_string())?;
 
     // Get conversation history from database
-    let db_messages = db.get_messages(&conversation_id)
+    let db_messages = db
+        .get_messages(&conversation_id)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -195,7 +199,8 @@ pub async fn chat_with_agent_db(
             if !ctx.apps.is_empty() {
                 legacy_context.push_str("Legacy Context Apps:\n");
                 for app in &ctx.apps {
-                    legacy_context.push_str(&format!("- {} (Bundle ID: {})\n", app.name, app.bundle_id));
+                    legacy_context
+                        .push_str(&format!("- {} (Bundle ID: {})\n", app.name, app.bundle_id));
                 }
             }
 
@@ -215,7 +220,11 @@ pub async fn chat_with_agent_db(
         if context_parts.is_empty() {
             message.clone()
         } else {
-            format!("{}\n\nUser Message: {}", context_parts.join("\n\n"), message)
+            format!(
+                "{}\n\nUser Message: {}",
+                context_parts.join("\n\n"),
+                message
+            )
         }
     };
 
@@ -223,68 +232,56 @@ pub async fn chat_with_agent_db(
     let _config = state.get_config().await.ok_or("Agent config not found")?;
 
     // Check if tool calling is enabled and process potential tool calls
-    let response = if enable_tool_calling.unwrap_or(false) {
-        process_chat_with_tools(
-            &enhanced_message,
-            state.clone(),
-            use_vision.unwrap_or(false),
-        ).await?
-    } else {
-        let agent_guard = state.agent.lock().await;
-        let agent = agent_guard.as_ref().ok_or("Agent not initialized")?;
+    let response =
+        if enable_tool_calling.unwrap_or(false) {
+            process_chat_with_tools(
+                &enhanced_message,
+                state.clone(),
+                use_vision.unwrap_or(false),
+            )
+            .await?
+        } else {
+            let agent_guard = state.agent.lock().await;
+            let agent = agent_guard.as_ref().ok_or("Agent not initialized")?;
 
-        match agent {
-            DynamicAgent::OpenAI(openai_agent) => {
-                openai_agent
+            match agent {
+                DynamicAgent::OpenAI(openai_agent) => openai_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
-            }
-            DynamicAgent::Anthropic(anthropic_agent) => {
-                anthropic_agent
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
+                DynamicAgent::Anthropic(anthropic_agent) => anthropic_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
-            }
-            DynamicAgent::Gemini(gemini_agent) => {
-                gemini_agent
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
+                DynamicAgent::Gemini(gemini_agent) => gemini_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
-            }
-            DynamicAgent::Groq(groq_agent) => {
-                let response: String = groq_agent
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
+                DynamicAgent::Groq(groq_agent) => {
+                    let response: String = groq_agent
+                        .prompt(&enhanced_message)
+                        .await
+                        .map_err(|e| format!("Agent request failed: {}", e))?;
+                    response
+                }
+                DynamicAgent::Cohere(cohere_agent) => cohere_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?;
-                response
-            }
-            DynamicAgent::Cohere(cohere_agent) => {
-                cohere_agent
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
+                DynamicAgent::Mistral(mistral_agent) => mistral_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
-            }
-            DynamicAgent::Mistral(mistral_agent) => {
-                mistral_agent
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
+                DynamicAgent::Together(together_agent) => together_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
-            }
-            DynamicAgent::Together(together_agent) => {
-                together_agent
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
+                DynamicAgent::HuggingFace(huggingface_agent) => huggingface_agent
                     .prompt(&enhanced_message)
                     .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
+                    .map_err(|e| format!("Agent request failed: {}", e))?,
             }
-            DynamicAgent::HuggingFace(huggingface_agent) => {
-                huggingface_agent
-                    .prompt(&enhanced_message)
-                    .await
-                    .map_err(|e| format!("Agent request failed: {}", e))?
-            }
-        }
-    };
+        };
 
     // Add assistant response to database
     db.add_message(
@@ -293,8 +290,9 @@ pub async fn chat_with_agent_db(
         &response,
         None,
         Some(estimate_tokens(&response) as i32),
-        &model
-    ).await
+        &model,
+    )
+    .await
     .map_err(|e| e.to_string())?;
 
     // Create response
@@ -343,10 +341,7 @@ pub async fn list_conversations_db(
 // Delete conversation from database
 #[tauri::command]
 #[specta::specta]
-pub async fn delete_conversation_db(
-    app: AppHandle,
-    conversation_id: String,
-) -> Result<(), String> {
+pub async fn delete_conversation_db(app: AppHandle, conversation_id: String) -> Result<(), String> {
     let db = app.state::<database::Database>();
 
     db.delete_conversation(&conversation_id)
@@ -386,24 +381,20 @@ pub async fn search_conversations_db(
 // Get chat statistics
 #[tauri::command]
 #[specta::specta]
-pub async fn get_chat_statistics_db(
-    app: AppHandle,
-) -> Result<EnhancedAgentStatus, String> {
+pub async fn get_chat_statistics_db(app: AppHandle) -> Result<EnhancedAgentStatus, String> {
     let db = app.state::<database::Database>();
-    let db_stats = db.get_basic_statistics()
-        .await
-        .map_err(|e| e.to_string())?;
+    let db_stats = db.get_basic_statistics().await.map_err(|e| e.to_string())?;
 
     // Convert database statistics to public EnhancedAgentStatus
     Ok(EnhancedAgentStatus {
         initialized: true, // Assume initialized if we can get stats
-        config: None,       // Not available in this context
+        config: None,      // Not available in this context
         active_streams: 0,
         total_conversations: db_stats.0,
         total_messages: db_stats.1,
-        user_messages: 0, // Not available in simplified stats
+        user_messages: 0,      // Not available in simplified stats
         assistant_messages: 0, // Not available in simplified stats
-        total_tokens: 0, // Not available in simplified stats
+        total_tokens: 0,       // Not available in simplified stats
         provider: None,
         model: None,
     })
@@ -422,13 +413,14 @@ pub async fn get_enhanced_agent_status(
 
     // Get database statistics
     let db = app.state::<database::Database>();
-    let db_stats = db.get_basic_statistics()
-        .await
-        .map_err(|e| e.to_string())?;
+    let db_stats = db.get_basic_statistics().await.map_err(|e| e.to_string())?;
 
     // Get provider and model from config
     let (provider, model) = if let Some(ref config) = config {
-        (Some(format!("{:?}", config.provider)), Some(config.model.clone()))
+        (
+            Some(format!("{:?}", config.provider)),
+            Some(config.model.clone()),
+        )
     } else {
         (None, None)
     };
@@ -439,9 +431,9 @@ pub async fn get_enhanced_agent_status(
         active_streams,
         total_conversations: db_stats.0,
         total_messages: db_stats.1,
-        user_messages: 0, // Not available in simplified stats
+        user_messages: 0,      // Not available in simplified stats
         assistant_messages: 0, // Not available in simplified stats
-        total_tokens: 0, // Not available in simplified stats
+        total_tokens: 0,       // Not available in simplified stats
         provider,
         model,
     })
@@ -482,7 +474,8 @@ fn estimate_tokens(text: &str) -> u32 {
 }
 
 async fn get_model_from_state(state: tauri::State<'_, AgentState>) -> String {
-    state.get_config()
+    state
+        .get_config()
         .await
         .map(|c| c.model)
         .unwrap_or_else(|| "gpt-4o-mini".to_string())
@@ -509,57 +502,44 @@ async fn process_chat_with_tools(
     let agent_guard = state.agent.lock().await;
     let agent = agent_guard.as_ref().ok_or("Agent not initialized")?;
 
-    let response = match agent {
-        DynamicAgent::OpenAI(openai_agent) => {
-            openai_agent
+    let response =
+        match agent {
+            DynamicAgent::OpenAI(openai_agent) => openai_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-        DynamicAgent::Anthropic(anthropic_agent) => {
-            anthropic_agent
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+            DynamicAgent::Anthropic(anthropic_agent) => anthropic_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-        DynamicAgent::Gemini(gemini_agent) => {
-            gemini_agent
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+            DynamicAgent::Gemini(gemini_agent) => gemini_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-        DynamicAgent::Groq(groq_agent) => {
-            let response: String = groq_agent
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+            DynamicAgent::Groq(groq_agent) => {
+                let response: String = groq_agent
+                    .prompt(&tool_enhanced_prompt)
+                    .await
+                    .map_err(|e| format!("Agent request failed: {}", e))?;
+                response
+            }
+            DynamicAgent::Cohere(cohere_agent) => cohere_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?;
-            response
-        }
-        DynamicAgent::Cohere(cohere_agent) => {
-            cohere_agent
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+            DynamicAgent::Mistral(mistral_agent) => mistral_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-        DynamicAgent::Mistral(mistral_agent) => {
-            mistral_agent
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+            DynamicAgent::Together(together_agent) => together_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-        DynamicAgent::Together(together_agent) => {
-            together_agent
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+            DynamicAgent::HuggingFace(huggingface_agent) => huggingface_agent
                 .prompt(&tool_enhanced_prompt)
                 .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-        DynamicAgent::HuggingFace(huggingface_agent) => {
-            huggingface_agent
-                .prompt(&tool_enhanced_prompt)
-                .await
-                .map_err(|e| format!("Agent request failed: {}", e))?
-        }
-    };
+                .map_err(|e| format!("Agent request failed: {}", e))?,
+        };
 
     // Check if response contains tool calls
     if let Some(tool_calls_json) = extract_tool_calls(&response) {
@@ -573,7 +553,10 @@ async fn process_chat_with_tools(
                 if let Some(parameters) = tool_call.get("parameters") {
                     match super::tools::ToolManager::execute_tool(tool_name, parameters).await {
                         Ok(result) => {
-                            tool_results.push(format!("Tool '{}' executed successfully: {}", tool_name, result));
+                            tool_results.push(format!(
+                                "Tool '{}' executed successfully: {}",
+                                tool_name, result
+                            ));
                         }
                         Err(e) => {
                             tool_results.push(format!("Tool '{}' failed: {}", tool_name, e));
@@ -591,24 +574,18 @@ async fn process_chat_with_tools(
         );
 
         let final_response = match agent {
-            DynamicAgent::OpenAI(openai_agent) => {
-                openai_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
-            DynamicAgent::Anthropic(anthropic_agent) => {
-                anthropic_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
-            DynamicAgent::Gemini(gemini_agent) => {
-                gemini_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
+            DynamicAgent::OpenAI(openai_agent) => openai_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
+            DynamicAgent::Anthropic(anthropic_agent) => anthropic_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
+            DynamicAgent::Gemini(gemini_agent) => gemini_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
             DynamicAgent::Groq(groq_agent) => {
                 let response: String = groq_agent
                     .prompt(&final_prompt)
@@ -616,30 +593,22 @@ async fn process_chat_with_tools(
                     .map_err(|e| format!("Final agent request failed: {}", e))?;
                 response
             }
-            DynamicAgent::Cohere(cohere_agent) => {
-                cohere_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
-            DynamicAgent::Mistral(mistral_agent) => {
-                mistral_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
-            DynamicAgent::Together(together_agent) => {
-                together_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
-            DynamicAgent::HuggingFace(huggingface_agent) => {
-                huggingface_agent
-                    .prompt(&final_prompt)
-                    .await
-                    .map_err(|e| format!("Final agent request failed: {}", e))?
-            }
+            DynamicAgent::Cohere(cohere_agent) => cohere_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
+            DynamicAgent::Mistral(mistral_agent) => mistral_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
+            DynamicAgent::Together(together_agent) => together_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
+            DynamicAgent::HuggingFace(huggingface_agent) => huggingface_agent
+                .prompt(&final_prompt)
+                .await
+                .map_err(|e| format!("Final agent request failed: {}", e))?,
         };
 
         Ok(final_response)
@@ -720,14 +689,17 @@ pub async fn generate_image_enhanced(
                 first_image.revised_prompt
             );
 
-            if let Err(e) = db.add_message(
-                &conversation_id,
-                "assistant",
-                &content,
-                None,
-                None,
-                "dall-e-3"
-            ).await {
+            if let Err(e) = db
+                .add_message(
+                    &conversation_id,
+                    "assistant",
+                    &content,
+                    None,
+                    None,
+                    "dall-e-3",
+                )
+                .await
+            {
                 return Err(format!("Failed to save image to database: {}", e));
             }
         }
@@ -765,12 +737,14 @@ pub async fn semantic_search_conversation(
     let db = app.state::<database::Database>();
 
     // Get conversation messages
-    let messages = db.get_messages(&conversation_id)
+    let messages = db
+        .get_messages(&conversation_id)
         .await
         .map_err(|e| e.to_string())?;
 
     // Extract message contents
-    let documents: Vec<String> = messages.iter()
+    let documents: Vec<String> = messages
+        .iter()
         .map(|msg| format!("{}: {}", msg.role, msg.content))
         .collect();
 
@@ -781,7 +755,8 @@ pub async fn semantic_search_conversation(
         documents,
         Some("text-embedding-3-small".to_string()),
         Some(5),
-    ).await
+    )
+    .await
 }
 
 // Enhanced agent status structure

@@ -1,17 +1,17 @@
 use super::*;
-use serde_json::{json, Value};
+use base64::{engine::general_purpose, Engine as _};
 use reqwest::Client;
-use base64::{Engine as _, engine::general_purpose};
+use serde_json::{json, Value};
 
 // Image generation request structures
 #[derive(Serialize, Deserialize, Type, Debug, Clone)]
 pub struct ImageGenerationRequest {
     pub prompt: String,
     pub model: Option<String>,
-    pub n: Option<u32>, // Number of images to generate
-    pub size: Option<String>, // e.g., "1024x1024"
-    pub quality: Option<String>, // "standard" or "hd"
-    pub style: Option<String>, // "vivid" or "natural"
+    pub n: Option<u32>,                  // Number of images to generate
+    pub size: Option<String>,            // e.g., "1024x1024"
+    pub quality: Option<String>,         // "standard" or "hd"
+    pub style: Option<String>,           // "vivid" or "natural"
     pub response_format: Option<String>, // "url" or "b64_json"
 }
 
@@ -41,7 +41,7 @@ pub struct ImageVariationRequest {
 // Image edit request
 #[derive(Serialize, Deserialize, Type, Debug, Clone)]
 pub struct ImageEditRequest {
-    pub image: String, // Base64 encoded original image
+    pub image: String,        // Base64 encoded original image
     pub mask: Option<String>, // Base64 encoded mask
     pub prompt: String,
     pub model: Option<String>,
@@ -67,8 +67,12 @@ impl ImageGenerationTool {
         }
     }
 
-    pub async fn generate_image(&self, request: ImageGenerationRequest) -> Result<ImageGenerationResponse, AgentError> {
-        let url = self.base_url
+    pub async fn generate_image(
+        &self,
+        request: ImageGenerationRequest,
+    ) -> Result<ImageGenerationResponse, AgentError> {
+        let url = self
+            .base_url
             .clone()
             .unwrap_or_else(|| "https://api.openai.com/v1/images/generations".to_string());
 
@@ -82,7 +86,8 @@ impl ImageGenerationTool {
             "response_format": request.response_format.unwrap_or_else(|| "b64_json".to_string()),
         });
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
@@ -92,19 +97,29 @@ impl ImageGenerationTool {
             .map_err(|e| AgentError::ApiError(format!("Failed to send request: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await
-                .map_err(|e| AgentError::ApiError(format!("Failed to read error response: {}", e)))?;
-            return Err(AgentError::ApiError(format!("Image generation failed: {}", error_text)));
+            let error_text = response.text().await.map_err(|e| {
+                AgentError::ApiError(format!("Failed to read error response: {}", e))
+            })?;
+            return Err(AgentError::ApiError(format!(
+                "Image generation failed: {}",
+                error_text
+            )));
         }
 
-        let result: ImageGenerationResponse = response.json().await
+        let result: ImageGenerationResponse = response
+            .json()
+            .await
             .map_err(|e| AgentError::ApiError(format!("Failed to parse response: {}", e)))?;
 
         Ok(result)
     }
 
-    pub async fn create_image_variation(&self, request: ImageVariationRequest) -> Result<ImageGenerationResponse, AgentError> {
-        let url = self.base_url
+    pub async fn create_image_variation(
+        &self,
+        request: ImageVariationRequest,
+    ) -> Result<ImageGenerationResponse, AgentError> {
+        let url = self
+            .base_url
             .clone()
             .unwrap_or_else(|| "https://api.openai.com/v1/images/variations".to_string());
 
@@ -115,10 +130,13 @@ impl ImageGenerationTool {
             .decode(&request.image)
             .map_err(|e| AgentError::Custom(format!("Failed to decode base64 image: {}", e)))?;
 
-        form = form.part("image", reqwest::multipart::Part::bytes(image_data)
-            .file_name("image.png")
-            .mime_str("image/png")
-            .map_err(|e| AgentError::Custom(format!("Failed to create multipart: {}", e)))?);
+        form = form.part(
+            "image",
+            reqwest::multipart::Part::bytes(image_data)
+                .file_name("image.png")
+                .mime_str("image/png")
+                .map_err(|e| AgentError::Custom(format!("Failed to create multipart: {}", e)))?,
+        );
 
         if let Some(model) = &request.model {
             form = form.text("model", model.clone());
@@ -136,28 +154,40 @@ impl ImageGenerationTool {
             form = form.text("response_format", response_format.clone());
         }
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .multipart(form)
             .send()
             .await
-            .map_err(|e| AgentError::ApiError(format!("Failed to send variation request: {}", e)))?;
+            .map_err(|e| {
+                AgentError::ApiError(format!("Failed to send variation request: {}", e))
+            })?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await
-                .map_err(|e| AgentError::ApiError(format!("Failed to read error response: {}", e)))?;
-            return Err(AgentError::ApiError(format!("Image variation failed: {}", error_text)));
+            let error_text = response.text().await.map_err(|e| {
+                AgentError::ApiError(format!("Failed to read error response: {}", e))
+            })?;
+            return Err(AgentError::ApiError(format!(
+                "Image variation failed: {}",
+                error_text
+            )));
         }
 
-        let result: ImageGenerationResponse = response.json().await
-            .map_err(|e| AgentError::ApiError(format!("Failed to parse variation response: {}", e)))?;
+        let result: ImageGenerationResponse = response.json().await.map_err(|e| {
+            AgentError::ApiError(format!("Failed to parse variation response: {}", e))
+        })?;
 
         Ok(result)
     }
 
-    pub async fn edit_image(&self, request: ImageEditRequest) -> Result<ImageGenerationResponse, AgentError> {
-        let url = self.base_url
+    pub async fn edit_image(
+        &self,
+        request: ImageEditRequest,
+    ) -> Result<ImageGenerationResponse, AgentError> {
+        let url = self
+            .base_url
             .clone()
             .unwrap_or_else(|| "https://api.openai.com/v1/images/edits".to_string());
 
@@ -168,10 +198,13 @@ impl ImageGenerationTool {
             .decode(&request.image)
             .map_err(|e| AgentError::Custom(format!("Failed to decode base64 image: {}", e)))?;
 
-        form = form.part("image", reqwest::multipart::Part::bytes(image_data)
-            .file_name("image.png")
-            .mime_str("image/png")
-            .map_err(|e| AgentError::Custom(format!("Failed to create multipart: {}", e)))?);
+        form = form.part(
+            "image",
+            reqwest::multipart::Part::bytes(image_data)
+                .file_name("image.png")
+                .mime_str("image/png")
+                .map_err(|e| AgentError::Custom(format!("Failed to create multipart: {}", e)))?,
+        );
 
         // Add mask if provided
         if let Some(mask_data) = &request.mask {
@@ -179,10 +212,15 @@ impl ImageGenerationTool {
                 .decode(mask_data)
                 .map_err(|e| AgentError::Custom(format!("Failed to decode base64 mask: {}", e)))?;
 
-            form = form.part("mask", reqwest::multipart::Part::bytes(mask_bytes)
-                .file_name("mask.png")
-                .mime_str("image/png")
-                .map_err(|e| AgentError::Custom(format!("Failed to create mask multipart: {}", e)))?);
+            form = form.part(
+                "mask",
+                reqwest::multipart::Part::bytes(mask_bytes)
+                    .file_name("mask.png")
+                    .mime_str("image/png")
+                    .map_err(|e| {
+                        AgentError::Custom(format!("Failed to create mask multipart: {}", e))
+                    })?,
+            );
         }
 
         form = form.text("prompt", request.prompt);
@@ -203,7 +241,8 @@ impl ImageGenerationTool {
             form = form.text("response_format", response_format.clone());
         }
 
-        let response = self.client
+        let response = self
+            .client
             .post(&url)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .multipart(form)
@@ -212,24 +251,34 @@ impl ImageGenerationTool {
             .map_err(|e| AgentError::ApiError(format!("Failed to send edit request: {}", e)))?;
 
         if !response.status().is_success() {
-            let error_text = response.text().await
-                .map_err(|e| AgentError::ApiError(format!("Failed to read error response: {}", e)))?;
-            return Err(AgentError::ApiError(format!("Image edit failed: {}", error_text)));
+            let error_text = response.text().await.map_err(|e| {
+                AgentError::ApiError(format!("Failed to read error response: {}", e))
+            })?;
+            return Err(AgentError::ApiError(format!(
+                "Image edit failed: {}",
+                error_text
+            )));
         }
 
-        let result: ImageGenerationResponse = response.json().await
+        let result: ImageGenerationResponse = response
+            .json()
+            .await
             .map_err(|e| AgentError::ApiError(format!("Failed to parse edit response: {}", e)))?;
 
         Ok(result)
     }
 
     // Save image to local file system
-    pub async fn save_image(&self, image_data: &str, file_path: &str) -> Result<String, AgentError> {
+    pub async fn save_image(
+        &self,
+        image_data: &str,
+        file_path: &str,
+    ) -> Result<String, AgentError> {
         let image_bytes = if image_data.starts_with("data:image/") {
             // Remove data URL prefix
-            let comma_index = image_data.find(',').ok_or_else(|| {
-                AgentError::Custom("Invalid data URL format".to_string())
-            })?;
+            let comma_index = image_data
+                .find(',')
+                .ok_or_else(|| AgentError::Custom("Invalid data URL format".to_string()))?;
             general_purpose::STANDARD
                 .decode(&image_data[comma_index + 1..])
                 .map_err(|e| AgentError::Custom(format!("Failed to decode data URL: {}", e)))?
@@ -257,12 +306,13 @@ pub async fn generate_image_command(
     save_to_file: Option<String>,
 ) -> Result<ImageGenerationResponse, String> {
     // Get API key from state or environment
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OpenAI API key not found".to_string())?;
+    let api_key =
+        std::env::var("OPENAI_API_KEY").map_err(|_| "OpenAI API key not found".to_string())?;
 
     let generator = ImageGenerationTool::new(api_key, None);
 
-    let response = generator.generate_image(request)
+    let response = generator
+        .generate_image(request)
         .await
         .map_err(|e| e.to_string())?;
 
@@ -287,12 +337,13 @@ pub async fn create_image_variation_command(
     app: tauri::AppHandle,
     request: ImageVariationRequest,
 ) -> Result<ImageGenerationResponse, String> {
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OpenAI API key not found".to_string())?;
+    let api_key =
+        std::env::var("OPENAI_API_KEY").map_err(|_| "OpenAI API key not found".to_string())?;
 
     let generator = ImageGenerationTool::new(api_key, None);
 
-    generator.create_image_variation(request)
+    generator
+        .create_image_variation(request)
         .await
         .map_err(|e| e.to_string())
 }
@@ -303,12 +354,13 @@ pub async fn edit_image_command(
     app: tauri::AppHandle,
     request: ImageEditRequest,
 ) -> Result<ImageGenerationResponse, String> {
-    let api_key = std::env::var("OPENAI_API_KEY")
-        .map_err(|_| "OpenAI API key not found".to_string())?;
+    let api_key =
+        std::env::var("OPENAI_API_KEY").map_err(|_| "OpenAI API key not found".to_string())?;
 
     let generator = ImageGenerationTool::new(api_key, None);
 
-    generator.edit_image(request)
+    generator
+        .edit_image(request)
         .await
         .map_err(|e| e.to_string())
 }
