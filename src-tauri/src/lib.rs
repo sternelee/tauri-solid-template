@@ -2,6 +2,7 @@ use tauri::Manager;
 use tauri_specta::Event;
 pub mod apps;
 pub mod database;
+pub mod mcp;
 pub mod rig_agent;
 pub mod search;
 pub mod settings;
@@ -165,89 +166,35 @@ pub fn run() {
             get_system_info,
             create_plugin_window,
             update_plugin_window,
-            apps::get_applications,
-            apps::get_frontmost_app,
-            apps::refresh_applications_list,
-            apps::refresh_applications_list_in_bg,
-            apps::hide_all_apps_except_frontmost,
-            apps::get_app_icon_data_url,
             close_plugin_window,
             focus_plugin_window,
             set_window_fullscreen,
             request_screenshot_permission,
             toggle_window_visibility,
             hide_window,
-            // File search commands
-            search::search_files,
-            search::get_search_directories,
-            search::search_screenshots,
-            // Enhanced rig agent commands with database integration
-            rig_agent::chat_commands::initialize_agent_with_db,
-            rig_agent::chat_commands::chat_with_agent_db,
-            rig_agent::chat_commands::get_conversation_history_db,
-            rig_agent::chat_commands::list_conversations_db,
-            rig_agent::chat_commands::delete_conversation_db,
-            rig_agent::chat_commands::update_conversation_title_db,
-            rig_agent::chat_commands::search_conversations_db,
-            rig_agent::chat_commands::get_enhanced_agent_status,
-            rig_agent::chat_commands::create_conversation_with_db,
-            rig_agent::chat_commands::execute_tool_command,
-            rig_agent::chat_commands::get_available_tools_command,
-            rig_agent::chat_commands::generate_image_enhanced,
-            rig_agent::chat_commands::create_embeddings_for_search,
-            rig_agent::chat_commands::semantic_search_conversation,
-            // Provider management commands
-            rig_agent::providers::get_available_providers,
-            rig_agent::providers::get_provider_models,
-            // Image generation commands
-            rig_agent::generate_image_command,
-            rig_agent::create_image_variation_command,
-            rig_agent::edit_image_command,
-            // Embedding commands
-            rig_agent::create_embeddings_command,
-            rig_agent::semantic_search_command,
-            rig_agent::calculate_similarity_command,
-            // Legacy rig agent commands
-            rig_agent::commands::initialize_agent,
-            rig_agent::commands::chat_with_agent,
-            rig_agent::commands::get_conversation_history,
-            rig_agent::commands::clear_conversation,
-            rig_agent::commands::list_conversations,
-            rig_agent::commands::get_agent_status,
-            rig_agent::commands::get_available_tools,
-            // New enhanced commands with multimodal and tool support (temporarily commented for compilation)
-            // rig_agent::enhanced_commands::initialize_enhanced_agent,
-            // rig_agent::enhanced_commands::enhanced_chat_with_agent,
-            // rig_agent::enhanced_commands::enhanced_chat_streaming,
-            // rig_agent::enhanced_commands::process_image_for_vision,
-            // rig_agent::enhanced_commands::generate_text_embeddings,
-            // rig_agent::enhanced_commands::execute_tool,
-            // rig_agent::enhanced_commands::get_available_providers,
-            // rig_agent::enhanced_commands::get_provider_template,
-            // Legacy compatibility commands (temporarily removed for compilation)
-            // rig_agent::initialize_agent_legacy,
-            // rig_agent::chat_with_agent_legacy,
-            // rig_agent::get_conversation_history_legacy,
-            // rig_agent::clear_conversation_legacy,
-            // rig_agent::is_agent_initialized,
-            // rig_agent::get_agent_config,
-            // Text selection toolbar commands
-            text_selection::get_system_text_selection,
-            text_selection::get_toolbar_actions,
-            text_selection::execute_toolbar_action,
-            text_selection::get_toolbar_config,
-            text_selection::update_toolbar_config,
-            text_selection::show_toolbar,
-            text_selection::hide_toolbar,
-            text_selection::replace_original_text,
-            // Settings commands
-            settings::get_settings,
-            settings::save_settings,
-            settings::reset_settings,
+            // Apps commands
+            apps::get_applications,
+            apps::get_frontmost_app,
+            apps::refresh_applications_list,
+            apps::refresh_applications_list_in_bg,
+            apps::hide_all_apps_except_frontmost,
+            apps::get_app_icon_data_url,
+            // MCP commands
+            mcp::commands::activate_mcp_server,
+            mcp::commands::deactivate_mcp_server,
+            mcp::commands::restart_mcp_servers,
+            mcp::commands::get_connected_servers,
+            mcp::commands::get_tools,
+            mcp::commands::call_tool,
+            mcp::commands::cancel_tool_call,
+            mcp::commands::get_mcp_configs,
+            mcp::commands::save_mcp_configs,
+            mcp::commands::get_mcp_server_status,
+            mcp::commands::reset_mcp_restart_count,
         ])
         .events(tauri_specta::collect_events![
             crate::DemoEvent,
-            rig_agent::commands::ChatEvent,
+            // rig_agent::commands::ChatEvent, // Temporarily commented
             // rig_agent::enhanced_commands::EnhancedChatEvent // Temporarily commented
         ]);
 
@@ -276,10 +223,12 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_clipboard_x::init())
         .plugin(tauri_plugin_screenshots::init())
+        .plugin(tauri_plugin_http::init())
         .manage(apps::ApplicationsState::default())
         .manage(rig_agent::AgentState::default())
         .manage(settings::SettingsState::new())
         .manage(text_selection::init_text_selection_system())
+        .manage(mcp::state::McpState::with_client_manager())
         .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
             specta_builder.mount_events(app);
@@ -292,6 +241,10 @@ pub fn run() {
                     .expect("Failed to initialize database");
                 app_handle.manage(db);
             });
+
+            // Initialize MCP servers
+            // Note: MCP servers will be initialized on-demand to avoid AppHandle Send issues
+            log::info!("MCP integration ready - servers will be initialized on demand");
 
             // listen to demo event
             DemoEvent::listen(app, |event| {

@@ -20,6 +20,9 @@ pub mod embeddings;
 pub mod image_generation;
 pub mod providers;
 pub mod tools;
+pub mod react_agent;
+pub mod react_commands;
+pub mod react_tests;
 // pub mod enhanced_agent; // Temporarily commented
 // pub mod enhanced_commands; // Temporarily commented
 
@@ -31,6 +34,9 @@ pub use embeddings::*;
 pub use image_generation::*;
 pub use providers::*;
 pub use tools::*;
+pub use react_agent::*;
+pub use react_commands::*;
+// pub use react_tests::*; // Tests are not typically exported
 // pub use enhanced_agent::*; // Temporarily commented
 // pub use enhanced_commands::*; // Temporarily commented
 

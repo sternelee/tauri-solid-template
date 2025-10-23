@@ -1,6 +1,7 @@
 import { createSignal, onMount, For, Show } from "solid-js";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
+import McpManager from "../components/McpManager";
 
 interface SettingsData {
   language: string;
@@ -81,6 +82,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'general', name: '通用设置', icon: '⚙️' },
     { id: 'ai', name: 'AI 配置', icon: '🤖' },
+    { id: 'mcp', name: 'MCP 服务器', icon: '🔌' },
     { id: 'toolbar', name: '划词工具栏', icon: '📝' },
     { id: 'shortcuts', name: '快捷键', icon: '⌨️' },
     { id: 'advanced', name: '高级设置', icon: '🔧' },
@@ -451,6 +453,11 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+          </Show>
+
+          {/* MCP Settings */}
+          <Show when={activeTab() === 'mcp'}>
+            <McpManager />
           </Show>
 
           {/* Text Selection Toolbar Settings */}

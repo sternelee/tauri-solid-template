@@ -32,7 +32,10 @@
       "WebFetch(domain:crates.io)",
       "mcp__mcphub__tavily-mcp-tavily-search",
       "WebFetch(domain:www.npmjs.com)",
-      "Bash(pnpm install)"
+      "Bash(pnpm install)",
+      "Bash(cargo test:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

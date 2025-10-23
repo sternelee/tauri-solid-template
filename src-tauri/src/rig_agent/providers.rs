@@ -189,6 +189,292 @@ impl ProviderFactory {
         Ok(agent)
     }
 
+    // Create a ReAct-enabled agent based on provider configuration
+    pub async fn create_react_agent(
+        client: &DynamicClient,
+        config: &AgentConfig,
+        tools: Vec<Box<dyn rig::tool::Tool>>,
+    ) -> Result<DynamicAgent, AgentError> {
+        let model = config.model.clone();
+        let temperature = config.temperature.unwrap_or(0.7) as f64;
+
+        let agent = match client {
+            DynamicClient::OpenAI(openai_client) => {
+                let mut agent_builder = openai_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::OpenAI(agent_builder.build())
+            }
+
+            DynamicClient::Anthropic(anthropic_client) => {
+                let mut agent_builder = anthropic_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::Anthropic(agent_builder.build())
+            }
+
+            DynamicClient::Gemini(gemini_client) => {
+                let mut agent_builder = gemini_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::Gemini(agent_builder.build())
+            }
+
+            DynamicClient::Groq(groq_client) => {
+                let mut agent_builder = groq_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::Groq(agent_builder.build())
+            }
+
+            DynamicClient::Cohere(cohere_client) => {
+                let mut agent_builder = cohere_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::Cohere(agent_builder.build())
+            }
+
+            DynamicClient::Mistral(mistral_client) => {
+                let mut agent_builder = mistral_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::Mistral(agent_builder.build())
+            }
+
+            DynamicClient::Together(together_client) => {
+                let mut agent_builder = together_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::Together(agent_builder.build())
+            }
+
+            DynamicClient::HuggingFace(huggingface_client) => {
+                let mut agent_builder = huggingface_client.agent(&model);
+
+                // Add ReAct preamble if specified
+                let preamble = config.preamble.as_ref().map_or_else(
+                    || {
+                        Some(
+                            "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                            Think step by step and use available tools when necessary. \
+                            Follow this format:\n\n\
+                            Thought: [Your reasoning about what to do]\n\
+                            Action: [Tool name and parameters if needed]\n\
+                            Observation: [Result of the action]\n\
+                            ... (repeat as needed)\n\
+                            Final Answer: [Your final response]"
+                                .to_string(),
+                        )
+                    },
+                    |p| Some(p.clone()),
+                );
+
+                if let Some(preamble) = &preamble {
+                    agent_builder = agent_builder.preamble(preamble);
+                }
+
+                // Add tools
+                for tool in tools {
+                    agent_builder = agent_builder.tool(tool);
+                }
+
+                agent_builder = agent_builder.temperature(temperature);
+                DynamicAgent::HuggingFace(agent_builder.build())
+            }
+        };
+
+        Ok(agent)
+    }
+
     // Get available models for a provider
     pub fn get_available_models(provider: &AIProvider) -> Vec<String> {
         match provider {

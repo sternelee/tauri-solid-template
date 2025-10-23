@@ -121,6 +121,216 @@ impl AgentFactory {
     }
 }
 
+// ReAct Agent factory for creating ReAct-enabled agents
+pub struct ReactAgentFactory;
+
+impl ReactAgentFactory {
+    pub async fn create_react_agent<M>(
+        client: &rig::Client<M>,
+        config: &AgentConfig,
+        tools: Vec<Box<dyn rig::tool::Tool>>,
+    ) -> Result<rig::Agent<M>, AgentError>
+    where
+        M: rig::completion::CompletionModel + 'static,
+        <M as rig::completion::CompletionModel>::StreamingResponse: std::marker::Send,
+    {
+        let mut agent_builder = client.agent(&config.model);
+
+        // Add ReAct preamble if specified
+        let preamble = config.preamble.as_ref().map_or_else(
+            || {
+                Some(
+                    "You are a helpful AI assistant that uses the ReAct (Reasoning and Acting) pattern. \
+                    Think step by step and use available tools when necessary. \
+                    Follow this format:\n\n\
+                    Thought: [Your reasoning about what to do]\n\
+                    Action: [Tool name and parameters if needed]\n\
+                    Observation: [Result of the action]\n\
+                    ... (repeat as needed)\n\
+                    Final Answer: [Your final response]"
+                        .to_string(),
+                )
+            },
+            |p| Some(p.clone()),
+        );
+
+        if let Some(preamble) = &preamble {
+            agent_builder = agent_builder.preamble(preamble);
+        }
+
+        // Add tools
+        for tool in tools {
+            agent_builder = agent_builder.tool(tool);
+        }
+
+        // Set temperature if specified
+        if let Some(temperature) = config.temperature {
+            agent_builder = agent_builder.temperature(temperature as f64);
+        }
+
+        let agent = agent_builder.build();
+        Ok(agent)
+    }
+
+    pub async fn create_react_agent_from_dynamic(
+        client: &DynamicClient,
+        config: &AgentConfig,
+        tools: Vec<Box<dyn rig::tool::Tool>>,
+    ) -> Result<DynamicAgent, AgentError> {
+        match client {
+            DynamicClient::OpenAI(openai_client) => {
+                let agent = Self::create_react_agent(openai_client, config, tools).await?;
+                Ok(DynamicAgent::OpenAI(agent))
+            }
+            DynamicClient::Anthropic(anthropic_client) => {
+                let agent = Self::create_react_agent(anthropic_client, config, tools).await?;
+                Ok(DynamicAgent::Anthropic(agent))
+            }
+            DynamicClient::Gemini(gemini_client) => {
+                let agent = Self::create_react_agent(gemini_client, config, tools).await?;
+                Ok(DynamicAgent::Gemini(agent))
+            }
+            DynamicClient::Groq(groq_client) => {
+                let agent = Self::create_react_agent(groq_client, config, tools).await?;
+                Ok(DynamicAgent::Groq(agent))
+            }
+            DynamicClient::Cohere(cohere_client) => {
+                let agent = Self::create_react_agent(cohere_client, config, tools).await?;
+                Ok(DynamicAgent::Cohere(agent))
+            }
+            DynamicClient::Mistral(mistral_client) => {
+                let agent = Self::create_react_agent(mistral_client, config, tools).await?;
+                Ok(DynamicAgent::Mistral(agent))
+            }
+            DynamicClient::Together(together_client) => {
+                let agent = Self::create_react_agent(together_client, config, tools).await?;
+                Ok(DynamicAgent::Together(agent))
+            }
+            DynamicClient::HuggingFace(huggingface_client) => {
+                let agent = Self::create_react_agent(huggingface_client, config, tools).await?;
+                Ok(DynamicAgent::HuggingFace(agent))
+            }
+        }
+    }
+}
+
+// Enhanced Agent wrapper with ReAct support
+pub struct ReactAgentWrapper {
+    agent: DynamicAgent,
+    config: AgentConfig,
+    cancel_signal: Option<Arc<Notify>>,
+}
+
+impl ReactAgentWrapper {
+    pub fn new(agent: DynamicAgent, config: AgentConfig) -> Self {
+        Self {
+            agent,
+            config,
+            cancel_signal: None,
+        }
+    }
+
+    pub fn with_cancellation(mut self, cancel_signal: Arc<Notify>) -> Self {
+        self.cancel_signal = Some(cancel_signal);
+        self
+    }
+
+    pub async fn chat_with_react<F>(
+        &self,
+        message: &str,
+        history: &[ChatMessage],
+        mut on_event: F,
+    ) -> Result<String, AgentError>
+    where
+        F: FnMut(ReactAgentStreamEvent) -> Result<(), AgentError>,
+    {
+        // Check for cancellation
+        if let Some(signal) = &self.cancel_signal {
+            if signal.notified().now_or_never().is_some() {
+                return Err(AgentError::Cancelled);
+            }
+        }
+
+        // Convert history to rig format
+        let rig_history: Vec<rig::completion::Message> = history
+            .iter()
+            .map(|msg| match msg.role.as_str() {
+                "user" => rig::completion::Message::User {
+                    content: rig::OneOrMany::one(rig::message::UserContent::Text(
+                        rig::message::Text { text: msg.content.clone() },
+                    )),
+                },
+                "assistant" => rig::completion::Message::Assistant {
+                    id: None,
+                    content: rig::OneOrMany::one(rig::message::AssistantContent::Text(
+                        rig::message::Text { text: msg.content.clone() },
+                    )),
+                },
+                _ => rig::completion::Message::User {
+                    content: rig::OneOrMany::one(rig::message::UserContent::Text(
+                        rig::message::Text { text: msg.content.clone() },
+                    )),
+                },
+            })
+            .collect();
+
+        // Create ReAct configuration
+        let react_config = ReactAgentConfig {
+            max_iterations: self.config.max_iterations.unwrap_or(20),
+            stream_tool_events: true,
+            enable_reasoning: true,
+            cancel_signal: self.cancel_signal.clone(),
+            react_preamble: self.config.preamble.clone(),
+        };
+
+        // Execute ReAct agent based on the dynamic agent type
+        match &self.agent {
+            DynamicAgent::OpenAI(openai_agent) => {
+                let mut stream = multi_turn_react_agent(
+                    openai_agent.clone(),
+                    message.to_string(),
+                    rig_history,
+                    react_config,
+                )
+                .await;
+
+                let mut final_response = String::new();
+
+                while let Some(event_result) = stream.next().await {
+                    match event_result {
+                        Ok(event) => {
+                            on_event(event.clone())?;
+
+                            match event {
+                                ReactAgentStreamEvent::Text { content } => {
+                                    final_response.push_str(&content);
+                                }
+                                ReactAgentStreamEvent::Reasoning { content } => {
+                                    // Include reasoning in final response
+                                    final_response.push_str(&format!("[Reasoning: {}] ", content));
+                                }
+                                ReactAgentStreamEvent::Complete => {
+                                    break;
+                                }
+                                _ => {} // Handle other events as needed
+                            }
+                        }
+                        Err(e) => {
+                            return Err(AgentError::Custom(format!("ReAct stream error: {}", e)));
+                        }
+                    }
+                }
+
+                Ok(final_response)
+            }
+            _ => {
+                // Fallback to regular chat for other providers
+                self.chat_with_context(message, history).await
+            }
+        }
+    }
+}
+
 // Provider configuration management
 pub struct ProviderManager;
 
