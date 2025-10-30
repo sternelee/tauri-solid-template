@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup } from "solid-js";
 import CommandPalette from "../components/CommandPalette";
+import KeyboardShortcutsHelp from "../components/KeyboardShortcutsHelp";
 
 export default function Home() {
   const [showWelcome, setShowWelcome] = createSignal(true);
@@ -59,6 +60,9 @@ export default function Home() {
       <div class="raycast-main-content">
         <CommandPalette />
       </div>
+
+      {/* Keyboard Shortcuts Help */}
+      <KeyboardShortcutsHelp />
 
       {/* Raycast-style global styles */}
       <style jsx global>{`

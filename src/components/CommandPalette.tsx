@@ -484,15 +484,14 @@ export default function CommandPalette() {
     groups.push({
       heading: "System Applications",
       items: appsLoading()
-        ? [
-            {
-              id: "loading-apps",
-              title: "Loading applications...",
-              icon: "⏳",
-              type: "action" as const,
-              action: () => {},
-            },
-          ]
+        ? Array(6).fill(null).map((_, i) => ({
+            id: `loading-skeleton-${i}`,
+            title: "Loading...",
+            subtitle: "Please wait",
+            icon: "⏳",
+            type: "action" as const,
+            action: () => {},
+          }))
         : systemApps().length > 0
           ? systemApps()
           : [
@@ -972,16 +971,29 @@ export default function CommandPalette() {
                 {/* Command Groups */}
                 {commandGroups().map((group) => (
                   <Command.Group heading={group.heading}>
-                    <div class="raycast-group-header">{group.heading}</div>
-                    {group.items.map((item) => (
+                    <div class="raycast-group-header">
+                      {group.heading}
+                      {group.heading === "Recent Applications" && (
+                        <span class="raycast-group-badge">⭐</span>
+                      )}
+                    </div>
+                    {group.items.map((item, index) => (
                       <Command.Item
                         value={`${item.title} ${item.subtitle || ""} ${item.keywords?.join(" ") || ""}`}
                         onSelect={() => handleSelect(item)}
                         class="raycast-item"
+                        style={{
+                          "animation-delay": `${index * 20}ms`,
+                        }}
                       >
                         <div class="raycast-item-icon">
                         {typeof item.icon === "string" && item.icon.startsWith("data:") ? (
-                          <img src={item.icon} alt="" class="raycast-app-icon" />
+                          <img 
+                            src={item.icon} 
+                            alt="" 
+                            class="raycast-app-icon"
+                            loading="lazy"
+                          />
                         ) : (
                           item.icon
                         )}
@@ -994,6 +1006,11 @@ export default function CommandPalette() {
                             </div>
                           )}
                         </div>
+                        {item.score && item.score > 1 && (
+                          <div class="raycast-item-badge">
+                            <span class="badge-text">Used {item.score}x</span>
+                          </div>
+                        )}
                         {item.shortcut && (
                           <div class="raycast-item-shortcut">
                             <kbd class="raycast-kbd raycast-kbd-small">
@@ -1175,6 +1192,44 @@ export default function CommandPalette() {
           }
         }
 
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+
+        .loading-shimmer {
+          background: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.05) 0%,
+            rgba(255, 255, 255, 0.1) 50%,
+            rgba(255, 255, 255, 0.05) 100%
+          );
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite linear;
+        }
+
+        .raycast-item[id^="loading-skeleton"] {
+          pointer-events: none;
+        }
+
+        .raycast-item[id^="loading-skeleton"] .raycast-item-title,
+        .raycast-item[id^="loading-skeleton"] .raycast-item-subtitle {
+          background: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0.1) 100%
+          );
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite linear;
+          border-radius: 4px;
+          color: transparent;
+        }
+
         .raycast-search {
           display: flex;
           align-items: center;
@@ -1189,6 +1244,11 @@ export default function CommandPalette() {
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          transition: color 0.2s ease;
+        }
+
+        .raycast-search:focus-within .raycast-search-icon {
+          color: rgba(59, 130, 246, 0.8);
         }
 
         .raycast-input {
@@ -1281,6 +1341,9 @@ export default function CommandPalette() {
         }
 
         .raycast-group-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
           padding: 8px 20px 4px;
           font-size: 11px;
           font-weight: 600;
@@ -1288,6 +1351,11 @@ export default function CommandPalette() {
           letter-spacing: 0.5px;
           color: rgba(255, 255, 255, 0.5);
           user-select: none;
+        }
+
+        .raycast-group-badge {
+          font-size: 10px;
+          margin-left: 6px;
         }
 
         .raycast-item {
@@ -1300,11 +1368,31 @@ export default function CommandPalette() {
           user-select: none;
           transition: all 0.15s ease;
           outline: none;
+          animation: item-slide-in 0.2s ease-out forwards;
+          opacity: 0;
         }
 
-        .raycast-item:hover,
+        @keyframes item-slide-in {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .raycast-item:hover {
+          background: rgba(255, 255, 255, 0.08);
+          transform: scale(1.01);
+        }
+        
         .raycast-item[aria-selected="true"] {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(59, 130, 246, 0.15);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          transform: scale(1.02);
+          box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
         }
 
         .raycast-item-icon {
@@ -1316,6 +1404,11 @@ export default function CommandPalette() {
           margin-right: 12px;
           font-size: 16px;
           flex-shrink: 0;
+          transition: transform 0.2s ease;
+        }
+
+        .raycast-item:hover .raycast-item-icon {
+          transform: scale(1.1);
         }
 
         .raycast-app-icon {
@@ -1323,11 +1416,33 @@ export default function CommandPalette() {
           height: 24px;
           object-fit: contain;
           border-radius: 4px;
+          transition: all 0.2s ease;
+        }
+
+        .raycast-app-icon:hover {
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .raycast-item-content {
           flex: 1;
           min-width: 0;
+        }
+
+        .raycast-item-badge {
+          display: flex;
+          align-items: center;
+          margin-left: 8px;
+          padding: 2px 8px;
+          background: rgba(59, 130, 246, 0.15);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 12px;
+          font-size: 10px;
+          color: #60a5fa;
+          font-weight: 600;
+        }
+
+        .badge-text {
+          white-space: nowrap;
         }
 
         .raycast-item-title {
