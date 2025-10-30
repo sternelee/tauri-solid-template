@@ -2,7 +2,6 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::path::PathBuf;
-use std::process::Command;
 
 #[derive(Serialize, Deserialize, Type, Debug, Clone)]
 pub struct SearchResult {
@@ -24,6 +23,7 @@ pub struct SearchOptions {
 #[tauri::command]
 #[specta::specta]
 pub fn search_files(
+    app_handle: tauri::AppHandle,
     options: SearchOptions,
     search_path: Option<String>,
 ) -> Result<Vec<SearchResult>, String> {
@@ -73,11 +73,8 @@ pub fn search_files(
     // Add search directory
     args.push(search_dir.to_string_lossy().to_string());
 
-    // Execute ripgrep command
-    let output = Command::new("rg")
-        .args(&args)
-        .output()
-        .map_err(|e| format!("Failed to execute ripgrep: {}", e))?;
+    // Execute ripgrep command using the helper that checks system vs sidecar
+    let output = crate::ripgrep::execute_ripgrep(&app_handle, &args)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -246,7 +243,10 @@ fn detect_file_type(path: &str) -> String {
 /// Search for screenshot files
 #[tauri::command]
 #[specta::specta]
-pub fn search_screenshots(search_path: Option<String>) -> Result<Vec<SearchResult>, String> {
+pub fn search_screenshots(
+    app_handle: tauri::AppHandle,
+    search_path: Option<String>,
+) -> Result<Vec<SearchResult>, String> {
     // Default to common screenshot directories if no path provided
     let search_dirs = if let Some(path) = search_path {
         vec![PathBuf::from(path)]
@@ -307,8 +307,8 @@ pub fn search_screenshots(search_path: Option<String>) -> Result<Vec<SearchResul
 
             args.push(search_dir.to_string_lossy().to_string());
 
-            // Execute ripgrep command
-            if let Ok(output) = Command::new("rg").args(&args).output() {
+            // Execute ripgrep command using the helper that checks system vs sidecar
+            if let Ok(output) = crate::ripgrep::execute_ripgrep(&app_handle, &args) {
                 if output.status.success() {
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     for line in stdout.lines() {

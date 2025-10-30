@@ -5,6 +5,7 @@ pub mod database;
 pub mod mcp;
 // Temporarily disable rig_agent until compilation issues are resolved
 // pub mod rig_agent;
+pub mod ripgrep;
 pub mod search;
 pub mod settings;
 pub mod text_selection;
@@ -183,6 +184,10 @@ pub fn run() {
             apps::refresh_applications_list_in_bg,
             apps::hide_all_apps_except_frontmost,
             apps::get_app_icon_data_url,
+            // Search commands
+            search::search_files,
+            search::search_screenshots,
+            search::get_search_directories,
             // MCP commands
             mcp::commands::activate_mcp_server,
             mcp::commands::deactivate_mcp_server,
