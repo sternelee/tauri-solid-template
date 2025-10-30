@@ -265,7 +265,7 @@ export const commands = {
    */
   async callTool(
     toolName: string,
-    arguments: { [key in string]: JsonValue } | null,
+    toolArguments: { [key in string]: JsonValue } | null,
     cancellationToken: string | null,
   ): Promise<Result<CallToolResult, string>> {
     try {
@@ -273,7 +273,7 @@ export const commands = {
         status: "ok",
         data: await TAURI_INVOKE("call_tool", {
           toolName,
-          arguments,
+          arguments: toolArguments,
           cancellationToken,
         }),
       };
