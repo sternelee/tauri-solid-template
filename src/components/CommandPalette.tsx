@@ -20,6 +20,13 @@ import {
   addRecentApp,
   type RecentApp 
 } from "../utils/recentApps";
+import { 
+  categorizeApp, 
+  groupAppsByCategory, 
+  getCategoriesWithCounts,
+  APP_CATEGORIES,
+  type AppCategory 
+} from "../utils/appCategories";
 
 interface CommandItem {
   id: string;
@@ -31,6 +38,7 @@ interface CommandItem {
   action: () => void | Promise<void>;
   score?: number; // For ranking search results
   bundleId?: string; // For app tracking
+  category?: AppCategory; // For categorization
 }
 
 export default function CommandPalette() {
@@ -47,6 +55,7 @@ export default function CommandPalette() {
     createSignal(false);
   const [fileSearchResults, setFileSearchResults] = createSignal<any[]>([]);
   const [fileSearchLoading, setFileSearchLoading] = createSignal(false);
+  const [groupByCategory, setGroupByCategory] = createSignal(false); // Toggle for category grouping
 
   // New states for AI Chat integration
   const [currentMode, setCurrentMode] = createSignal<"command" | "chat">("command");
@@ -225,6 +234,7 @@ export default function CommandPalette() {
           keywords: [app.name.toLowerCase(), app.bundle_id.toLowerCase()],
           type: "app" as const,
           bundleId: app.bundle_id,
+          category: categorizeApp(app.bundle_id, app.name), // Add category
           action: async () => {
             try {
               // Track this app as recently used
@@ -480,33 +490,46 @@ export default function CommandPalette() {
       });
     }
 
-    // Add all system apps
-    groups.push({
-      heading: "System Applications",
-      items: appsLoading()
-        ? Array(6).fill(null).map((_, i) => ({
-            id: `loading-skeleton-${i}`,
-            title: "Loading...",
-            subtitle: "Please wait",
-            icon: "⏳",
-            type: "action" as const,
-            action: () => {},
-          }))
-        : systemApps().length > 0
-          ? systemApps()
-          : [
-              {
-                id: "no-apps",
-                title: "No applications found",
-                icon: "🔍",
-                type: "action" as const,
-                action: () => {},
-              },
-            ],
-    });
+    // Add system apps - either grouped by category or all together
+    if (groupByCategory()) {
+      // Group by category
+      const categories = getCategoriesWithCounts(systemApps());
+      categories.forEach(({ category, apps }) => {
+        if (apps.length > 0) {
+          groups.push({
+            heading: `${category.icon} ${category.name}`,
+            items: apps,
+          });
+        }
+      });
+    } else {
+      // All apps in one group
+      groups.push({
+        heading: "System Applications",
+        items: appsLoading()
+          ? Array(6).fill(null).map((_, i) => ({
+              id: `loading-skeleton-${i}`,
+              title: "Loading...",
+              subtitle: "Please wait",
+              icon: "⏳",
+              type: "action" as const,
+              action: () => {},
+            }))
+          : systemApps().length > 0
+            ? systemApps()
+            : [
+                {
+                  id: "no-apps",
+                  title: "No applications found",
+                  icon: "🔍",
+                  type: "action" as const,
+                  action: () => {},
+                },
+              ],
+      });
+    }
 
     return [
-      ...groups,
       ...groups,
       {
         heading: "Actions",
@@ -545,6 +568,20 @@ export default function CommandPalette() {
               setAppsLoaded(false); // Reset loading state to allow refresh
               await loadSystemApplications();
               // Keep command palette open after refresh so user can see the results
+              setSearch("");
+            },
+          },
+          {
+            id: "action-toggle-categories",
+            title: groupByCategory() ? "Show All Apps" : "Group by Category",
+            subtitle: groupByCategory() 
+              ? "Display apps in a single list"
+              : "Organize apps by type (Browsers, Development, etc.)",
+            icon: groupByCategory() ? "📋" : "📁",
+            keywords: ["categories", "group", "organize", "filter"],
+            type: "action" as const,
+            action: async () => {
+              setGroupByCategory(!groupByCategory());
               setSearch("");
             },
           },
@@ -1006,6 +1043,19 @@ export default function CommandPalette() {
                             </div>
                           )}
                         </div>
+                        {!groupByCategory() && item.category && item.type === "app" && (
+                          <div 
+                            class="raycast-category-badge"
+                            style={{
+                              background: `${item.category.color}20`,
+                              border: `1px solid ${item.category.color}40`,
+                              color: item.category.color,
+                            }}
+                          >
+                            <span class="category-icon">{item.category.icon}</span>
+                            <span class="category-name">{item.category.name}</span>
+                          </div>
+                        )}
                         {item.score && item.score > 1 && (
                           <div class="raycast-item-badge">
                             <span class="badge-text">Used {item.score}x</span>
@@ -1443,6 +1493,27 @@ export default function CommandPalette() {
 
         .badge-text {
           white-space: nowrap;
+        }
+
+        .raycast-category-badge {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          margin-left: 8px;
+          padding: 3px 8px;
+          border-radius: 8px;
+          font-size: 11px;
+          font-weight: 600;
+          transition: all 0.2s ease;
+        }
+
+        .category-icon {
+          font-size: 10px;
+        }
+
+        .category-name {
+          white-space: nowrap;
+          font-weight: 500;
         }
 
         .raycast-item-title {
