@@ -5,6 +5,7 @@ import {
   createEffect,
   createMemo,
   Show,
+  For,
 } from "solid-js";
 import { Command } from "cmdk-solid";
 import { pluginManager } from "../plugins/PluginManager";
@@ -12,6 +13,13 @@ import { commands } from "../bindings";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import AIChatInterface from "./AIChatInterface";
+import { fuzzySearch } from "../utils/fuzzySearch";
+import { 
+  getRecentApps, 
+  getFrequentApps, 
+  addRecentApp,
+  type RecentApp 
+} from "../utils/recentApps";
 
 interface CommandItem {
   id: string;
@@ -21,6 +29,8 @@ interface CommandItem {
   keywords?: string[];
   type: "app" | "action" | "web" | "plugin";
   action: () => void | Promise<void>;
+  score?: number; // For ranking search results
+  bundleId?: string; // For app tracking
 }
 
 export default function CommandPalette() {
@@ -28,6 +38,8 @@ export default function CommandPalette() {
   const [search, setSearch] = createSignal("");
   const [pluginCommands, setPluginCommands] = createSignal<CommandItem[]>([]);
   const [systemApps, setSystemApps] = createSignal<CommandItem[]>([]);
+  const [recentApps, setRecentApps] = createSignal<RecentApp[]>([]);
+  const [frequentApps, setFrequentApps] = createSignal<RecentApp[]>([]);
   const [appsLoading, setAppsLoading] = createSignal(false);
   const [appsLoaded, setAppsLoaded] = createSignal(false);
   const [iconCache, setIconCache] = createSignal<Map<string, string>>(new Map());
@@ -114,10 +126,27 @@ export default function CommandPalette() {
       // Load system apps immediately after mount
       console.log("Loading system apps on mount...");
       await loadSystemApplications();
+      
+      // Load recent and frequent apps
+      await loadRecentAndFrequentApps();
     } catch (error) {
       console.error("Failed to load plugins:", error);
     }
   });
+
+  // Load recent and frequent apps
+  const loadRecentAndFrequentApps = async () => {
+    try {
+      const [recent, frequent] = await Promise.all([
+        getRecentApps(),
+        getFrequentApps(15),
+      ]);
+      setRecentApps(recent);
+      setFrequentApps(frequent);
+    } catch (error) {
+      console.error("Failed to load recent/frequent apps:", error);
+    }
+  };
 
   const updatePluginCommands = () => {
     const commands = pluginManager.getAllCommands().map((cmd) => ({
@@ -195,8 +224,19 @@ export default function CommandPalette() {
           icon: "📱", // Default icon for apps (will be updated asynchronously)
           keywords: [app.name.toLowerCase(), app.bundle_id.toLowerCase()],
           type: "app" as const,
+          bundleId: app.bundle_id,
           action: async () => {
             try {
+              // Track this app as recently used
+              await addRecentApp(
+                `system-app-${index}`,
+                app.name,
+                app.bundle_id
+              );
+              
+              // Refresh recent apps list
+              await loadRecentAndFrequentApps();
+              
               // Use tauri-plugin-opener to open the application
               // Try different methods based on available information
               if (app.path) {
@@ -343,37 +383,132 @@ export default function CommandPalette() {
     return iconMap[fileType] || "📄";
   };
 
+  // Get recent apps as command items
+  const recentAppsItems = createMemo(() => {
+    const recent = recentApps();
+    const allApps = systemApps();
+    
+    return recent.slice(0, 8).map(recentApp => {
+      const appItem = allApps.find(app => app.bundleId === recentApp.bundleId);
+      if (appItem) {
+        return { ...appItem, score: recentApp.usageCount };
+      }
+      return null;
+    }).filter(Boolean) as CommandItem[];
+  });
+
+  // Get frequent apps as command items
+  const frequentAppsItems = createMemo(() => {
+    const frequent = frequentApps();
+    const allApps = systemApps();
+    
+    return frequent.map(freqApp => {
+      const appItem = allApps.find(app => app.bundleId === freqApp.bundleId);
+      if (appItem) {
+        return { ...appItem, score: freqApp.usageCount };
+      }
+      return null;
+    }).filter(Boolean) as CommandItem[];
+  });
+
+  // Optimized search with fuzzy matching
+  const searchResults = createMemo(() => {
+    const query = search();
+    if (!query || query.startsWith('#')) {
+      return null; // No search active or file search
+    }
+
+    // Combine all searchable items
+    const allItems = [
+      ...systemApps(),
+      ...pluginCommands(),
+      // Add action items, web items etc.
+    ];
+
+    // Use fuzzy search
+    const results = fuzzySearch(query, allItems);
+    
+    return results.slice(0, 50); // Limit results for performance
+  });
+
   // Commands with real Tauri integration - using createMemo for reactive updates
   const commandGroups = createMemo(() => {
     console.log(
       `Computing commandGroups - appsLoading: ${appsLoading()}, appsLoaded: ${appsLoaded()}, systemApps length: ${systemApps().length}`,
     );
 
-    return [
-      {
-        heading: "System Applications",
-        items: appsLoading()
-          ? [
+    const searchQuery = search();
+    const hasSearch = searchQuery && !searchQuery.startsWith('#');
+
+    // If searching, return search results
+    if (hasSearch) {
+      const results = searchResults();
+      if (results && results.length > 0) {
+        return [
+          {
+            heading: "Search Results",
+            items: results,
+          },
+        ];
+      } else {
+        return [
+          {
+            heading: "No Results",
+            items: [
               {
-                id: "loading-apps",
-                title: "Loading applications...",
-                icon: "⏳",
+                id: "no-results",
+                title: "No results found",
+                icon: "🔍",
                 type: "action" as const,
                 action: () => {},
               },
-            ]
-          : systemApps().length > 0
-            ? systemApps()
-            : [
-                {
-                  id: "no-apps",
-                  title: "No applications found",
-                  icon: "🔍",
-                  type: "action" as const,
-                  action: () => {},
-                },
-              ],
-      },
+            ],
+          },
+        ];
+      }
+    }
+
+    // Default view with recent and all apps
+    const groups: Array<{ heading: string; items: CommandItem[] }> = [];
+
+    // Add recent apps group if available
+    const recentItems = recentAppsItems();
+    if (recentItems.length > 0) {
+      groups.push({
+        heading: "Recent Applications",
+        items: recentItems,
+      });
+    }
+
+    // Add all system apps
+    groups.push({
+      heading: "System Applications",
+      items: appsLoading()
+        ? [
+            {
+              id: "loading-apps",
+              title: "Loading applications...",
+              icon: "⏳",
+              type: "action" as const,
+              action: () => {},
+            },
+          ]
+        : systemApps().length > 0
+          ? systemApps()
+          : [
+              {
+                id: "no-apps",
+                title: "No applications found",
+                icon: "🔍",
+                type: "action" as const,
+                action: () => {},
+              },
+            ],
+    });
+
+    return [
+      ...groups,
+      ...groups,
       {
         heading: "Actions",
         items: [
