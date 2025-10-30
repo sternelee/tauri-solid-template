@@ -66,18 +66,18 @@ export default function KeyboardShortcutsHelp() {
             
             <div class="help-content">
               {Object.entries(groupedShortcuts()).map(([category, items]) => (
-                <div class="help-section">
+                <div class="help-section" key={category}>
                   <h3 class="help-category">{category}</h3>
                   <div class="help-shortcuts">
-                    {items.map(shortcut => (
-                      <div class="help-shortcut-item">
+                    {items.map((shortcut, shortcutIndex) => (
+                      <div class="help-shortcut-item" key={`${category}-${shortcutIndex}`}>
                         <span class="help-description">{shortcut.description}</span>
                         <div class="help-keys">
                           {shortcut.keys.map((key, index) => (
                             <>
-                              <kbd class="help-key">{key}</kbd>
+                              <kbd class="help-key" key={`${shortcut.description}-${index}`}>{key}</kbd>
                               {index < shortcut.keys.length - 1 && (
-                                <span class="help-key-separator">+</span>
+                                <span class="help-key-separator" key={`sep-${index}`}>+</span>
                               )}
                             </>
                           ))}

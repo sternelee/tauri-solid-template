@@ -162,10 +162,16 @@ export function getCategoriesWithCounts<T extends { bundleId?: string; title: st
  */
 export function getCategoryBadge(bundleId: string, name: string): {
   category: AppCategory;
-  style: string;
+  style: Record<string, string>;
 } {
   const category = categorizeApp(bundleId, name);
-  const style = `background: ${category.color}20; border-color: ${category.color}40; color: ${category.color};`;
+  
+  // Return style object instead of string for type safety
+  const style = {
+    background: `${category.color}20`,
+    borderColor: `${category.color}40`,
+    color: category.color,
+  };
   
   return { category, style };
 }

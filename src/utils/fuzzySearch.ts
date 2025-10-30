@@ -60,6 +60,13 @@ export function fuzzySearch<T extends SearchableItem>(
 /**
  * Calculate match score for highlighting
  */
+
+// Scoring constants
+const EXACT_MATCH_SCORE = 1.0;
+const STARTS_WITH_SCORE = 0.9;
+const CONTAINS_SCORE = 0.7;
+const FUZZY_MATCH_MULTIPLIER = 0.5;
+
 export function getMatchScore(
   query: string,
   text: string
@@ -70,13 +77,13 @@ export function getMatchScore(
   const lowerText = text.toLowerCase();
   
   // Exact match
-  if (lowerText === lowerQuery) return 1.0;
+  if (lowerText === lowerQuery) return EXACT_MATCH_SCORE;
   
   // Starts with query
-  if (lowerText.startsWith(lowerQuery)) return 0.9;
+  if (lowerText.startsWith(lowerQuery)) return STARTS_WITH_SCORE;
   
   // Contains query
-  if (lowerText.includes(lowerQuery)) return 0.7;
+  if (lowerText.includes(lowerQuery)) return CONTAINS_SCORE;
   
   // Check for fuzzy match (each character in query appears in text in order)
   let queryIndex = 0;
@@ -87,7 +94,8 @@ export function getMatchScore(
   }
   
   if (queryIndex === lowerQuery.length) {
-    return 0.5 * (queryIndex / text.length);
+    // Score based on how condensed the match is
+    return FUZZY_MATCH_MULTIPLIER * (queryIndex / text.length);
   }
   
   return 0;

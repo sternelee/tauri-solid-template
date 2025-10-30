@@ -41,6 +41,10 @@ interface CommandItem {
   category?: AppCategory; // For categorization
 }
 
+// UI Constants
+const SKELETON_ITEMS_COUNT = 6;
+const ANIMATION_DELAY_MS = 20;
+
 export default function CommandPalette() {
   const [open, setOpen] = createSignal(true); // Auto-open on app start
   const [search, setSearch] = createSignal("");
@@ -507,7 +511,7 @@ export default function CommandPalette() {
       groups.push({
         heading: "System Applications",
         items: appsLoading()
-          ? Array(6).fill(null).map((_, i) => ({
+          ? Array(SKELETON_ITEMS_COUNT).fill(null).map((_, i) => ({
               id: `loading-skeleton-${i}`,
               title: "Loading...",
               subtitle: "Please wait",
@@ -1020,7 +1024,7 @@ export default function CommandPalette() {
                         onSelect={() => handleSelect(item)}
                         class="raycast-item"
                         style={{
-                          "animation-delay": `${index * 20}ms`,
+                          "animation-delay": `${index * ANIMATION_DELAY_MS}ms`,
                         }}
                       >
                         <div class="raycast-item-icon">
