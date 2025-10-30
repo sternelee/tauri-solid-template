@@ -1,0 +1,112 @@
+Ripgrep Integration Flow Diagram
+=================================
+
+1. Application Startup
+   └─> Tauri initializes
+       └─> Registers search commands: search_files, search_screenshots, get_search_directories
+
+2. User Triggers Search (from Frontend)
+   │
+   ├─> invoke('search_files', { options, search_path })
+   │   │
+   │   └─> [Rust Backend] search::search_files(app_handle, options, search_path)
+   │       │
+   │       ├─> Build ripgrep arguments (pattern, filters, etc.)
+   │       │
+   │       └─> ripgrep::execute_ripgrep(app_handle, args)
+   │           │
+   │           └─> ripgrep::get_ripgrep_command(app_handle)
+   │               │
+   │               ├─> [Check System] is_ripgrep_installed()
+   │               │   │
+   │               │   └─> Execute: Command::new("rg").arg("--version")
+   │               │       │
+   │               │       ├─> ✅ Success → return Ok("rg")
+   │               │       │   [Use system ripgrep - OPTIMAL]
+   │               │       │
+   │               │       └─> ❌ Failed → get_sidecar_path(app_handle)
+   │               │           │
+   │               │           └─> app_handle.shell().sidecar("rg")
+   │               │               │
+   │               │               └─> Returns path to bundled binary:
+   │               │                   - Linux: binaries/rg-x86_64-unknown-linux-musl
+   │               │                   - macOS Intel: binaries/rg-x86_64-apple-darwin
+   │               │                   - macOS ARM: binaries/rg-aarch64-apple-darwin
+   │               │                   - Windows: binaries/rg-x86_64-pc-windows-msvc.exe
+   │               │
+   │               └─> [Execute] Command::new(rg_command).args(args).output()
+   │                   │
+   │                   └─> Parse JSON output → Vec<SearchResult>
+   │
+   └─> Return results to frontend
+
+3. Build Process (CI/CD or Manual)
+   │
+   ├─> Developer runs: ./download-ripgrep.sh (or .ps1)
+   │   │
+   │   ├─> Downloads from https://github.com/BurntSushi/ripgrep/releases
+   │   │   - ripgrep-14.1.1-x86_64-unknown-linux-musl.tar.gz
+   │   │   - ripgrep-14.1.1-x86_64-apple-darwin.tar.gz
+   │   │   - ripgrep-14.1.1-aarch64-apple-darwin.tar.gz
+   │   │   - ripgrep-14.1.1-x86_64-pc-windows-msvc.zip
+   │   │
+   │   ├─> Extracts binaries
+   │   │
+   │   └─> Renames to Tauri convention: rg-{target-triple}
+   │
+   ├─> Developer runs: pnpm tauri build
+   │   │
+   │   └─> Tauri reads tauri.conf.json → externalBin: ["binaries/rg"]
+   │       │
+   │       └─> Bundles platform-specific binary into installer
+   │
+   └─> Installer distributed to users
+       └─> Contains ripgrep binary, ready to use as fallback
+
+Key Decision Points:
+====================
+
+Point 1: System Check
+  Question: Is ripgrep installed on system?
+  Method: Try to execute 'rg --version'
+  ├─> Yes → Use system binary (path: "rg")
+  │   Benefits: May be newer, system-optimized, saves bundle size
+  │
+  └─> No → Use sidecar binary
+      Benefits: Always works, consistent behavior, no user setup needed
+
+Point 2: Binary Selection
+  Tauri automatically selects based on:
+  - Operating System (Linux, macOS, Windows)
+  - Architecture (x86_64, aarch64)
+  Naming pattern: rg-{rust-target-triple}{.exe}
+
+Result Flow:
+============
+
+Search Results → JSON from ripgrep → Parsed into Vec<SearchResult>
+                                    ↓
+                                    Each result contains:
+                                    - path: String
+                                    - line_number: Option<u32>
+                                    - content: Option<String>
+                                    - file_type: String
+
+Error Handling:
+===============
+
+1. System ripgrep check fails → Try sidecar
+2. Sidecar not found → Return error: "Failed to get ripgrep sidecar"
+3. Execution fails → Return error: "Failed to execute ripgrep"
+4. Command fails → Return error: "ripgrep failed: {stderr}"
+5. JSON parse fails → Skip invalid lines, continue processing
+
+Benefits of This Approach:
+===========================
+
+✅ Zero Configuration: Works out of the box for all users
+✅ Optimal Performance: Uses system ripgrep when available
+✅ Always Works: Falls back to bundled binary
+✅ Cross-Platform: Single codebase for all platforms
+✅ Transparent: User doesn't need to know about ripgrep
+✅ Future-Proof: Can update bundled version independently
