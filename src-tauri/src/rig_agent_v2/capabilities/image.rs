@@ -15,10 +15,17 @@ impl ImageCapability {
         prompt: &str,
         params: Option<ImageGenerationParams>,
     ) -> Result<ImageGenerationResponse> {
-        // Implementation would go here
-        Err(AgentError::ImageGenerationError(
-            "Not implemented yet".to_string(),
-        ))
+        // Get the unified agent from the agent manager
+        let agent = self.agent_manager.agent();
+
+        // Convert parameters to JSON format
+        let params_json = params.map(|p| serde_json::to_value(p).unwrap_or_default());
+
+        // Use the agent's image generation functionality
+        let result = agent.generate_image(prompt, params_json).await?;
+
+        // Convert the result to ImageGenerationResponse format
+        serde_json::from_value(result).map_err(|e| AgentError::SerializationError(e))
     }
 }
 

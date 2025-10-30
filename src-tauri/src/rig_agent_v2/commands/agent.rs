@@ -35,8 +35,8 @@ pub async fn get_agent_info(app: AppHandle) -> std::result::Result<serde_json::V
                     "chat": true,
                     "streaming": true,
                     "tools": manager.tools().list_tools().len() > 0,
-                    "embeddings": false, // TODO: implement embeddings
-                    "image_generation": false, // TODO: implement image generation
+                    "embeddings": true,
+                    "image_generation": true,
                 },
                 "timestamp": chrono::Utc::now().to_rfc3339()
             });

@@ -1,9 +1,11 @@
 // Tool management system - simplified for compilation
 
 pub mod registry;
+pub mod mcp_adapter;
 
 // Re-export core types
 pub use registry::*;
+pub use mcp_adapter::*;
 
 // Simple mock types for now
 use serde::{Deserialize, Serialize};

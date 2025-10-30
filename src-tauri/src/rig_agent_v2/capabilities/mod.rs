@@ -5,6 +5,26 @@ use futures::Stream;
 use std::pin::Pin;
 use std::sync::Arc;
 
+/// User intent categories for tool suggestions
+#[derive(Debug, Clone, PartialEq)]
+enum IntentCategory {
+    Search,
+    FileOperation,
+    Generation,
+    Communication,
+    Analysis,
+    MCP,
+    General,
+}
+
+/// User intent extracted from message and context
+#[derive(Debug, Clone)]
+struct UserIntent {
+    primary_category: IntentCategory,
+    keywords: Vec<String>,
+    confidence: f32,
+}
+
 pub mod chat;
 pub mod embedding;
 pub mod image;
@@ -98,16 +118,106 @@ impl AICapability {
         self.agent_manager.tools().list_tools()
     }
 
-    /// Search tools (placeholder)
-    pub async fn search_tools(&self, _query: &str) -> Vec<ToolMetadata> {
-        // TODO: Implement tool search
-        vec![]
+    /// Search tools by query
+    pub async fn search_tools(&self, query: &str) -> Vec<ToolMetadata> {
+        if query.is_empty() {
+            return vec![];
+        }
+
+        // Get available tools from the tool manager
+        let available_tools = self.agent_manager.tools().list_tools();
+
+        // Convert tool names to ToolMetadata with search matching
+        let mut matching_tools = Vec::new();
+
+        for tool_name in available_tools {
+            // Create basic metadata for each tool
+            let metadata = ToolMetadata {
+                name: tool_name.clone(),
+                description: format!("Tool: {}", tool_name),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {}
+                }),
+                category: self.categorize_tool(&tool_name),
+                tags: self.generate_tool_tags(&tool_name),
+            };
+
+            // Check if tool matches search query
+            if self.tool_matches_query(&metadata, query) {
+                matching_tools.push(metadata);
+            }
+        }
+
+        // Sort by relevance (simple heuristic: exact name matches first, then description matches)
+        matching_tools.sort_by(|a, b| {
+            let a_exact = a.name.to_lowercase() == query.to_lowercase();
+            let b_exact = b.name.to_lowercase() == query.to_lowercase();
+
+            if a_exact && !b_exact {
+                std::cmp::Ordering::Less
+            } else if !a_exact && b_exact {
+                std::cmp::Ordering::Greater
+            } else {
+                // Sort by name if neither or both are exact matches
+                a.name.cmp(&b.name)
+            }
+        });
+
+        matching_tools
     }
 
-    /// Get tool suggestions (placeholder)
-    pub async fn suggest_tools(&self, _context: &serde_json::Value) -> Vec<ToolMetadata> {
-        // TODO: Implement tool suggestions
-        vec![]
+    /// Get tool suggestions based on context
+    pub async fn suggest_tools(&self, context: &serde_json::Value) -> Vec<ToolMetadata> {
+        // Get available tools from the tool manager
+        let available_tools = self.agent_manager.tools().list_tools();
+
+        // Extract context information
+        let user_message = context.get("message")
+            .and_then(|m| m.as_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        let empty_history = vec![];
+        let conversation_history = context.get("conversation_history")
+            .and_then(|h| h.as_array())
+            .unwrap_or(&empty_history);
+
+        let history_refs: Vec<&serde_json::Value> = conversation_history.iter().collect();
+        let user_intent = self.extract_user_intent(&user_message, &history_refs);
+
+        // Generate suggestions based on context and intent
+        let mut suggestions = Vec::new();
+
+        for tool_name in available_tools {
+            let metadata = ToolMetadata {
+                name: tool_name.clone(),
+                description: format!("Tool: {}", tool_name),
+                parameters: serde_json::json!({
+                    "type": "object",
+                    "properties": {}
+                }),
+                category: self.categorize_tool(&tool_name),
+                tags: self.generate_tool_tags(&tool_name),
+            };
+
+            // Calculate relevance score
+            let relevance_score = self.calculate_tool_relevance(&metadata, &user_intent, &user_message, &history_refs);
+
+            // Include tool if it's relevant enough
+            if relevance_score > 0.3 {
+                suggestions.push((metadata, relevance_score));
+            }
+        }
+
+        // Sort by relevance score (descending)
+        suggestions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        // Take top suggestions (max 10)
+        suggestions.into_iter()
+            .take(10)
+            .map(|(metadata, _score)| metadata)
+            .collect()
     }
 
     /// Get current provider information
@@ -123,6 +233,242 @@ impl AICapability {
     /// Get current configuration
     pub async fn get_config(&self) -> AgentConfig {
         self.agent_manager.get_config().await
+    }
+
+    // Helper methods for tool search
+
+    /// Categorize a tool based on its name
+    fn categorize_tool(&self, tool_name: &str) -> Option<String> {
+        let name_lower = tool_name.to_lowercase();
+
+        if name_lower.contains("search") || name_lower.contains("find") {
+            Some("Search".to_string())
+        } else if name_lower.contains("file") || name_lower.contains("read") || name_lower.contains("write") {
+            Some("File System".to_string())
+        } else if name_lower.contains("web") || name_lower.contains("http") || name_lower.contains("api") {
+            Some("Network".to_string())
+        } else if name_lower.contains("mcp") {
+            Some("MCP".to_string())
+        } else if name_lower.contains("embed") || name_lower.contains("vector") {
+            Some("Embeddings".to_string())
+        } else if name_lower.contains("image") || name_lower.contains("generate") {
+            Some("Generation".to_string())
+        } else if name_lower.contains("chat") || name_lower.contains("conversation") {
+            Some("Communication".to_string())
+        } else if name_lower.contains("database") || name_lower.contains("db") {
+            Some("Database".to_string())
+        } else if name_lower.contains("system") || name_lower.contains("process") {
+            Some("System".to_string())
+        } else {
+            Some("General".to_string())
+        }
+    }
+
+    /// Generate tags for a tool based on its name
+    fn generate_tool_tags(&self, tool_name: &str) -> Vec<String> {
+        let name_lower = tool_name.to_lowercase();
+        let mut tags = Vec::new();
+
+        // Add common tags based on keywords
+        if name_lower.contains("async") {
+            tags.push("async".to_string());
+        }
+        if name_lower.contains("mcp") {
+            tags.push("mcp".to_string());
+        }
+        if name_lower.contains("tool") {
+            tags.push("tool".to_string());
+        }
+        if name_lower.contains("execute") {
+            tags.push("execution".to_string());
+        }
+        if name_lower.contains("list") {
+            tags.push("listing".to_string());
+        }
+        if name_lower.contains("search") {
+            tags.push("search".to_string());
+        }
+        if name_lower.contains("generate") {
+            tags.push("generation".to_string());
+        }
+        if name_lower.contains("file") {
+            tags.push("file".to_string());
+        }
+
+        // Add the tool name itself as a tag
+        tags.push(tool_name.to_string());
+
+        tags
+    }
+
+    /// Check if a tool matches a search query
+    fn tool_matches_query(&self, metadata: &ToolMetadata, query: &str) -> bool {
+        let query_lower = query.to_lowercase();
+
+        // Check exact name match
+        if metadata.name.to_lowercase() == query_lower {
+            return true;
+        }
+
+        // Check if query is contained in tool name
+        if metadata.name.to_lowercase().contains(&query_lower) {
+            return true;
+        }
+
+        // Check description match
+        if metadata.description.to_lowercase().contains(&query_lower) {
+            return true;
+        }
+
+        // Check category match
+        if let Some(category) = &metadata.category {
+            if category.to_lowercase().contains(&query_lower) {
+                return true;
+            }
+        }
+
+        // Check tags match
+        for tag in &metadata.tags {
+            if tag.to_lowercase().contains(&query_lower) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    // Helper methods for tool suggestions
+
+    /// Extract user intent from message and conversation history
+    fn extract_user_intent(&self, message: &str, _history: &[&serde_json::Value]) -> UserIntent {
+        let mut intent = UserIntent {
+            primary_category: IntentCategory::General,
+            keywords: Vec::new(),
+            confidence: 0.5,
+        };
+
+        // Analyze message for intent indicators
+        let message_lower = message.to_lowercase();
+
+        // Search intent
+        if message_lower.contains("search") || message_lower.contains("find") || message_lower.contains("look for") {
+            intent.primary_category = IntentCategory::Search;
+            intent.confidence = 0.8;
+            intent.keywords.push("search".to_string());
+        }
+        // File operations intent
+        else if message_lower.contains("file") || message_lower.contains("read") || message_lower.contains("write")
+            || message_lower.contains("create") || message_lower.contains("delete") {
+            intent.primary_category = IntentCategory::FileOperation;
+            intent.confidence = 0.8;
+            intent.keywords.push("file".to_string());
+        }
+        // Generation intent
+        else if message_lower.contains("generate") || message_lower.contains("create") || message_lower.contains("make") {
+            intent.primary_category = IntentCategory::Generation;
+            intent.confidence = 0.7;
+            intent.keywords.push("generate".to_string());
+        }
+        // Communication intent
+        else if message_lower.contains("chat") || message_lower.contains("talk") || message_lower.contains("ask") {
+            intent.primary_category = IntentCategory::Communication;
+            intent.confidence = 0.6;
+            intent.keywords.push("communication".to_string());
+        }
+        // Analysis intent
+        else if message_lower.contains("analyze") || message_lower.contains("check") || message_lower.contains("review") {
+            intent.primary_category = IntentCategory::Analysis;
+            intent.confidence = 0.7;
+            intent.keywords.push("analysis".to_string());
+        }
+        // MCP-specific intent
+        else if message_lower.contains("mcp") {
+            intent.primary_category = IntentCategory::MCP;
+            intent.confidence = 0.9;
+            intent.keywords.push("mcp".to_string());
+        }
+
+        intent
+    }
+
+    /// Calculate relevance score for a tool based on context
+    fn calculate_tool_relevance(&self, metadata: &ToolMetadata, intent: &UserIntent, message: &str, _history: &[&serde_json::Value]) -> f32 {
+        let mut score = 0.0;
+
+        // Base score for tool availability
+        score += 0.1;
+
+        // Category matching with intent
+        if let Some(tool_category) = &metadata.category {
+            match intent.primary_category {
+                IntentCategory::Search => {
+                    if tool_category.to_lowercase().contains("search") {
+                        score += 0.5;
+                    }
+                }
+                IntentCategory::FileOperation => {
+                    if tool_category.to_lowercase().contains("file") || tool_category.to_lowercase().contains("system") {
+                        score += 0.5;
+                    }
+                }
+                IntentCategory::Generation => {
+                    if tool_category.to_lowercase().contains("generation") || tool_category.to_lowercase().contains("create") {
+                        score += 0.5;
+                    }
+                }
+                IntentCategory::Communication => {
+                    if tool_category.to_lowercase().contains("communication") || tool_category.to_lowercase().contains("chat") {
+                        score += 0.5;
+                    }
+                }
+                IntentCategory::Analysis => {
+                    if tool_category.to_lowercase().contains("embeddings") || tool_category.to_lowercase().contains("vector") {
+                        score += 0.5;
+                    }
+                }
+                IntentCategory::MCP => {
+                    if tool_category.to_lowercase().contains("mcp") {
+                        score += 0.5;
+                    }
+                }
+                IntentCategory::General => {
+                    // No specific category boost for general intent
+                }
+            }
+        }
+
+        // Keyword matching in tool name and description
+        for keyword in &intent.keywords {
+            if metadata.name.to_lowercase().contains(keyword) {
+                score += 0.3;
+            }
+            if metadata.description.to_lowercase().contains(keyword) {
+                score += 0.2;
+            }
+        }
+
+        // Direct message keyword matching
+        let message_words: Vec<&str> = message.split_whitespace().collect();
+        for word in message_words {
+            if metadata.name.to_lowercase().contains(word) {
+                score += 0.2;
+            }
+            for tag in &metadata.tags {
+                if tag.to_lowercase().contains(word) {
+                    score += 0.1;
+                }
+            }
+        }
+
+        // Apply intent confidence as a multiplier
+        score *= intent.confidence;
+
+        // Cap the score at 1.0
+        if score > 1.0 {
+            score = 1.0;
+        }
+
+        score
     }
 
     // Private implementation methods

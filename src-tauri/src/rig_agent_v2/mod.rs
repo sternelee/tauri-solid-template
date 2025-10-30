@@ -8,6 +8,8 @@ pub mod capabilities;
 pub mod events;
 pub mod commands;
 pub mod specta_events;
+pub mod mcp_approval;
+pub mod mcp_approval_manager;
 
 // Export specta-compatible events
 pub use specta_events::*;

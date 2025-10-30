@@ -216,6 +216,24 @@ pub fn run() {
             rig_agent_v2::commands::get_available_tools,
             rig_agent_v2::commands::update_agent_config,
 
+            // MCP集成命令
+            rig_agent_v2::commands::initialize_mcp_tools,
+            rig_agent_v2::commands::list_mcp_tools,
+            rig_agent_v2::commands::refresh_mcp_tools_command,
+            rig_agent_v2::commands::get_mcp_servers_status,
+
+            // MCP审批流程命令
+            rig_agent_v2::commands::initialize_mcp_approval_manager,
+            rig_agent_v2::commands::get_pending_approval_requests,
+            rig_agent_v2::commands::approve_tool_request,
+            rig_agent_v2::commands::reject_tool_request,
+            rig_agent_v2::commands::get_mcp_approval_config,
+            rig_agent_v2::commands::toggle_tool_auto_approve,
+            rig_agent_v2::commands::toggle_mcp_server,
+            rig_agent_v2::commands::get_tool_approval_status,
+            rig_agent_v2::commands::cleanup_expired_approval_requests,
+            rig_agent_v2::commands::execute_approved_mcp_tool,
+
             // ReAct模式命令
             rig_agent_v2::commands::start_react_chat,
             rig_agent_v2::commands::get_react_config,

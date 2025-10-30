@@ -11,10 +11,11 @@ impl EmbeddingCapability {
     }
 
     pub async fn generate_embeddings(&self, texts: Vec<String>) -> Result<Vec<Vec<f32>>> {
-        // Implementation would go here
-        Err(AgentError::EmbeddingError(
-            "Not implemented yet".to_string(),
-        ))
+        // Get the unified agent from the agent manager
+        let agent = self.agent_manager.agent();
+
+        // Use the agent's embedding functionality
+        agent.generate_embeddings(texts).await
     }
 }
 
