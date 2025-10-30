@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::pin::Pin;
 use std::sync::Arc;
 use thiserror::Error;
+use futures::FutureExt;
 use tokio::sync::Notify;
 
 #[derive(Debug, Error)]

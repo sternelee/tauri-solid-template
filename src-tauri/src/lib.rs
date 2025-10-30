@@ -3,10 +3,14 @@ use tauri_specta::Event;
 pub mod apps;
 pub mod database;
 pub mod mcp;
-pub mod rig_agent;
+// Temporarily disable rig_agent until compilation issues are resolved
+// pub mod rig_agent;
 pub mod search;
 pub mod settings;
 pub mod text_selection;
+
+// Add the new rig_agent_v2 module
+pub mod rig_agent_v2;
 
 // demo command
 #[tauri::command]
@@ -191,11 +195,42 @@ pub fn run() {
             mcp::commands::save_mcp_configs,
             mcp::commands::get_mcp_server_status,
             mcp::commands::reset_mcp_restart_count,
+            // rig_agent_v2 commands - 已全部启用 (17个命令)
+            // 系统信息命令
+            rig_agent_v2::commands::get_ai_system_info,
+            rig_agent_v2::commands::get_ai_capabilities,
+            rig_agent_v2::commands::get_agent_config,
+
+            // 系统管理命令
+            rig_agent_v2::commands::initialize_ai_system,
+            rig_agent_v2::commands::initialize_agent_system,
+            rig_agent_v2::commands::get_agent_info,
+            rig_agent_v2::commands::shutdown_agent_system,
+
+            // 聊天功能命令
+            rig_agent_v2::commands::send_chat_message,
+            rig_agent_v2::commands::start_chat_stream,
+
+            // 工具系统命令
+            rig_agent_v2::commands::execute_tool,
+            rig_agent_v2::commands::get_available_tools,
+            rig_agent_v2::commands::update_agent_config,
+
+            // ReAct模式命令
+            rig_agent_v2::commands::start_react_chat,
+            rig_agent_v2::commands::get_react_config,
+            rig_agent_v2::commands::update_react_config,
+            rig_agent_v2::commands::execute_react_step,
         ])
         .events(tauri_specta::collect_events![
             crate::DemoEvent,
             // rig_agent::commands::ChatEvent, // Temporarily commented
-            // rig_agent::enhanced_commands::EnhancedChatEvent // Temporarily commented
+            // rig_agent::enhanced_commands::EnhancedChatEvent, // Temporarily commented
+            // rig_agent_v2 events (temporarily commented)
+            // rig_agent_v2::specta_events::ChatStreamEvent,
+            // rig_agent_v2::specta_events::ReActStreamEvent,
+            // rig_agent_v2::specta_events::AISystemEvent,
+            // rig_agent_v2::specta_events::ToolEvent,
         ]);
 
     #[cfg(debug_assertions)]
@@ -225,7 +260,7 @@ pub fn run() {
         .plugin(tauri_plugin_screenshots::init())
         .plugin(tauri_plugin_http::init())
         .manage(apps::ApplicationsState::default())
-        .manage(rig_agent::AgentState::default())
+        .manage(rig_agent_v2::AgentState::default())
         .manage(settings::SettingsState::new())
         .manage(text_selection::init_text_selection_system())
         .manage(mcp::state::McpState::with_client_manager())

@@ -55,6 +55,10 @@ rig-core = { version = "0.22.0", features = [
   "reqwest-rustls",
 ] }
 
+# Async utilities
+futures = "0.3"
+lazy_static = "1.5"
+
 rmcp = { version = "0.7", features = [
   "client",
   "transport-sse-client-reqwest",

@@ -1,6 +1,8 @@
 use super::*;
 use std::sync::Arc;
 use tokio::sync::Notify;
+use rig::agent::Agent;
+use rig::tool::Tool;
 
 // Legacy Agent wrapper (deprecated, use EnhancedAgent from enhanced_agent instead)
 pub struct LegacyAgent {
@@ -128,8 +130,8 @@ impl ReactAgentFactory {
     pub async fn create_react_agent<M>(
         client: &rig::Client<M>,
         config: &AgentConfig,
-        tools: Vec<Box<dyn rig::tool::Tool>>,
-    ) -> Result<rig::Agent<M>, AgentError>
+        tools: Vec<Box<dyn Tool>>,
+    ) -> Result<Agent<M>, AgentError>
     where
         M: rig::completion::CompletionModel + 'static,
         <M as rig::completion::CompletionModel>::StreamingResponse: std::marker::Send,

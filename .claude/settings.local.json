@@ -35,7 +35,11 @@
       "Bash(pnpm install)",
       "Bash(cargo test:*)",
       "WebFetch(domain:localhost)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(rustc:*)",
+      "Bash(perl:*)",
+      "Bash(python3:*)",
+      "Read(//Users/sternelee/www/github/**)"
     ],
     "deny": [],
     "ask": []

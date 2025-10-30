@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::Engine as _;
 use rig::completion::Prompt;
 use rig::prelude::*;
 use rig::providers::openai;

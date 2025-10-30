@@ -88,7 +88,9 @@ impl HttpMcpClient {
         if response_text.starts_with("event: message\ndata: ") {
             // Parse SSE response
             let json_start = response_text.find("data: ").unwrap_or(0) + 6;
-            let json_end = response_text.find('\n', json_start).unwrap_or(response_text.len());
+            let json_end = response_text[json_start..].find('\n')
+                .map(|pos| pos + json_start)
+                .unwrap_or(response_text.len());
             let json_str = &response_text[json_start..json_end];
 
             let sse_response: Value = serde_json::from_str(json_str)
