@@ -1,9 +1,17 @@
-use std::path::PathBuf;
+// Ripgrep functionality is only available on desktop platforms
+// Mobile platforms do not support external binaries or sidecar processes
+
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 use std::process::Command;
 
 /// Determines the ripgrep executable path to use.
 /// First checks if 'rg' is available in the system PATH.
 /// If not found, falls back to the sidecar binary bundled with the application.
+/// 
+/// Note: This function is only available on desktop platforms.
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 pub fn get_ripgrep_command(app_handle: &tauri::AppHandle) -> Result<String, String> {
     // First, try to find ripgrep on the system
     if is_ripgrep_installed() {
@@ -15,6 +23,8 @@ pub fn get_ripgrep_command(app_handle: &tauri::AppHandle) -> Result<String, Stri
 }
 
 /// Check if ripgrep is installed on the system by trying to run 'rg --version'
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 fn is_ripgrep_installed() -> bool {
     Command::new("rg")
         .arg("--version")
@@ -24,6 +34,8 @@ fn is_ripgrep_installed() -> bool {
 }
 
 /// Get the path to the ripgrep sidecar binary
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 fn get_sidecar_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
     use tauri::Manager;
     
@@ -40,6 +52,10 @@ fn get_sidecar_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
 }
 
 /// Execute ripgrep with the given arguments
+/// 
+/// Note: This function is only available on desktop platforms.
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 pub fn execute_ripgrep(
     app_handle: &tauri::AppHandle,
     args: &[String],

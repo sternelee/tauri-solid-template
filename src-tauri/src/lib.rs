@@ -5,7 +5,12 @@ pub mod database;
 pub mod mcp;
 // Temporarily disable rig_agent until compilation issues are resolved
 // pub mod rig_agent;
+
+// Ripgrep module is only available on desktop platforms
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 pub mod ripgrep;
+
 pub mod search;
 pub mod settings;
 pub mod text_selection;
