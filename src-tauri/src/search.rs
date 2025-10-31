@@ -2,7 +2,6 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::path::PathBuf;
-use std::process::Command;
 
 #[derive(Serialize, Deserialize, Type, Debug, Clone)]
 pub struct SearchResult {
@@ -20,10 +19,14 @@ pub struct SearchOptions {
     pub include_hidden: Option<bool>,
 }
 
-/// Search for files using ripgrep command
+// Desktop-only implementation with ripgrep support
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
+/// Search for files using ripgrep command (Desktop only)
 #[tauri::command]
 #[specta::specta]
 pub fn search_files(
+    app_handle: tauri::AppHandle,
     options: SearchOptions,
     search_path: Option<String>,
 ) -> Result<Vec<SearchResult>, String> {
@@ -73,11 +76,8 @@ pub fn search_files(
     // Add search directory
     args.push(search_dir.to_string_lossy().to_string());
 
-    // Execute ripgrep command
-    let output = Command::new("rg")
-        .args(&args)
-        .output()
-        .map_err(|e| format!("Failed to execute ripgrep: {}", e))?;
+    // Execute ripgrep command using the helper that checks system vs sidecar
+    let output = crate::ripgrep::execute_ripgrep(&app_handle, &args)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -149,6 +149,21 @@ pub fn search_files(
     Ok(results)
 }
 
+// Mobile stub implementation - ripgrep not supported
+#[cfg(any(target_os = "android", target_os = "ios"))]
+/// Search for files (Mobile - Not supported)
+#[tauri::command]
+#[specta::specta]
+pub fn search_files(
+    _app_handle: tauri::AppHandle,
+    _options: SearchOptions,
+    _search_path: Option<String>,
+) -> Result<Vec<SearchResult>, String> {
+    Err("File search with ripgrep is not supported on mobile platforms".to_string())
+}
+
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum RgResult {
@@ -174,6 +189,8 @@ enum RgResult {
     },
 }
 
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 #[derive(Deserialize)]
 struct RgStats {
     elapsed: Option<f64>,
@@ -185,6 +202,8 @@ struct RgStats {
     matches: Option<u64>,
 }
 
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 #[derive(Deserialize)]
 struct RgSubmatch {
     #[serde(rename = "match")]
@@ -193,11 +212,15 @@ struct RgSubmatch {
     end: u64,
 }
 
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 #[derive(Deserialize)]
 struct RgMatchText {
     text: String,
 }
 
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
 /// Detect file type based on file extension
 fn detect_file_type(path: &str) -> String {
     if let Some(extension) = std::path::Path::new(path)
@@ -243,10 +266,15 @@ fn detect_file_type(path: &str) -> String {
     }
 }
 
-/// Search for screenshot files
+#[cfg(not(target_os = "android"))]
+#[cfg(not(target_os = "ios"))]
+/// Search for screenshot files (Desktop only)
 #[tauri::command]
 #[specta::specta]
-pub fn search_screenshots(search_path: Option<String>) -> Result<Vec<SearchResult>, String> {
+pub fn search_screenshots(
+    app_handle: tauri::AppHandle,
+    search_path: Option<String>,
+) -> Result<Vec<SearchResult>, String> {
     // Default to common screenshot directories if no path provided
     let search_dirs = if let Some(path) = search_path {
         vec![PathBuf::from(path)]
@@ -307,8 +335,8 @@ pub fn search_screenshots(search_path: Option<String>) -> Result<Vec<SearchResul
 
             args.push(search_dir.to_string_lossy().to_string());
 
-            // Execute ripgrep command
-            if let Ok(output) = Command::new("rg").args(&args).output() {
+            // Execute ripgrep command using the helper that checks system vs sidecar
+            if let Ok(output) = crate::ripgrep::execute_ripgrep(&app_handle, &args) {
                 if output.status.success() {
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     for line in stdout.lines() {
@@ -333,6 +361,17 @@ pub fn search_screenshots(search_path: Option<String>) -> Result<Vec<SearchResul
     results.truncate(50); // Limit to 50 results
 
     Ok(results)
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+/// Search for screenshot files (Mobile - Not supported)
+#[tauri::command]
+#[specta::specta]
+pub fn search_screenshots(
+    _app_handle: tauri::AppHandle,
+    _search_path: Option<String>,
+) -> Result<Vec<SearchResult>, String> {
+    Err("Screenshot search with ripgrep is not supported on mobile platforms".to_string())
 }
 
 /// Get common search directories

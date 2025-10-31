@@ -1,0 +1,9 @@
+# Ignore all files in this directory
+*
+
+# Except this file and the README
+!.gitignore
+!README.md
+
+# The binaries should be downloaded during build process
+# They are too large to commit to the repository
