@@ -67,7 +67,7 @@ export default function CommandPalette() {
 
   // Initialize plugins on mount
   onMount(async () => {
-    console.log("CommandPalette mounting...");
+    console.log("CommandPalette mounting...", { open: open() });
 
     try {
       // Check if AI agent is available

@@ -3,17 +3,41 @@ import CommandPalette from "../components/CommandPalette";
 import KeyboardShortcutsHelp from "../components/KeyboardShortcutsHelp";
 
 export default function Home() {
-  const [showWelcome, setShowWelcome] = createSignal(true);
+  const [isCommandPaletteVisible, setIsCommandPaletteVisible] = createSignal(false);
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = (event: KeyboardEvent) => {
+    // Cmd+K or Ctrl+K to toggle command palette
+    if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+      event.preventDefault();
+      setIsCommandPaletteVisible(true);
+    }
+    // Escape to hide command palette
+    if (event.key === "Escape") {
+      setIsCommandPaletteVisible(false);
+    }
+  };
 
   onMount(() => {
-    // Hide welcome screen after a brief moment
-    setTimeout(() => setShowWelcome(false), 1500);
+    console.log("Raycast-style interface mounted");
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Auto-hide command palette when it loses focus
+    const handleBlur = () => {
+      setTimeout(() => setIsCommandPaletteVisible(false), 200);
+    };
+    window.addEventListener("blur", handleBlur);
+
+    onCleanup(() => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("blur", handleBlur);
+    });
   });
 
   return (
     <div class="raycast-main">
-      {/* Welcome Screen */}
-      {showWelcome() && (
+      {/* Welcome Screen - Visible when command palette is hidden */}
+      {!isCommandPaletteVisible() && (
         <div class="raycast-welcome animate-fade-in">
           <div class="raycast-welcome-content">
             <div class="raycast-logo">
@@ -58,7 +82,10 @@ export default function Home() {
 
       {/* Main Interface - Hidden by default, activated by Cmd+K */}
       <div class="raycast-main-content">
-        <CommandPalette />
+        <CommandPalette
+          isVisible={isCommandPaletteVisible()}
+          onHide={() => setIsCommandPaletteVisible(false)}
+        />
       </div>
 
       {/* Keyboard Shortcuts Help */}
