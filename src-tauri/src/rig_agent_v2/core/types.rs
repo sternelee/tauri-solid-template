@@ -75,9 +75,12 @@ impl ContentPart {
 pub struct ChatMessage {
     pub id: String,
     pub role: MessageRole,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub content: Vec<ContentPart>,
     pub timestamp: String,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub tool_calls: Option<Vec<ToolCall>>,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub tool_results: Option<Vec<ToolResult>>,
     pub metadata: Option<HashMap<String, serde_json::Value>>,
 }
@@ -153,6 +156,7 @@ pub struct ToolResult {
 pub struct Conversation {
     pub id: String,
     pub title: Option<String>,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub messages: Vec<ChatMessage>,
     pub created_at: String,
     pub updated_at: String,
@@ -480,6 +484,7 @@ pub struct ChatResponse {
     pub message: ChatMessage,
     pub usage: Option<TokenUsage>,
     pub finish_reason: Option<String>,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub tool_calls: Option<Vec<ToolCall>>,
     #[serde(rename = "duration_ms")]
     #[specta(type = i32)] // Use i32 instead of u64 for TypeScript compatibility

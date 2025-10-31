@@ -23,11 +23,14 @@ pub trait EventFilter: Send + Sync {
 /// Event subscription configuration
 #[derive(Serialize, Deserialize, Type, Clone, Debug)]
 pub struct EventSubscription {
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub event_types: Vec<EventType>,
     pub session_id: Option<String>,
     pub conversation_id: Option<String>,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub tool_names: Option<Vec<String>>,
     pub min_severity: Option<EventSeverity>,
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub filters: Vec<EventFilterType>,
 }
 

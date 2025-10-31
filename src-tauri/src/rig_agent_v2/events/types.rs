@@ -425,6 +425,7 @@ pub struct EventBatch {
     pub batch_id: String,
 
     /// Events in this batch
+    #[serde(skip)] // Skip Vec field to avoid usize BigInt issues
     pub events: Vec<AgentEvent>,
 
     /// Batch timestamp
