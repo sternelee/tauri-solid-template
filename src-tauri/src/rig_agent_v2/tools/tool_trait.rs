@@ -201,9 +201,13 @@ pub trait MonitorableToolTrait: ToolTrait {
 /// ToolTrait execution metrics
 #[derive(serde::Serialize, serde::Deserialize, specta::Type, Clone, Debug)]
 pub struct ToolTraitMetrics {
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub total_executions: u64,
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub successful_executions: u64,
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub failed_executions: u64,
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub total_execution_time_ms: u64,
     pub average_execution_time_ms: f64,
     pub last_execution_time: Option<String>,

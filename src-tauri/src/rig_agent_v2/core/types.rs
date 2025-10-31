@@ -408,6 +408,7 @@ pub struct EmbeddingData {
 /// Image generation response
 #[derive(Serialize, Deserialize, Type, Clone, Debug)]
 pub struct ImageGenerationResponse {
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub created: u64,
     pub data: Vec<ImageData>,
 }
@@ -479,6 +480,8 @@ pub struct ChatResponse {
     pub usage: Option<TokenUsage>,
     pub finish_reason: Option<String>,
     pub tool_calls: Option<Vec<ToolCall>>,
+    #[serde(rename = "duration_ms")]
+    #[specta(type = i32)] // Use i32 instead of u64 for TypeScript compatibility
     pub duration_ms: u64,
 }
 

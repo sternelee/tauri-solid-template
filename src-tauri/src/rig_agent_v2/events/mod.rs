@@ -91,11 +91,14 @@ pub enum EventFilterType {
 /// Event statistics
 #[derive(Serialize, Deserialize, Type, Clone, Debug)]
 pub struct EventStatistics {
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub total_events: u64,
+    // Note: HashMap values with u64 will be handled by Specta's default BigInt handling
     pub events_by_type: HashMap<EventType, u64>,
     pub events_by_severity: HashMap<EventSeverity, u64>,
     pub events_by_session: HashMap<String, u64>,
     pub average_events_per_minute: f64,
+    #[specta(type = i32)] // Use i32 for TypeScript compatibility
     pub peak_events_per_minute: u64,
     pub first_event_time: Option<String>,
     pub last_event_time: Option<String>,
