@@ -266,14 +266,8 @@ pub fn run() {
         builder = builder.plugin(devtools);
     }
 
-    #[cfg(all(debug_assertions, not(mobile)))]
-    specta_builder
-        .export(
-            specta_typescript::Typescript::default()
-                .formatter(specta_typescript::formatter::prettier),
-            "../src/bindings.ts",
-        )
-        .expect("failed to export typescript bindings");
+    // Permanently disable TypeScript binding export for rig_agent_v2 due to BigInt compatibility issues
+    // TypeScript bindings can be manually generated when needed
 
     builder
         .plugin(tauri_plugin_shell::init())
