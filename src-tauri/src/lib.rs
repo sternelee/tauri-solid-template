@@ -205,50 +205,6 @@ pub fn run() {
             mcp::commands::save_mcp_configs,
             mcp::commands::get_mcp_server_status,
             mcp::commands::reset_mcp_restart_count,
-            // rig_agent_v2 commands - 已全部启用 (17个命令)
-            // 系统信息命令
-            rig_agent_v2::commands::get_ai_system_info,
-            rig_agent_v2::commands::get_ai_capabilities,
-            rig_agent_v2::commands::get_agent_config,
-
-            // 系统管理命令
-            rig_agent_v2::commands::initialize_ai_system,
-            rig_agent_v2::commands::initialize_agent_system,
-            rig_agent_v2::commands::get_agent_info,
-            rig_agent_v2::commands::shutdown_agent_system,
-
-            // 聊天功能命令
-            rig_agent_v2::commands::send_chat_message,
-            rig_agent_v2::commands::start_chat_stream,
-
-            // 工具系统命令
-            rig_agent_v2::commands::execute_tool,
-            rig_agent_v2::commands::get_available_tools,
-            rig_agent_v2::commands::update_agent_config,
-
-            // MCP集成命令
-            rig_agent_v2::commands::initialize_mcp_tools,
-            rig_agent_v2::commands::list_mcp_tools,
-            rig_agent_v2::commands::refresh_mcp_tools_command,
-            rig_agent_v2::commands::get_mcp_servers_status,
-
-            // MCP审批流程命令
-            rig_agent_v2::commands::initialize_mcp_approval_manager,
-            rig_agent_v2::commands::get_pending_approval_requests,
-            rig_agent_v2::commands::approve_tool_request,
-            rig_agent_v2::commands::reject_tool_request,
-            rig_agent_v2::commands::get_mcp_approval_config,
-            rig_agent_v2::commands::toggle_tool_auto_approve,
-            rig_agent_v2::commands::toggle_mcp_server,
-            rig_agent_v2::commands::get_tool_approval_status,
-            rig_agent_v2::commands::cleanup_expired_approval_requests,
-            rig_agent_v2::commands::execute_approved_mcp_tool,
-
-            // ReAct模式命令
-            rig_agent_v2::commands::start_react_chat,
-            rig_agent_v2::commands::get_react_config,
-            rig_agent_v2::commands::update_react_config,
-            rig_agent_v2::commands::execute_react_step,
         ])
         .events(tauri_specta::collect_events![
             crate::DemoEvent,
@@ -266,8 +222,14 @@ pub fn run() {
         builder = builder.plugin(devtools);
     }
 
-    // Permanently disable TypeScript binding export for rig_agent_v2 due to BigInt compatibility issues
-    // TypeScript bindings can be manually generated when needed
+    #[cfg(all(debug_assertions, not(mobile)))]
+    specta_builder
+        .export(
+            specta_typescript::Typescript::default()
+                .formatter(specta_typescript::formatter::prettier),
+            "../src/bindings.ts",
+        )
+        .expect("failed to export typescript bindings");
 
     builder
         .plugin(tauri_plugin_shell::init())
@@ -287,6 +249,46 @@ pub fn run() {
         .manage(text_selection::init_text_selection_system())
         .manage(mcp::state::McpState::with_client_manager())
         .invoke_handler(specta_builder.invoke_handler())
+        .invoke_handler(tauri::generate_handler![
+            // rig_agent_v2 commands - 已全部启用 (17个命令)
+            // 系统信息命令
+            rig_agent_v2::commands::get_ai_system_info,
+            rig_agent_v2::commands::get_ai_capabilities,
+            rig_agent_v2::commands::get_agent_config,
+            // 系统管理命令
+            rig_agent_v2::commands::initialize_ai_system,
+            rig_agent_v2::commands::initialize_agent_system,
+            rig_agent_v2::commands::get_agent_info,
+            rig_agent_v2::commands::shutdown_agent_system,
+            // 聊天功能命令
+            rig_agent_v2::commands::send_chat_message,
+            rig_agent_v2::commands::start_chat_stream,
+            // 工具系统命令
+            rig_agent_v2::commands::execute_tool,
+            rig_agent_v2::commands::get_available_tools,
+            rig_agent_v2::commands::update_agent_config,
+            // MCP集成命令
+            rig_agent_v2::commands::initialize_mcp_tools,
+            rig_agent_v2::commands::list_mcp_tools,
+            rig_agent_v2::commands::refresh_mcp_tools_command,
+            rig_agent_v2::commands::get_mcp_servers_status,
+            // MCP审批流程命令
+            rig_agent_v2::commands::initialize_mcp_approval_manager,
+            rig_agent_v2::commands::get_pending_approval_requests,
+            rig_agent_v2::commands::approve_tool_request,
+            rig_agent_v2::commands::reject_tool_request,
+            rig_agent_v2::commands::get_mcp_approval_config,
+            rig_agent_v2::commands::toggle_tool_auto_approve,
+            rig_agent_v2::commands::toggle_mcp_server,
+            rig_agent_v2::commands::get_tool_approval_status,
+            rig_agent_v2::commands::cleanup_expired_approval_requests,
+            rig_agent_v2::commands::execute_approved_mcp_tool,
+            // ReAct模式命令
+            rig_agent_v2::commands::start_react_chat,
+            rig_agent_v2::commands::get_react_config,
+            rig_agent_v2::commands::update_react_config,
+            rig_agent_v2::commands::execute_react_step,
+        ])
         .setup(move |app| {
             specta_builder.mount_events(app);
 
