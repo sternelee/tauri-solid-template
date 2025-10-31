@@ -3,7 +3,8 @@ import CommandPalette from "../components/CommandPalette";
 import KeyboardShortcutsHelp from "../components/KeyboardShortcutsHelp";
 
 export default function Home() {
-  const [isCommandPaletteVisible, setIsCommandPaletteVisible] = createSignal(false);
+  const [isCommandPaletteVisible, setIsCommandPaletteVisible] =
+    createSignal(false);
 
   // Handle keyboard shortcuts
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -35,13 +36,19 @@ export default function Home() {
   });
 
   return (
-    <div class="raycast-main">
+    <div class="relative min-h-screen overflow-hidden bg-slate-900 text-white">
       {/* Welcome Screen - Visible when command palette is hidden */}
       {!isCommandPaletteVisible() && (
-        <div class="raycast-welcome animate-fade-in">
-          <div class="raycast-welcome-content">
-            <div class="raycast-logo">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+        <div class="animate-fade-in fixed inset-0 z-10 flex items-center justify-center bg-slate-900">
+          <div class="max-w-md px-5 text-center">
+            <div class="mb-6 flex justify-center text-indigo-400">
+              <svg
+                width="64"
+                height="64"
+                viewBox="0 0 24 24"
+                fill="none"
+                class="animate-pulse"
+              >
                 <path
                   d="M12 2L2 7L12 12L22 7L12 2Z"
                   stroke="currentColor"
@@ -65,23 +72,27 @@ export default function Home() {
                 />
               </svg>
             </div>
-            <h1 class="raycast-welcome-title">Raycast Clone</h1>
-            <p class="raycast-welcome-subtitle">
+            <h1 class="mb-2 text-3xl font-bold tracking-tight text-white">
+              Raycast Clone
+            </h1>
+            <p class="mb-8 text-base leading-relaxed text-slate-400">
               A powerful launcher for your desktop
             </p>
-            <div class="raycast-welcome-shortcut">
-              <kbd class="raycast-kbd raycast-kbd-large">
+            <div class="flex items-center justify-center gap-3 rounded-xl border border-slate-700/50 bg-slate-800/50 px-6 py-4 backdrop-blur-sm">
+              <kbd class="flex min-h-12 items-center gap-1 rounded-md border border-slate-600 bg-slate-700 px-3 py-2 text-sm">
                 <span>⌘</span>
                 <span>K</span>
               </kbd>
-              <span class="raycast-shortcut-text">to get started</span>
+              <span class="text-sm font-medium text-slate-400">
+                to get started
+              </span>
             </div>
           </div>
         </div>
       )}
 
       {/* Main Interface - Hidden by default, activated by Cmd+K */}
-      <div class="raycast-main-content">
+      <div class="relative h-screen w-full">
         <CommandPalette
           isVisible={isCommandPaletteVisible()}
           onHide={() => setIsCommandPaletteVisible(false)}
@@ -90,119 +101,6 @@ export default function Home() {
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp />
-
-      {/* Raycast-style global styles */}
-      <style jsx global>{`
-        .raycast-main {
-          min-height: 100vh;
-          background: var(--raycast-background);
-          position: relative;
-          overflow: hidden;
-        }
-
-        .raycast-welcome {
-          position: fixed;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--raycast-background);
-          z-index: 10;
-        }
-
-        .raycast-welcome-content {
-          text-align: center;
-          max-width: 400px;
-          padding: 0 20px;
-        }
-
-        .raycast-logo {
-          color: var(--raycast-accent-foreground);
-          margin-bottom: 24px;
-          display: flex;
-          justify-content: center;
-        }
-
-        .raycast-welcome-title {
-          font-size: 32px;
-          font-weight: 700;
-          color: var(--raycast-foreground);
-          margin: 0 0 8px 0;
-          letter-spacing: -0.025em;
-        }
-
-        .raycast-welcome-subtitle {
-          font-size: 16px;
-          color: var(--raycast-muted);
-          margin: 0 0 32px 0;
-          line-height: 1.5;
-        }
-
-        .raycast-welcome-shortcut {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          padding: 16px 24px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          backdrop-filter: blur(10px);
-        }
-
-        .raycast-shortcut-text {
-          color: var(--raycast-muted);
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        .raycast-kbd-large {
-          padding: 8px 16px;
-          font-size: 16px;
-          min-height: 48px;
-          gap: 4px;
-        }
-
-        .raycast-main-content {
-          position: relative;
-          width: 100%;
-          height: 100vh;
-        }
-
-        /* Custom scrollbar for the entire app */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Focus improvements */
-        *:focus-visible {
-          outline: 2px solid var(--raycast-accent-foreground);
-          outline-offset: 2px;
-          border-radius: 4px;
-        }
-
-        /* Smooth transitions */
-        * {
-          transition:
-            background-color 0.15s ease,
-            border-color 0.15s ease,
-            color 0.15s ease;
-        }
-      `}</style>
     </div>
   );
 }

@@ -1,9 +1,4 @@
-import {
-  createSignal,
-  createEffect,
-  For,
-  Show,
-} from "solid-js";
+import { createSignal, createEffect, For, Show } from "solid-js";
 import { commands } from "../bindings";
 
 interface ProviderConfig {
@@ -43,7 +38,9 @@ export default function ProviderConfigPanel(props: {
   onConfigChange: (config: AIConfig) => void;
   initialConfig?: AIConfig;
 }) {
-  const [availableProviders, setAvailableProviders] = createSignal<ProviderConfig[]>([]);
+  const [availableProviders, setAvailableProviders] = createSignal<
+    ProviderConfig[]
+  >([]);
   const [selectedProvider, setSelectedProvider] = createSignal<any>(null);
   const [availableModels, setAvailableModels] = createSignal<string[]>([]);
   const [config, setConfig] = createSignal<AIConfig>(
@@ -52,11 +49,12 @@ export default function ProviderConfigPanel(props: {
       model: "",
       temperature: 0.7,
       max_tokens: 1000,
-      preamble: "You are a helpful AI assistant integrated into a desktop application.",
+      preamble:
+        "You are a helpful AI assistant integrated into a desktop application.",
       enable_vision: false,
       enable_tools: true,
       enable_embeddings: false,
-    }
+    },
   );
 
   // Load available providers on mount
@@ -93,8 +91,8 @@ export default function ProviderConfigPanel(props: {
     setSelectedProvider(provider);
 
     // Get provider info
-    const providerInfo = availableProviders().find(p =>
-      JSON.stringify(p.provider) === JSON.stringify(provider)
+    const providerInfo = availableProviders().find(
+      (p) => JSON.stringify(p.provider) === JSON.stringify(provider),
     );
 
     if (providerInfo) {
@@ -124,19 +122,23 @@ export default function ProviderConfigPanel(props: {
   };
 
   const selectedProviderInfo = () => {
-    return availableProviders().find(p =>
-      JSON.stringify(p.provider) === JSON.stringify(selectedProvider())
+    return availableProviders().find(
+      (p) => JSON.stringify(p.provider) === JSON.stringify(selectedProvider()),
     );
   };
 
   return (
-    <div class="provider-config-panel">
+    <div class="max-h-[80vh] overflow-y-auto rounded-xl bg-gray-800/95 p-5 text-white/90">
       <div class="config-section">
-        <h3>AI Provider Configuration</h3>
+        <h3 class="m-0 mb-4 text-lg font-semibold text-white/95">
+          AI Provider Configuration
+        </h3>
 
         {/* Provider Selection */}
-        <div class="form-group">
-          <label>AI Provider</label>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-white/80">
+            AI Provider
+          </label>
           <select
             value={selectedProvider() ? JSON.stringify(selectedProvider()) : ""}
             onChange={(e) => {
@@ -147,6 +149,7 @@ export default function ProviderConfigPanel(props: {
                 console.error("Invalid provider selection:", error);
               }
             }}
+            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
           >
             <option value="">Select a provider...</option>
             <For each={availableProviders()}>
@@ -161,17 +164,25 @@ export default function ProviderConfigPanel(props: {
 
         <Show when={selectedProviderInfo()}>
           {(providerInfo) => (
-            <div class="provider-info">
-              <p>{providerInfo.description}</p>
-              <div class="provider-capabilities">
+            <div class="mb-4 rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
+              <p class="m-0 mb-2 text-xs text-white/80">
+                {providerInfo.description}
+              </p>
+              <div class="flex flex-wrap gap-1.5">
                 <Show when={providerInfo.supports_vision}>
-                  <span class="capability-tag">👁️ Vision</span>
+                  <span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-medium text-blue-400">
+                    👁️ Vision
+                  </span>
                 </Show>
                 <Show when={providerInfo.supports_tools}>
-                  <span class="capability-tag">🛠️ Tools</span>
+                  <span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-medium text-blue-400">
+                    🛠️ Tools
+                  </span>
                 </Show>
                 <Show when={providerInfo.supports_embeddings}>
-                  <span class="capability-tag">🔍 Embeddings</span>
+                  <span class="rounded-full bg-blue-500/20 px-2 py-0.5 text-[11px] font-medium text-blue-400">
+                    🔍 Embeddings
+                  </span>
                 </Show>
               </div>
             </div>
@@ -180,16 +191,17 @@ export default function ProviderConfigPanel(props: {
 
         {/* Model Selection */}
         <Show when={availableModels().length > 0}>
-          <div class="form-group">
-            <label>Model</label>
+          <div class="mb-4">
+            <label class="mb-1.5 block text-sm font-medium text-white/80">
+              Model
+            </label>
             <select
               value={config().model}
               onChange={(e) => handleModelChange(e.currentTarget.value)}
+              class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
             >
               <For each={availableModels()}>
-                {(model) => (
-                  <option value={model}>{model}</option>
-                )}
+                {(model) => <option value={model}>{model}</option>}
               </For>
             </select>
           </div>
@@ -197,89 +209,140 @@ export default function ProviderConfigPanel(props: {
 
         {/* API Key */}
         <Show when={selectedProviderInfo()?.requires_api_key}>
-          <div class="form-group">
-            <label>API Key</label>
+          <div class="mb-4">
+            <label class="mb-1.5 block text-sm font-medium text-white/80">
+              API Key
+            </label>
             <input
               type="password"
               value={config().api_key || ""}
               placeholder="Enter your API key..."
-              onInput={(e) => handleFieldChange("api_key", e.currentTarget.value)}
+              onInput={(e) =>
+                handleFieldChange("api_key", e.currentTarget.value)
+              }
+              class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
             />
           </div>
         </Show>
 
         {/* Base URL */}
-        <div class="form-group">
-          <label>Base URL (Optional)</label>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-white/80">
+            Base URL (Optional)
+          </label>
           <input
             type="text"
             value={config().base_url || ""}
             placeholder="Custom base URL..."
-            onInput={(e) => handleFieldChange("base_url", e.currentTarget.value)}
+            onInput={(e) =>
+              handleFieldChange("base_url", e.currentTarget.value)
+            }
+            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
           />
         </div>
 
         {/* Provider-specific configurations */}
         <Show when={config().provider?.OpenAIAzure}>
-          <div class="provider-specific-config">
-            <h4>Azure OpenAI Configuration</h4>
-            <div class="form-group">
-              <label>Azure Endpoint</label>
+          <div class="mb-4 rounded-lg border border-white/10 bg-white/3 p-4">
+            <h4 class="m-0 mb-3 text-sm font-semibold text-white/90">
+              Azure OpenAI Configuration
+            </h4>
+            <div class="mb-4">
+              <label class="mb-1.5 block text-sm font-medium text-white/80">
+                Azure Endpoint
+              </label>
               <input
                 type="text"
                 value={config().azure_endpoint || ""}
                 placeholder="https://your-resource.openai.azure.com"
-                onInput={(e) => handleFieldChange("azure_endpoint", e.currentTarget.value)}
+                onInput={(e) =>
+                  handleFieldChange("azure_endpoint", e.currentTarget.value)
+                }
+                class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
               />
             </div>
-            <div class="form-group">
-              <label>Deployment Name</label>
+            <div class="mb-4">
+              <label class="mb-1.5 block text-sm font-medium text-white/80">
+                Deployment Name
+              </label>
               <input
                 type="text"
                 value={config().azure_deployment || ""}
                 placeholder="Your deployment name"
-                onInput={(e) => handleFieldChange("azure_deployment", e.currentTarget.value)}
+                onInput={(e) =>
+                  handleFieldChange("azure_deployment", e.currentTarget.value)
+                }
+                class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
               />
             </div>
-            <div class="form-group">
-              <label>API Version</label>
+            <div class="mb-4">
+              <label class="mb-1.5 block text-sm font-medium text-white/80">
+                API Version
+              </label>
               <input
                 type="text"
                 value={config().azure_api_version || "2023-12-01-preview"}
-                onInput={(e) => handleFieldChange("azure_api_version", e.currentTarget.value)}
+                onInput={(e) =>
+                  handleFieldChange("azure_api_version", e.currentTarget.value)
+                }
+                class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
               />
             </div>
           </div>
         </Show>
 
-        <Show when={config().provider?.Anthropic || config().provider?.AnthropicVertex}>
-          <div class="provider-specific-config">
-            <h4>Anthropic Configuration</h4>
-            <div class="form-group">
-              <label>API Version</label>
+        <Show
+          when={
+            config().provider?.Anthropic || config().provider?.AnthropicVertex
+          }
+        >
+          <div class="mb-4 rounded-lg border border-white/10 bg-white/3 p-4">
+            <h4 class="m-0 mb-3 text-sm font-semibold text-white/90">
+              Anthropic Configuration
+            </h4>
+            <div class="mb-4">
+              <label class="mb-1.5 block text-sm font-medium text-white/80">
+                API Version
+              </label>
               <select
                 value={config().anthropic_version || "2023-06-01"}
-                onChange={(e) => handleFieldChange("anthropic_version", e.currentTarget.value)}
+                onChange={(e) =>
+                  handleFieldChange("anthropic_version", e.currentTarget.value)
+                }
+                class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
               >
                 <option value="2023-06-01">2023-06-01</option>
                 <option value="2023-10-22">2023-10-22</option>
               </select>
             </div>
             <Show when={config().provider?.AnthropicVertex}>
-              <div class="form-group">
-                <label>Google Project ID</label>
+              <div class="mb-4">
+                <label class="mb-1.5 block text-sm font-medium text-white/80">
+                  Google Project ID
+                </label>
                 <input
                   type="text"
                   value={config().google_project_id || ""}
                   placeholder="your-google-project-id"
-                  onInput={(e) => handleFieldChange("google_project_id", e.currentTarget.value)}
+                  onInput={(e) =>
+                    handleFieldChange(
+                      "google_project_id",
+                      e.currentTarget.value,
+                    )
+                  }
+                  class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
                 />
               </div>
-              <div class="form-group">
-                <label>Location</label>
+              <div class="mb-4">
+                <label class="mb-1.5 block text-sm font-medium text-white/80">
+                  Location
+                </label>
                 <select
                   value={config().google_location || "us-central1"}
-                  onChange={(e) => handleFieldChange("google_location", e.currentTarget.value)}
+                  onChange={(e) =>
+                    handleFieldChange("google_location", e.currentTarget.value)
+                  }
+                  class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
                 >
                   <option value="us-central1">us-central1</option>
                   <option value="us-east1">us-east1</option>
@@ -292,92 +355,141 @@ export default function ProviderConfigPanel(props: {
         </Show>
 
         <Show when={config().provider?.Ollama}>
-          <div class="provider-specific-config">
-            <h4>Ollama Configuration</h4>
-            <div class="form-group">
-              <label>Host</label>
+          <div class="mb-4 rounded-lg border border-white/10 bg-white/3 p-4">
+            <h4 class="m-0 mb-3 text-sm font-semibold text-white/90">
+              Ollama Configuration
+            </h4>
+            <div class="mb-4">
+              <label class="mb-1.5 block text-sm font-medium text-white/80">
+                Host
+              </label>
               <input
                 type="text"
                 value={config().ollama_host || "localhost"}
-                onInput={(e) => handleFieldChange("ollama_host", e.currentTarget.value)}
+                onInput={(e) =>
+                  handleFieldChange("ollama_host", e.currentTarget.value)
+                }
+                class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
               />
             </div>
-            <div class="form-group">
-              <label>Port</label>
+            <div class="mb-4">
+              <label class="mb-1.5 block text-sm font-medium text-white/80">
+                Port
+              </label>
               <input
                 type="number"
                 value={config().ollama_port || 11434}
-                onInput={(e) => handleFieldChange("ollama_port", parseInt(e.currentTarget.value))}
+                onInput={(e) =>
+                  handleFieldChange(
+                    "ollama_port",
+                    parseInt(e.currentTarget.value),
+                  )
+                }
+                class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
               />
             </div>
           </div>
         </Show>
 
         {/* Basic Configuration */}
-        <div class="form-group">
-          <label>Temperature</label>
-          <input
-            type="range"
-            min="0"
-            max="2"
-            step="0.1"
-            value={config().temperature || 0.7}
-            onInput={(e) => handleFieldChange("temperature", parseFloat(e.currentTarget.value))}
-          />
-          <span class="range-value">{config().temperature}</span>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-white/80">
+            Temperature
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              value={config().temperature || 0.7}
+              onInput={(e) =>
+                handleFieldChange(
+                  "temperature",
+                  parseFloat(e.currentTarget.value),
+                )
+              }
+              class="flex-1 accent-blue-500"
+            />
+            <span class="text-sm text-white/70">{config().temperature}</span>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Max Tokens</label>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-white/80">
+            Max Tokens
+          </label>
           <input
             type="number"
             min="1"
             max="4096"
             value={config().max_tokens || 1000}
-            onInput={(e) => handleFieldChange("max_tokens", parseInt(e.currentTarget.value))}
+            onInput={(e) =>
+              handleFieldChange("max_tokens", parseInt(e.currentTarget.value))
+            }
+            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
           />
         </div>
 
-        <div class="form-group">
-          <label>System Preamble</label>
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-white/80">
+            System Preamble
+          </label>
           <textarea
             value={config().preamble || ""}
             rows={3}
             placeholder="Instructions for the AI assistant..."
-            onInput={(e) => handleFieldChange("preamble", e.currentTarget.value)}
+            onInput={(e) =>
+              handleFieldChange("preamble", e.currentTarget.value)
+            }
+            class="font-inherit min-h-20 w-full resize-y rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/90 transition-all focus:border-blue-500/50 focus:bg-white/8 focus:outline-none"
           />
         </div>
 
         {/* Capabilities */}
-        <div class="form-group">
-          <label>Capabilities</label>
-          <div class="checkbox-group">
+        <div class="mb-4">
+          <label class="mb-1.5 block text-sm font-medium text-white/80">
+            Capabilities
+          </label>
+          <div class="flex flex-col gap-2">
             <Show when={selectedProviderInfo()?.supports_vision}>
-              <label class="checkbox-label">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-white/80">
                 <input
                   type="checkbox"
                   checked={config().enable_vision || false}
-                  onChange={(e) => handleFieldChange("enable_vision", e.currentTarget.checked)}
+                  onChange={(e) =>
+                    handleFieldChange("enable_vision", e.currentTarget.checked)
+                  }
+                  class="w-auto accent-blue-500"
                 />
                 Enable Vision
               </label>
             </Show>
             <Show when={selectedProviderInfo()?.supports_tools}>
-              <label class="checkbox-label">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-white/80">
                 <input
                   type="checkbox"
                   checked={config().enable_tools !== false}
-                  onChange={(e) => handleFieldChange("enable_tools", e.currentTarget.checked)}
+                  onChange={(e) =>
+                    handleFieldChange("enable_tools", e.currentTarget.checked)
+                  }
+                  class="w-auto accent-blue-500"
                 />
                 Enable Tools
               </label>
             </Show>
             <Show when={selectedProviderInfo()?.supports_embeddings}>
-              <label class="checkbox-label">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-white/80">
                 <input
                   type="checkbox"
                   checked={config().enable_embeddings || false}
-                  onChange={(e) => handleFieldChange("enable_embeddings", e.currentTarget.checked)}
+                  onChange={(e) =>
+                    handleFieldChange(
+                      "enable_embeddings",
+                      e.currentTarget.checked,
+                    )
+                  }
+                  class="w-auto accent-blue-500"
                 />
                 Enable Embeddings
               </label>
@@ -385,138 +497,7 @@ export default function ProviderConfigPanel(props: {
           </div>
         </div>
       </div>
-
-      <style>{`
-        .provider-config-panel {
-          background: rgba(30, 30, 30, 0.95);
-          border-radius: 12px;
-          padding: 20px;
-          color: rgba(255, 255, 255, 0.9);
-          max-height: 80vh;
-          overflow-y: auto;
-        }
-
-        .config-section h3 {
-          margin: 0 0 16px 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.95);
-        }
-
-        .form-group {
-          margin-bottom: 16px;
-        }
-
-        .form-group label {
-          display: block;
-          margin-bottom: 6px;
-          font-size: 14px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.8);
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-          width: 100%;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 10px 12px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          transition: all 0.15s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-          outline: none;
-          border-color: rgba(59, 130, 246, 0.5);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .form-group textarea {
-          resize: vertical;
-          min-height: 80px;
-          font-family: inherit;
-        }
-
-        .provider-info {
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          border-radius: 8px;
-          padding: 12px;
-          margin-bottom: 16px;
-        }
-
-        .provider-info p {
-          margin: 0 0 8px 0;
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.8);
-        }
-
-        .provider-capabilities {
-          display: flex;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-
-        .capability-tag {
-          background: rgba(59, 130, 246, 0.2);
-          color: #60a5fa;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: 500;
-        }
-
-        .provider-specific-config {
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 16px;
-          margin-bottom: 16px;
-        }
-
-        .provider-specific-config h4 {
-          margin: 0 0 12px 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-        }
-
-        .checkbox-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .checkbox-label {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.8);
-          cursor: pointer;
-        }
-
-        .checkbox-label input[type="checkbox"] {
-          width: auto;
-          accent-color: #3b82f6;
-        }
-
-        .range-value {
-          margin-left: 8px;
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.7);
-        }
-
-        input[type="range"] {
-          width: calc(100% - 40px);
-          accent-color: #3b82f6;
-        }
-      `}</style>
     </div>
   );
 }
+

@@ -246,26 +246,20 @@ export default function ScreenshotTool() {
   ) => {
     // Create a simple notification (in a real app, you might want to use a proper notification library)
     const notification = document.createElement("div");
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 20px;
-      background: ${type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#3b82f6"};
-      color: white;
-      border-radius: 8px;
-      font-family: system-ui, -apple-system, sans-serif;
-      font-size: 14px;
-      z-index: 10000;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      animation: slideIn 0.3s ease;
-    `;
+    const bgColors = {
+      success: "bg-green-500",
+      error: "bg-red-500",
+      info: "bg-blue-500",
+    };
+
+    notification.className = `fixed top-5 right-5 px-5 py-3 ${bgColors[type]} text-white rounded-lg font-sans text-sm z-[10000] shadow-lg animate-slide-in`;
     notification.textContent = message;
 
     document.body.appendChild(notification);
 
     setTimeout(() => {
-      notification.style.animation = "slideOut 0.3s ease";
+      notification.classList.remove("animate-slide-in");
+      notification.classList.add("animate-slide-out");
       setTimeout(() => {
         document.body.removeChild(notification);
       }, 300);
@@ -306,65 +300,23 @@ export default function ScreenshotTool() {
   };
 
   return (
-    <div
-      style={{
-        padding: "24px",
-        "max-width": "800px",
-        margin: "0 auto",
-        "font-family":
-          "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
-      <style>{`
-        @keyframes slideIn {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-          from { transform: translateX(0); opacity: 1; }
-          to { transform: translateX(100%); opacity: 0; }
-        }
-      `}</style>
-
-      <div style={{ "margin-bottom": "24px" }}>
-        <h2
-          style={{
-            margin: "0 0 8px 0",
-            "font-size": "24px",
-            "font-weight": "600",
-            color: "#1f2937",
-          }}
-        >
+    <div class="mx-auto max-w-2xl p-6 font-sans">
+      <div class="mb-6">
+        <h2 class="m-0 mb-2 text-2xl font-semibold text-gray-800">
           📸 Screenshot Tool
         </h2>
-        <p style={{ margin: 0, color: "#6b7280", "font-size": "14px" }}>
+        <p class="m-0 text-sm text-gray-500">
           Capture screenshots of your entire screen or selected regions
         </p>
       </div>
 
       {/* Monitor Selection */}
-      <div style={{ "margin-bottom": "20px" }}>
-        <label
-          style={{
-            display: "block",
-            "font-weight": "500",
-            "margin-bottom": "8px",
-            color: "#374151",
-          }}
-        >
-          Monitor:
-        </label>
+      <div class="mb-5">
+        <label class="mb-2 block font-medium text-gray-700">Monitor:</label>
         <select
           value={selectedMonitor()}
           onChange={(e) => setSelectedMonitor(parseInt(e.target.value))}
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            border: "1px solid #d1d5db",
-            "border-radius": "6px",
-            "font-size": "14px",
-            background: "white",
-          }}
+          class="w-full rounded-md border border-gray-300 bg-white p-2 text-sm"
         >
           <For each={monitors()}>
             {(monitor) => (
@@ -378,36 +330,18 @@ export default function ScreenshotTool() {
       </div>
 
       {/* Format Selection */}
-      <div style={{ "margin-bottom": "20px" }}>
-        <label
-          style={{
-            display: "block",
-            "font-weight": "500",
-            "margin-bottom": "8px",
-            color: "#374151",
-          }}
-        >
-          Format:
-        </label>
-        <div style={{ display: "flex", gap: "8px" }}>
+      <div class="mb-5">
+        <label class="mb-2 block font-medium text-gray-700">Format:</label>
+        <div class="flex gap-2">
           {(["PNG", "JPEG", "BMP"] as const).map((format) => (
             <button
               key={format}
               onClick={() => setSelectedFormat(format)}
-              style={{
-                padding: "8px 16px",
-                border:
-                  selectedFormat() === format
-                    ? "2px solid #3b82f6"
-                    : "1px solid #d1d5db",
-                "border-radius": "6px",
-                background: selectedFormat() === format ? "#eff6ff" : "white",
-                color: selectedFormat() === format ? "#3b82f6" : "#374151",
-                cursor: "pointer",
-                "font-size": "14px",
-                "font-weight": selectedFormat() === format ? "500" : "400",
-                transition: "all 0.15s ease",
-              }}
+              class={`cursor-pointer rounded-md border px-4 py-2 text-sm transition-all ${
+                selectedFormat() === format
+                  ? "border-2 border-blue-500 bg-blue-50 font-medium text-blue-500"
+                  : "border border-gray-300 bg-white font-normal text-gray-700"
+              }`}
             >
               {format}
             </button>
@@ -417,15 +351,8 @@ export default function ScreenshotTool() {
 
       {/* Quality Setting (for JPEG) */}
       <Show when={selectedFormat() === "JPEG"}>
-        <div style={{ "margin-bottom": "20px" }}>
-          <label
-            style={{
-              display: "block",
-              "font-weight": "500",
-              "margin-bottom": "8px",
-              color: "#374151",
-            }}
-          >
+        <div class="mb-5">
+          <label class="mb-2 block font-medium text-gray-700">
             Quality: {quality()}%
           </label>
           <input
@@ -434,57 +361,36 @@ export default function ScreenshotTool() {
             max="100"
             value={quality()}
             onInput={(e) => setQuality(parseInt(e.target.value))}
-            style={{
-              width: "100%",
-              height: "4px",
-              "border-radius": "2px",
-              background: "#e5e7eb",
-              outline: "none",
-              "-webkit-appearance": "none",
-            }}
+            class="h-1 w-full appearance-none rounded-md bg-gray-200 outline-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500"
           />
         </div>
       </Show>
 
       {/* Save to File Option */}
-      <div style={{ "margin-bottom": "24px" }}>
-        <label
-          style={{
-            display: "flex",
-            "align-items": "center",
-            gap: "8px",
-            cursor: "pointer",
-          }}
-        >
+      <div class="mb-6">
+        <label class="flex cursor-pointer items-center gap-2">
           <input
             type="checkbox"
             checked={saveToFile()}
             onChange={(e) => setSaveToFile(e.target.checked)}
-            style={{ margin: 0 }}
+            class="m-0"
           />
-          <span style={{ "font-weight": "500", color: "#374151" }}>
+          <span class="font-medium text-gray-700">
             Save to file (in addition to clipboard)
           </span>
         </label>
       </div>
 
       {/* Action Buttons */}
-      <div style={{ display: "flex", gap: "12px", "margin-bottom": "24px" }}>
+      <div class="mb-6 flex gap-3">
         <button
           onClick={captureFullScreen}
           disabled={isCapturing()}
-          style={{
-            flex: 1,
-            padding: "12px 20px",
-            background: isCapturing() ? "#9ca3af" : "#3b82f6",
-            color: "white",
-            border: "none",
-            "border-radius": "8px",
-            "font-size": "14px",
-            "font-weight": "500",
-            cursor: isCapturing() ? "not-allowed" : "pointer",
-            transition: "all 0.15s ease",
-          }}
+          class={`flex-1 rounded-lg border-none px-5 py-3 text-sm font-medium transition-all ${
+            isCapturing()
+              ? "cursor-not-allowed bg-gray-400 text-white"
+              : "cursor-pointer bg-blue-500 text-white hover:bg-blue-600"
+          }`}
         >
           {isCapturing() ? "⏳ Capturing..." : "📷 Full Screen"}
         </button>
@@ -492,20 +398,11 @@ export default function ScreenshotTool() {
         <button
           onClick={startRegionSelection}
           disabled={isCapturing() || isSelectingRegion()}
-          style={{
-            flex: 1,
-            padding: "12px 20px",
-            background:
-              isCapturing() || isSelectingRegion() ? "#9ca3af" : "#10b981",
-            color: "white",
-            border: "none",
-            "border-radius": "8px",
-            "font-size": "14px",
-            "font-weight": "500",
-            cursor:
-              isCapturing() || isSelectingRegion() ? "not-allowed" : "pointer",
-            transition: "all 0.15s ease",
-          }}
+          class={`flex-1 rounded-lg border-none px-5 py-3 text-sm font-medium transition-all ${
+            isCapturing() || isSelectingRegion()
+              ? "cursor-not-allowed bg-gray-400 text-white"
+              : "cursor-pointer bg-green-500 text-white hover:bg-green-600"
+          }`}
         >
           {isSelectingRegion() ? "🎯 Selecting..." : "📐 Select Region"}
         </button>
@@ -513,16 +410,7 @@ export default function ScreenshotTool() {
 
       {/* Selected Region Display */}
       <Show when={selectedRegion()}>
-        <div
-          style={{
-            padding: "12px",
-            background: "#f3f4f6",
-            "border-radius": "6px",
-            "margin-bottom": "20px",
-            "font-size": "14px",
-            color: "#374151",
-          }}
-        >
+        <div class="mb-5 rounded-md bg-gray-100 p-3 text-sm text-gray-700">
           <strong>Selected Region:</strong> {selectedRegion()?.x},{" "}
           {selectedRegion()?.y}({selectedRegion()?.width}×
           {selectedRegion()?.height}px)
@@ -531,39 +419,17 @@ export default function ScreenshotTool() {
 
       {/* Last Screenshot Preview */}
       <Show when={lastScreenshot() && lastScreenshot()?.success}>
-        <div
-          style={{
-            "margin-top": "24px",
-            padding: "20px",
-            background: "#f9fafb",
-            border: "1px solid #e5e7eb",
-            "border-radius": "8px",
-          }}
-        >
-          <h3
-            style={{
-              margin: "0 0 12px 0",
-              "font-size": "16px",
-              "font-weight": "600",
-              color: "#1f2937",
-            }}
-          >
+        <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
+          <h3 class="m-0 mb-3 text-base font-semibold text-gray-800">
             Last Screenshot
           </h3>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              "align-items": "center",
-              "margin-bottom": "12px",
-            }}
-          >
-            <span style={{ "font-size": "14px", color: "#6b7280" }}>
+          <div class="mb-3 flex items-center gap-3">
+            <span class="text-sm text-gray-500">
               Dimensions: {lastScreenshot()?.width}×{lastScreenshot()?.height}px
             </span>
             <Show when={lastScreenshot()?.file_size}>
-              <span style={{ "font-size": "14px", color: "#6b7280" }}>
+              <span class="text-sm text-gray-500">
                 • Size: {Math.round((lastScreenshot()?.file_size || 0) / 1024)}
                 KB
               </span>
@@ -574,31 +440,14 @@ export default function ScreenshotTool() {
             <img
               src={lastScreenshot()?.data}
               alt="Screenshot"
-              style={{
-                width: "100%",
-                "max-width": "600px",
-                height: "auto",
-                border: "1px solid #d1d5db",
-                "border-radius": "4px",
-                "margin-bottom": "12px",
-              }}
+              class="mb-3 h-auto w-full max-w-[600px] rounded border border-gray-300"
             />
           </Show>
 
           <Show when={!saveToFile() && lastScreenshot()?.data}>
             <button
               onClick={saveScreenshot}
-              style={{
-                padding: "8px 16px",
-                background: "#6366f1",
-                color: "white",
-                border: "none",
-                "border-radius": "6px",
-                "font-size": "14px",
-                "font-weight": "500",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
+              class="cursor-pointer rounded-md border-none bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-600"
             >
               💾 Save to File
             </button>
@@ -608,17 +457,7 @@ export default function ScreenshotTool() {
 
       {/* Error Display */}
       <Show when={lastScreenshot() && !lastScreenshot()?.success}>
-        <div
-          style={{
-            "margin-top": "24px",
-            padding: "16px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            "border-radius": "6px",
-            color: "#dc2626",
-            "font-size": "14px",
-          }}
-        >
+        <div class="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           <strong>Error:</strong> {lastScreenshot()?.error}
         </div>
       </Show>

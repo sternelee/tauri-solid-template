@@ -396,41 +396,44 @@ export default function EnhancedAIChatInterface() {
   });
 
   return (
-    <div class="enhanced-ai-chat-interface">
+    <div class="flex flex-col h-screen bg-gray-900/95 backdrop-blur-xl -webkit-backdrop-blur-xl">
       {/* Control Panel */}
-      <div class="control-panel">
-        <div class="control-group">
-          <label class="toggle-label">
+      <div class="p-3 border-b border-white/10 flex justify-between items-center flex-shrink-0">
+        <div class="flex gap-4">
+          <label class="flex items-center gap-1.5 text-white/80 text-xs cursor-pointer">
             <input
               type="checkbox"
               checked={toolCallingEnabled()}
               onChange={(e) => setToolCallingEnabled(e.currentTarget.checked)}
+              class="accent-blue-500"
             />
             Tool Calling
           </label>
-          <label class="toggle-label">
+          <label class="flex items-center gap-1.5 text-white/80 text-xs cursor-pointer">
             <input
               type="checkbox"
               checked={imageGenerationEnabled()}
               onChange={(e) => setImageGenerationEnabled(e.currentTarget.checked)}
+              class="accent-blue-500"
             />
             Image Generation
           </label>
-          <label class="toggle-label">
+          <label class="flex items-center gap-1.5 text-white/80 text-xs cursor-pointer">
             <input
               type="checkbox"
               checked={embeddingsEnabled()}
               onChange={(e) => setEmbeddingsEnabled(e.currentTarget.checked)}
+              class="accent-blue-500"
             />
             Semantic Search
           </label>
         </div>
 
-        <div class="control-buttons">
+        <div class="flex gap-2">
           <Show when={toolCallingEnabled()}>
             <button
               onClick={() => setShowToolPanel(!showToolPanel())}
-              class="control-button"
+              class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs cursor-pointer transition-all hover:bg-blue-500/30"
             >
               🛠️ Tools
             </button>
@@ -439,7 +442,7 @@ export default function EnhancedAIChatInterface() {
           <Show when={imageGenerationEnabled()}>
             <button
               onClick={() => setShowImagePanel(!showImagePanel())}
-              class="control-button"
+              class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs cursor-pointer transition-all hover:bg-blue-500/30"
             >
               🎨 Images
             </button>
@@ -448,7 +451,7 @@ export default function EnhancedAIChatInterface() {
           <Show when={embeddingsEnabled()}>
             <button
               onClick={() => setShowEmbeddingPanel(!showEmbeddingPanel())}
-              class="control-button"
+              class="px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-xs cursor-pointer transition-all hover:bg-blue-500/30"
             >
               🔍 Search
             </button>
@@ -458,12 +461,13 @@ export default function EnhancedAIChatInterface() {
 
       {/* Tool Panel */}
       <Show when={showToolPanel()}>
-        <div class="tool-panel">
-          <h3>Execute Tool</h3>
-          <div class="tool-form">
+        <div class="bg-gray-800/95 border-b border-white/10 p-4 flex-shrink-0">
+          <h3 class="m-0 mb-3 text-sm font-semibold text-white/90">Execute Tool</h3>
+          <div class="flex flex-col gap-3">
             <select
               value={selectedTool()}
               onChange={(e) => setSelectedTool(e.currentTarget.value)}
+              class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm focus:outline-none focus:border-blue-500/50"
             >
               <option value="">Select a tool...</option>
               <For each={availableTools()}>
@@ -474,7 +478,7 @@ export default function EnhancedAIChatInterface() {
             </select>
 
             <Show when={selectedTool()}>
-              <div class="tool-parameters">
+              <div class="flex flex-col gap-2">
                 <textarea
                   placeholder="Enter tool parameters as JSON..."
                   value={JSON.stringify(toolParameters(), null, 2)}
@@ -486,10 +490,15 @@ export default function EnhancedAIChatInterface() {
                     }
                   }}
                   rows={4}
+                  class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/90 text-xs font-mono focus:outline-none focus:border-blue-500/50 resize-y"
                 />
               </div>
 
-              <button onClick={executeTool} disabled={isLoading()}>
+              <button
+                onClick={executeTool}
+                disabled={isLoading()}
+                class="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-sm cursor-pointer transition-all hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Execute Tool
               </button>
             </Show>
@@ -499,33 +508,36 @@ export default function EnhancedAIChatInterface() {
 
       {/* Image Generation Panel */}
       <Show when={showImagePanel()}>
-        <div class="image-panel">
-          <h3>Generate Image</h3>
-          <div class="image-form">
+        <div class="bg-gray-800/95 border-b border-white/10 p-4 flex-shrink-0">
+          <h3 class="m-0 mb-3 text-sm font-semibold text-white/90">Generate Image</h3>
+          <div class="flex flex-col gap-3">
             <textarea
               placeholder="Describe the image you want to generate..."
               value={imagePrompt()}
               onInput={(e) => setImagePrompt(e.currentTarget.value)}
               rows={3}
+              class="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm focus:outline-none focus:border-blue-500/50 resize-y"
             />
 
-            <div class="image-options">
-              <div class="option-group">
-                <label>Style:</label>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="flex flex-col gap-1">
+                <label class="text-white/70 text-xs">Style:</label>
                 <select
                   value={imageStyle()}
                   onChange={(e) => setImageStyle(e.currentTarget.value)}
+                  class="px-2 py-1.5 bg-white/5 border border-white/10 rounded-md text-white/90 text-xs focus:outline-none focus:border-blue-500/50"
                 >
                   <option value="vivid">Vivid</option>
                   <option value="natural">Natural</option>
                 </select>
               </div>
 
-              <div class="option-group">
-                <label>Size:</label>
+              <div class="flex flex-col gap-1">
+                <label class="text-white/70 text-xs">Size:</label>
                 <select
                   value={imageSize()}
                   onChange={(e) => setImageSize(e.currentTarget.value)}
+                  class="px-2 py-1.5 bg-white/5 border border-white/10 rounded-md text-white/90 text-xs focus:outline-none focus:border-blue-500/50"
                 >
                   <option value="1024x1024">1024x1024</option>
                   <option value="1792x1024">1792x1024</option>
@@ -533,11 +545,12 @@ export default function EnhancedAIChatInterface() {
                 </select>
               </div>
 
-              <div class="option-group">
-                <label>Quality:</label>
+              <div class="flex flex-col gap-1">
+                <label class="text-white/70 text-xs">Quality:</label>
                 <select
                   value={imageQuality()}
                   onChange={(e) => setImageQuality(e.currentTarget.value)}
+                  class="px-2 py-1.5 bg-white/5 border border-white/10 rounded-md text-white/90 text-xs focus:outline-none focus:border-blue-500/50"
                 >
                   <option value="standard">Standard</option>
                   <option value="hd">HD</option>
@@ -545,7 +558,11 @@ export default function EnhancedAIChatInterface() {
               </div>
             </div>
 
-            <button onClick={generateImage} disabled={isLoading() || !imagePrompt().trim()}>
+            <button
+              onClick={generateImage}
+              disabled={isLoading() || !imagePrompt().trim()}
+              class="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-sm cursor-pointer transition-all hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Generate Image
             </button>
           </div>
@@ -554,31 +571,41 @@ export default function EnhancedAIChatInterface() {
 
       {/* Embedding Panel */}
       <Show when={showEmbeddingPanel()}>
-        <div class="embedding-panel">
-          <h3>Semantic Search & Embeddings</h3>
+        <div class="bg-gray-800/95 border-b border-white/10 p-4 flex-shrink-0">
+          <h3 class="m-0 mb-4 text-sm font-semibold text-white/90">Semantic Search & Embeddings</h3>
 
-          <div class="embedding-section">
-            <h4>Create Embedding</h4>
+          <div class="mb-4">
+            <h4 class="m-0 mb-2 text-xs font-medium text-white/80">Create Embedding</h4>
             <textarea
               placeholder="Enter text to create embeddings..."
               value={embeddingText()}
               onInput={(e) => setEmbeddingText(e.currentTarget.value)}
               rows={2}
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm mb-2 focus:outline-none focus:border-blue-500/50 resize-y"
             />
-            <button onClick={createEmbedding} disabled={isLoading() || !embeddingText().trim()}>
+            <button
+              onClick={createEmbedding}
+              disabled={isLoading() || !embeddingText().trim()}
+              class="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-sm cursor-pointer transition-all hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Create Embedding
             </button>
           </div>
 
-          <div class="embedding-section">
-            <h4>Search Conversation</h4>
+          <div>
+            <h4 class="m-0 mb-2 text-xs font-medium text-white/80">Search Conversation</h4>
             <input
               type="text"
               placeholder="Search query..."
               value={searchQuery()}
               onInput={(e) => setSearchQuery(e.currentTarget.value)}
+              class="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white/90 text-sm mb-2 focus:outline-none focus:border-blue-500/50"
             />
-            <button onClick={performSemanticSearch} disabled={isLoading() || !searchQuery().trim()}>
+            <button
+              onClick={performSemanticSearch}
+              disabled={isLoading() || !searchQuery().trim()}
+              class="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 rounded-lg text-sm cursor-pointer transition-all hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Search
             </button>
           </div>
@@ -586,31 +613,37 @@ export default function EnhancedAIChatInterface() {
       </Show>
 
       {/* Messages Container */}
-      <div class="chat-messages" ref={chatContainerRef}>
+      <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-3" ref={chatContainerRef}>
         <For each={messages()}>
           {(message) => (
-            <div class={`chat-message ${message.role}`}>
-              <div class="message-avatar">
+            <div class={`flex gap-3 max-w-full ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0">
                 {message.role === "user" ? "👤" : "🤖"}
               </div>
-              <div class="message-content">
-                <div class="message-text">{message.content}</div>
+              <div class="flex-1 min-w-0">
+                <div class={`px-4 py-3 rounded-2xl text-sm leading-6 break-words whitespace-pre-wrap text-white/90 ${
+                  message.role === "user"
+                    ? "bg-blue-500/20 border border-blue-500/30 text-right"
+                    : "bg-white/10"
+                }`}>
+                  {message.content}
+                </div>
 
                 {/* Tool Calls */}
                 <Show when={message.toolCalls && message.toolCalls.length > 0}>
-                  <div class="tool-calls">
-                    <div class="tool-calls-header">Tool Calls:</div>
+                  <div class="mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                    <div class="text-green-400 text-xs font-semibold mb-2">Tool Calls:</div>
                     <For each={message.toolCalls}>
                       {(toolCall) => (
-                        <div class={`tool-call ${toolCall.status}`}>
-                          <div class="tool-name">{toolCall.name}</div>
+                        <div class={`mb-2 p-2 bg-white/5 rounded-md last:mb-0`}>
+                          <div class="text-white/90 text-xs font-semibold mb-1">{toolCall.name}</div>
                           <Show when={toolCall.parameters}>
-                            <pre class="tool-parameters">
+                            <pre class="bg-black/30 px-2 py-1 rounded text-white/80 text-xs overflow-x-auto mx-0 my-1">
                               {JSON.stringify(toolCall.parameters, null, 2)}
                             </pre>
                           </Show>
                           <Show when={toolCall.result}>
-                            <pre class="tool-result">
+                            <pre class="bg-black/30 px-2 py-1 rounded text-white/80 text-xs overflow-x-auto mx-0 my-1">
                               {JSON.stringify(toolCall.result, null, 2)}
                             </pre>
                           </Show>
@@ -622,20 +655,20 @@ export default function EnhancedAIChatInterface() {
 
                 {/* Generated Images */}
                 <Show when={message.images && message.images.length > 0}>
-                  <div class="generated-images">
-                    <div class="images-header">Generated Images:</div>
+                  <div class="mt-2">
+                    <div class="text-white/70 text-xs font-semibold mb-2">Generated Images:</div>
                     <For each={message.images}>
                       {(image) => (
-                        <div class="generated-image">
+                        <div class="mb-2 last:mb-0">
                           <Show when={image.base64}>
                             <img
                               src={`data:image/png;base64,${image.base64}`}
                               alt="Generated image"
-                              class="image-preview"
+                              class="max-w-[200px] max-h-[200px] rounded-lg mb-1"
                             />
                           </Show>
                           <Show when={image.revisedPrompt}>
-                            <div class="revised-prompt">
+                            <div class="text-white/70 text-xs italic">
                               <strong>Revised prompt:</strong> {image.revisedPrompt}
                             </div>
                           </Show>
@@ -645,7 +678,7 @@ export default function EnhancedAIChatInterface() {
                   </div>
                 </Show>
 
-                <div class="message-time">
+                <div class="mt-1 text-[11px] text-white/40">
                   {message.timestamp.toLocaleTimeString()}
                 </div>
               </div>
@@ -655,13 +688,17 @@ export default function EnhancedAIChatInterface() {
 
         {/* Loading indicator */}
         <Show when={isLoading()}>
-          <div class="chat-message assistant">
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-              <div class="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0">
+              🤖
+            </div>
+            <div class="flex-1">
+              <div class="px-4 py-3 bg-white/10 rounded-2xl">
+                <div class="flex gap-1">
+                  <span class="w-2 h-2 bg-white/60 rounded-full animate-typing [animation-delay:-0.32s]"></span>
+                  <span class="w-2 h-2 bg-white/60 rounded-full animate-typing [animation-delay:-0.16s]"></span>
+                  <span class="w-2 h-2 bg-white/60 rounded-full animate-typing"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -669,394 +706,23 @@ export default function EnhancedAIChatInterface() {
       </div>
 
       {/* Input Area */}
-      <div class="chat-input-container">
+      <div class="p-4 border-t border-white/10 flex gap-3 items-end flex-shrink-0">
         <textarea
           ref={inputRef}
           value={inputValue()}
           onInput={(e) => setInputValue(e.currentTarget.value)}
           onKeyDown={handleInputKeyDown}
           placeholder="Ask AI anything... Tools, images, and semantic search are available!"
-          class="chat-input"
+          class="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white/90 text-sm resize-none outline-none min-h-[44px] max-h-[120px] leading-6 placeholder-white/50 focus:border-blue-500/30 focus:bg-white/8"
           rows={2}
         />
         <button
           onClick={sendMessage}
           disabled={!inputValue().trim() || isLoading()}
-          class="send-button"
+          class="w-11 h-11 rounded-full border-none bg-blue-500/20 border border-blue-500/30 text-blue-400 cursor-pointer flex items-center justify-center text-base transition-all hover:bg-blue-500/30 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex-shrink-0"
         >
           {isLoading() ? "⏳" : "📤"}
         </button>
       </div>
-
-      <style>{`
-        .enhanced-ai-chat-interface {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          background: rgba(23, 23, 23, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-        }
-
-        .control-panel {
-          padding: 12px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          flex-shrink: 0;
-        }
-
-        .control-group {
-          display: flex;
-          gap: 16px;
-        }
-
-        .toggle-label {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 13px;
-          cursor: pointer;
-        }
-
-        .toggle-label input[type="checkbox"] {
-          accent-color: #3b82f6;
-        }
-
-        .control-buttons {
-          display: flex;
-          gap: 8px;
-        }
-
-        .control-button {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          padding: 6px 12px;
-          border-radius: 8px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .control-button:hover {
-          background: rgba(59, 130, 246, 0.3);
-        }
-
-        .tool-panel, .image-panel, .embedding-panel {
-          background: rgba(30, 30, 30, 0.95);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 16px;
-          flex-shrink: 0;
-        }
-
-        .tool-panel h3, .image-panel h3, .embedding-panel h3 {
-          color: rgba(255, 255, 255, 0.9);
-          margin: 0 0 12px 0;
-          font-size: 14px;
-        }
-
-        .tool-form, .image-form {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .tool-form select, .image-form textarea {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 8px 12px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 13px;
-        }
-
-        .tool-parameters textarea {
-          font-family: 'Monaco', 'Menlo', monospace;
-          font-size: 11px;
-        }
-
-        .image-options {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-        }
-
-        .option-group {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .option-group label {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 12px;
-        }
-
-        .option-group select {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 6px;
-          padding: 6px 8px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 12px;
-        }
-
-        .embedding-section {
-          margin-bottom: 16px;
-        }
-
-        .embedding-section h4 {
-          color: rgba(255, 255, 255, 0.8);
-          margin: 0 0 8px 0;
-          font-size: 13px;
-        }
-
-        .embedding-section textarea,
-        .embedding-section input {
-          width: 100%;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 8px 12px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 13px;
-          margin-bottom: 8px;
-        }
-
-        .chat-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .chat-message {
-          display: flex;
-          gap: 12px;
-          max-width: 100%;
-        }
-
-        .chat-message.user {
-          flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 16px;
-          flex-shrink: 0;
-        }
-
-        .message-content {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .chat-message.user .message-content {
-          text-align: right;
-        }
-
-        .message-text {
-          background: rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.9);
-          padding: 12px 16px;
-          border-radius: 16px;
-          font-size: 14px;
-          line-height: 1.5;
-          word-wrap: break-word;
-          white-space: pre-wrap;
-        }
-
-        .chat-message.user .message-text {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .tool-calls {
-          margin-top: 8px;
-          padding: 12px;
-          background: rgba(34, 197, 94, 0.1);
-          border: 1px solid rgba(34, 197, 94, 0.2);
-          border-radius: 8px;
-        }
-
-        .tool-calls-header {
-          color: #4ade80;
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        .tool-call {
-          margin-bottom: 8px;
-          padding: 8px;
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 6px;
-        }
-
-        .tool-name {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-
-        .tool-parameters, .tool-result {
-          background: rgba(0, 0, 0, 0.3);
-          padding: 6px 8px;
-          border-radius: 4px;
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.8);
-          overflow-x: auto;
-          margin: 4px 0;
-        }
-
-        .generated-images {
-          margin-top: 8px;
-        }
-
-        .images-header {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        .generated-image {
-          margin-bottom: 8px;
-        }
-
-        .image-preview {
-          max-width: 200px;
-          max-height: 200px;
-          border-radius: 8px;
-          margin-bottom: 4px;
-        }
-
-        .revised-prompt {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 11px;
-          font-style: italic;
-        }
-
-        .message-time {
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.4);
-          margin-top: 4px;
-        }
-
-        .typing-indicator {
-          display: flex;
-          gap: 4px;
-          padding: 12px 16px;
-        }
-
-        .typing-indicator span {
-          width: 8px;
-          height: 8px;
-          background: rgba(255, 255, 255, 0.6);
-          border-radius: 50%;
-          animation: typing 1.4s infinite ease-in-out;
-        }
-
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes typing {
-          0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-
-        .chat-input-container {
-          padding: 16px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          gap: 12px;
-          align-items: flex-end;
-          flex-shrink: 0;
-        }
-
-        .chat-input {
-          flex: 1;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
-          padding: 12px 16px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          resize: none;
-          outline: none;
-          min-height: 44px;
-          max-height: 120px;
-          line-height: 1.5;
-        }
-
-        .chat-input::placeholder {
-          color: rgba(255, 255, 255, 0.5);
-        }
-
-        .chat-input:focus {
-          border-color: rgba(59, 130, 246, 0.3);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .send-button {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          border: none;
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 16px;
-          transition: all 0.15s ease;
-          flex-shrink: 0;
-        }
-
-        .send-button:hover:not(:disabled) {
-          background: rgba(59, 130, 246, 0.3);
-          transform: scale(1.05);
-        }
-
-        .send-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        button {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        button:hover:not(:disabled) {
-          background: rgba(59, 130, 246, 0.3);
-        }
-
-        button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      `}</style>
-    </div>
   );
 }

@@ -1,10 +1,10 @@
-import { createSignal, onMount, onCleanup } from 'solid-js';
-import { invoke } from '@tauri-apps/api/core';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { createSignal, onMount, onCleanup } from "solid-js";
+import { invoke } from "@tauri-apps/api/core";
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 
 export interface SettingsData {
   language: string;
-  theme: 'light' | 'dark' | 'auto';
+  theme: "light" | "dark" | "auto";
   auto_start: boolean;
   shortcuts: Record<string, string>;
   ai_provider: {
@@ -36,26 +36,26 @@ export interface ThemeInfo {
 
 export function useSettings() {
   const [settings, setSettings] = createSignal<SettingsData>({
-    language: 'zh-CN',
-    theme: 'auto',
+    language: "zh-CN",
+    theme: "auto",
     auto_start: false,
     shortcuts: {
-      toggleWindow: 'CmdOrCtrl+K',
-      openSettings: 'CmdOrCtrl+,',
-      quitApp: 'CmdOrCtrl+Q',
-      focusSearch: 'CmdOrCtrl+F',
+      toggleWindow: "CmdOrCtrl+K",
+      openSettings: "CmdOrCtrl+,",
+      quitApp: "CmdOrCtrl+Q",
+      focusSearch: "CmdOrCtrl+F",
     },
     ai_provider: {
-      provider: 'OpenAI',
-      api_key: '',
-      model: 'gpt-4o',
+      provider: "OpenAI",
+      api_key: "",
+      model: "gpt-4o",
       temperature: 0.7,
       max_tokens: 4000,
     },
     notifications: true,
     system_tray: true,
     developer_mode: false,
-    log_level: 'info',
+    log_level: "info",
   });
 
   const [isLoading, setIsLoading] = createSignal(false);
@@ -72,10 +72,10 @@ export function useSettings() {
     setLastError(null);
 
     try {
-      const loadedSettings = await invoke<SettingsData>('get_settings');
+      const loadedSettings = await invoke<SettingsData>("get_settings");
       setSettings(loadedSettings);
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      console.error("Failed to load settings:", error);
       setLastError(error as string);
     } finally {
       setIsLoading(false);
@@ -88,7 +88,7 @@ export function useSettings() {
 
     try {
       const settingsToSave = newSettings || settings();
-      await invoke('save_settings', { settings: settingsToSave });
+      await invoke("save_settings", { settings: settingsToSave });
 
       if (!newSettings) {
         setSettings(settingsToSave);
@@ -96,7 +96,7 @@ export function useSettings() {
 
       return true;
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      console.error("Failed to save settings:", error);
       setLastError(error as string);
       return false;
     } finally {
@@ -106,20 +106,23 @@ export function useSettings() {
 
   const updateSetting = async <K extends keyof SettingsData>(
     key: K,
-    value: SettingsData[K]
+    value: SettingsData[K],
   ) => {
     const newSettings = { ...settings(), [key]: value };
     setSettings(newSettings);
     return await saveSettings(newSettings);
   };
 
-  const updateAIProvider = async (field: keyof SettingsData['ai_provider'], value: any) => {
+  const updateAIProvider = async (
+    field: keyof SettingsData["ai_provider"],
+    value: any,
+  ) => {
     const newSettings = {
       ...settings(),
       ai_provider: {
         ...settings().ai_provider,
-        [field]: value
-      }
+        [field]: value,
+      },
     };
     setSettings(newSettings);
     return await saveSettings(newSettings);
@@ -130,8 +133,8 @@ export function useSettings() {
       ...settings(),
       shortcuts: {
         ...settings().shortcuts,
-        [action]: shortcut
-      }
+        [action]: shortcut,
+      },
     };
     setSettings(newSettings);
     return await saveSettings(newSettings);
@@ -139,11 +142,11 @@ export function useSettings() {
 
   const resetToDefaults = async () => {
     try {
-      await invoke('reset_to_defaults');
+      await invoke("reset_to_defaults");
       await loadSettings();
       return true;
     } catch (error) {
-      console.error('Failed to reset settings:', error);
+      console.error("Failed to reset settings:", error);
       setLastError(error as string);
       return false;
     }
@@ -151,10 +154,10 @@ export function useSettings() {
 
   const openSettingsWindow = async () => {
     try {
-      await invoke('open_settings_window');
+      await invoke("open_settings_window");
       return true;
     } catch (error) {
-      console.error('Failed to open settings window:', error);
+      console.error("Failed to open settings window:", error);
       setLastError(error as string);
       return false;
     }
@@ -162,27 +165,27 @@ export function useSettings() {
 
   const getAvailableLanguages = async (): Promise<LanguageInfo[]> => {
     try {
-      return await invoke('get_available_languages');
+      return await invoke("get_available_languages");
     } catch (error) {
-      console.error('Failed to get available languages:', error);
+      console.error("Failed to get available languages:", error);
       return [];
     }
   };
 
   const getAvailableThemes = async (): Promise<ThemeInfo[]> => {
     try {
-      return await invoke('get_available_themes');
+      return await invoke("get_available_themes");
     } catch (error) {
-      console.error('Failed to get available themes:', error);
+      console.error("Failed to get available themes:", error);
       return [];
     }
   };
 
   const exportSettings = async (): Promise<string | null> => {
     try {
-      return await invoke('export_settings');
+      return await invoke("export_settings");
     } catch (error) {
-      console.error('Failed to export settings:', error);
+      console.error("Failed to export settings:", error);
       setLastError(error as string);
       return null;
     }
@@ -190,11 +193,11 @@ export function useSettings() {
 
   const importSettings = async (settingsJson: string): Promise<boolean> => {
     try {
-      await invoke('import_settings', { settingsJson });
+      await invoke("import_settings", { settingsJson });
       await loadSettings();
       return true;
     } catch (error) {
-      console.error('Failed to import settings:', error);
+      console.error("Failed to import settings:", error);
       setLastError(error as string);
       return false;
     }
@@ -202,9 +205,9 @@ export function useSettings() {
 
   const clearCache = async (): Promise<string | null> => {
     try {
-      return await invoke('clear_cache');
+      return await invoke("clear_cache");
     } catch (error) {
-      console.error('Failed to clear cache:', error);
+      console.error("Failed to clear cache:", error);
       setLastError(error as string);
       return null;
     }
@@ -214,20 +217,22 @@ export function useSettings() {
   const applyTheme = (theme: string) => {
     const root = document.documentElement;
 
-    if (theme === 'auto') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    if (theme === "auto") {
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      root.setAttribute("data-theme", prefersDark ? "dark" : "light");
 
       // Listen for system theme changes
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const handleChange = (e: MediaQueryListEvent) => {
-        root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        root.setAttribute("data-theme", e.matches ? "dark" : "light");
       };
-      mediaQuery.addEventListener('change', handleChange);
+      mediaQuery.addEventListener("change", handleChange);
 
-      return () => mediaQuery.removeEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
     } else {
-      root.setAttribute('data-theme', theme);
+      root.setAttribute("data-theme", theme);
       return () => {};
     }
   };
@@ -238,13 +243,13 @@ export function useSettings() {
 
     const setupThemeListener = async () => {
       try {
-        unlistenTheme = await listen('theme-changed', (event) => {
+        unlistenTheme = await listen("theme-changed", (event) => {
           const theme = event.payload as string;
-          updateSetting('theme', theme);
+          updateSetting("theme", theme);
           applyTheme(theme);
         });
       } catch (error) {
-        console.error('Failed to setup theme listener:', error);
+        console.error("Failed to setup theme listener:", error);
       }
     };
 
@@ -287,3 +292,4 @@ export function useGlobalSettings() {
   }
   return globalSettingsHook;
 }
+

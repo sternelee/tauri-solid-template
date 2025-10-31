@@ -14,18 +14,18 @@ import { openPath } from "@tauri-apps/plugin-opener";
 import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import AIChatInterface from "./AIChatInterface";
 import { fuzzySearch } from "../utils/fuzzySearch";
-import { 
-  getRecentApps, 
-  getFrequentApps, 
+import {
+  getRecentApps,
+  getFrequentApps,
   addRecentApp,
-  type RecentApp 
+  type RecentApp,
 } from "../utils/recentApps";
-import { 
-  categorizeApp, 
-  groupAppsByCategory, 
+import {
+  categorizeApp,
+  groupAppsByCategory,
   getCategoriesWithCounts,
   APP_CATEGORIES,
-  type AppCategory 
+  type AppCategory,
 } from "../utils/appCategories";
 
 interface CommandItem {
@@ -45,8 +45,13 @@ interface CommandItem {
 const SKELETON_ITEMS_COUNT = 6;
 const ANIMATION_DELAY_MS = 20;
 
-export default function CommandPalette() {
-  const [open, setOpen] = createSignal(true); // Auto-open on app start
+interface CommandPaletteProps {
+  isVisible?: boolean;
+  onHide?: () => void;
+}
+
+export default function CommandPalette(props: CommandPaletteProps) {
+  const [open, setOpen] = createSignal(props.isVisible ?? true); // Use props or default to true
   const [search, setSearch] = createSignal("");
   const [pluginCommands, setPluginCommands] = createSignal<CommandItem[]>([]);
   const [systemApps, setSystemApps] = createSignal<CommandItem[]>([]);
@@ -54,7 +59,9 @@ export default function CommandPalette() {
   const [frequentApps, setFrequentApps] = createSignal<RecentApp[]>([]);
   const [appsLoading, setAppsLoading] = createSignal(false);
   const [appsLoaded, setAppsLoaded] = createSignal(false);
-  const [iconCache, setIconCache] = createSignal<Map<string, string>>(new Map());
+  const [iconCache, setIconCache] = createSignal<Map<string, string>>(
+    new Map(),
+  );
   const [globalShortcutsRegistered, setGlobalShortcutsRegistered] =
     createSignal(false);
   const [fileSearchResults, setFileSearchResults] = createSignal<any[]>([]);
@@ -62,7 +69,9 @@ export default function CommandPalette() {
   const [groupByCategory, setGroupByCategory] = createSignal(false); // Toggle for category grouping
 
   // New states for AI Chat integration
-  const [currentMode, setCurrentMode] = createSignal<"command" | "chat">("command");
+  const [currentMode, setCurrentMode] = createSignal<"command" | "chat">(
+    "command",
+  );
   const [isAIChatReady, setIsAIChatReady] = createSignal(false);
 
   // Initialize plugins on mount
@@ -139,7 +148,7 @@ export default function CommandPalette() {
       // Load system apps immediately after mount
       console.log("Loading system apps on mount...");
       await loadSystemApplications();
-      
+
       // Load recent and frequent apps
       await loadRecentAndFrequentApps();
     } catch (error) {
@@ -230,81 +239,83 @@ export default function CommandPalette() {
       if (result.status === "ok") {
         console.log(`Processing ${result.data.length} applications`);
         const apps = result.data.map((app, index) => {
-        const appItem: any = {
-          id: `system-app-${index}`,
-          title: app.name,
-          subtitle: app.bundle_id,
-          icon: "📱", // Default icon for apps (will be updated asynchronously)
-          keywords: [app.name.toLowerCase(), app.bundle_id.toLowerCase()],
-          type: "app" as const,
-          bundleId: app.bundle_id,
-          category: categorizeApp(app.bundle_id, app.name), // Add category
-          action: async () => {
-            try {
-              // Track this app as recently used
-              await addRecentApp(
-                `system-app-${index}`,
-                app.name,
-                app.bundle_id
-              );
-              
-              // Refresh recent apps list
-              await loadRecentAndFrequentApps();
-              
-              // Use tauri-plugin-opener to open the application
-              // Try different methods based on available information
-              if (app.path) {
-                // If we have a direct path, use it
-                await openPath(app.path);
-              } else if (app.bundle_id) {
-                // For macOS, try opening with bundle ID using the applications scheme
-                if (navigator.platform.includes("Mac")) {
-                  // Try opening by bundle ID first
-                  try {
-                    await openPath(app.bundle_id);
-                  } catch {
-                    // Fallback to Applications folder path
-                    await openPath(`file:///Applications/${app.name}.app`);
-                  }
-                } else {
-                  // For other platforms, you might need different approaches
-                  console.log(
-                    `Opening app: ${app.name} (Bundle ID: ${app.bundle_id})`,
-                  );
-                  // Fallback: try using the bundle ID as a protocol
-                  try {
-                    await openPath(app.bundle_id);
-                  } catch {
-                    console.warn(`Could not open ${app.name} automatically`);
+          const appItem: any = {
+            id: `system-app-${index}`,
+            title: app.name,
+            subtitle: app.bundle_id,
+            icon: "📱", // Default icon for apps (will be updated asynchronously)
+            keywords: [app.name.toLowerCase(), app.bundle_id.toLowerCase()],
+            type: "app" as const,
+            bundleId: app.bundle_id,
+            category: categorizeApp(app.bundle_id, app.name), // Add category
+            action: async () => {
+              try {
+                // Track this app as recently used
+                await addRecentApp(
+                  `system-app-${index}`,
+                  app.name,
+                  app.bundle_id,
+                );
+
+                // Refresh recent apps list
+                await loadRecentAndFrequentApps();
+
+                // Use tauri-plugin-opener to open the application
+                // Try different methods based on available information
+                if (app.path) {
+                  // If we have a direct path, use it
+                  await openPath(app.path);
+                } else if (app.bundle_id) {
+                  // For macOS, try opening with bundle ID using the applications scheme
+                  if (navigator.platform.includes("Mac")) {
+                    // Try opening by bundle ID first
+                    try {
+                      await openPath(app.bundle_id);
+                    } catch {
+                      // Fallback to Applications folder path
+                      await openPath(`file:///Applications/${app.name}.app`);
+                    }
+                  } else {
+                    // For other platforms, you might need different approaches
+                    console.log(
+                      `Opening app: ${app.name} (Bundle ID: ${app.bundle_id})`,
+                    );
+                    // Fallback: try using the bundle ID as a protocol
+                    try {
+                      await openPath(app.bundle_id);
+                    } catch {
+                      console.warn(`Could not open ${app.name} automatically`);
+                    }
                   }
                 }
+                setOpen(false);
+                setSearch("");
+              } catch (error) {
+                console.error(`Failed to open ${app.name}:`, error);
               }
-              setOpen(false);
-              setSearch("");
-            } catch (error) {
-              console.error(`Failed to open ${app.name}:`, error);
-            }
-          },
-        };
+            },
+          };
 
-        // Load icon asynchronously
-        getAppIcon(app).then((iconUrl) => {
-          appItem.icon = iconUrl;
-          // Update the apps signal to trigger re-render
-          setSystemApps(prev => {
-            const newApps = [...prev];
-            const appIndex = newApps.findIndex(a => a.id === appItem.id);
-            if (appIndex !== -1) {
-              newApps[appIndex] = { ...newApps[appIndex], icon: iconUrl };
-            }
-            return newApps;
-          });
-        }).catch(() => {
-          // Keep default emoji if icon loading fails
+          // Load icon asynchronously
+          getAppIcon(app)
+            .then((iconUrl) => {
+              appItem.icon = iconUrl;
+              // Update the apps signal to trigger re-render
+              setSystemApps((prev) => {
+                const newApps = [...prev];
+                const appIndex = newApps.findIndex((a) => a.id === appItem.id);
+                if (appIndex !== -1) {
+                  newApps[appIndex] = { ...newApps[appIndex], icon: iconUrl };
+                }
+                return newApps;
+              });
+            })
+            .catch(() => {
+              // Keep default emoji if icon loading fails
+            });
+
+          return appItem;
         });
-
-        return appItem;
-      });
         setSystemApps(apps);
         setAppsLoaded(true);
         console.log(`Successfully loaded ${apps.length} applications`);
@@ -324,20 +335,23 @@ export default function CommandPalette() {
 
     setFileSearchLoading(true);
     try {
-      const result = await commands.searchFiles({
-        pattern: searchPattern,
-        max_results: 20,
-        file_extensions: null,
-        include_hidden: false
-      }, null);
+      const result = await commands.searchFiles(
+        {
+          pattern: searchPattern,
+          max_results: 20,
+          file_extensions: null,
+          include_hidden: false,
+        },
+        null,
+      );
 
       if (result.status === "ok") {
         const fileItems = result.data.map((file, index) => ({
           id: `file-search-${index}`,
-          title: file.path.split('/').pop() || file.path,
-          subtitle: `${file.path}${file.line_number ? `:${file.line_number}` : ''}`,
+          title: file.path.split("/").pop() || file.path,
+          subtitle: `${file.path}${file.line_number ? `:${file.line_number}` : ""}`,
           icon: getFileIcon(file.file_type),
-          keywords: [file.path, file.content || ''].join(' ').toLowerCase(),
+          keywords: [file.path, file.content || ""].join(" ").toLowerCase(),
           type: "action" as const,
           action: async () => {
             try {
@@ -370,29 +384,29 @@ export default function CommandPalette() {
   // Get file icon based on file type
   const getFileIcon = (fileType: string): string => {
     const iconMap: Record<string, string> = {
-      "Rust": "🦀",
-      "JavaScript": "🟨",
-      "React": "⚛️",
-      "TypeScript": "🔷",
-      "Python": "🐍",
-      "Java": "☕",
+      Rust: "🦀",
+      JavaScript: "🟨",
+      React: "⚛️",
+      TypeScript: "🔷",
+      Python: "🐍",
+      Java: "☕",
       "C++": "🔧",
-      "C": "⚙️",
-      "Go": "🐹",
-      "PHP": "🐘",
-      "Ruby": "💎",
-      "Swift": "🦉",
-      "HTML": "🌐",
-      "CSS": "🎨",
-      "JSON": "📄",
-      "YAML": "📝",
-      "Markdown": "📖",
-      "Text": "📄",
-      "SQL": "🗃️",
-      "Shell": "💻",
-      "Docker": "🐳",
-      "Git": "📦",
-      "Unknown": "📄"
+      C: "⚙️",
+      Go: "🐹",
+      PHP: "🐘",
+      Ruby: "💎",
+      Swift: "🦉",
+      HTML: "🌐",
+      CSS: "🎨",
+      JSON: "📄",
+      YAML: "📝",
+      Markdown: "📖",
+      Text: "📄",
+      SQL: "🗃️",
+      Shell: "💻",
+      Docker: "🐳",
+      Git: "📦",
+      Unknown: "📄",
     };
     return iconMap[fileType] || "📄";
   };
@@ -401,34 +415,43 @@ export default function CommandPalette() {
   const recentAppsItems = createMemo(() => {
     const recent = recentApps();
     const allApps = systemApps();
-    
-    return recent.slice(0, 8).map(recentApp => {
-      const appItem = allApps.find(app => app.bundleId === recentApp.bundleId);
-      if (appItem) {
-        return { ...appItem, score: recentApp.usageCount };
-      }
-      return null;
-    }).filter(Boolean) as CommandItem[];
+
+    return recent
+      .slice(0, 8)
+      .map((recentApp) => {
+        const appItem = allApps.find(
+          (app) => app.bundleId === recentApp.bundleId,
+        );
+        if (appItem) {
+          return { ...appItem, score: recentApp.usageCount };
+        }
+        return null;
+      })
+      .filter(Boolean) as CommandItem[];
   });
 
   // Get frequent apps as command items
   const frequentAppsItems = createMemo(() => {
     const frequent = frequentApps();
     const allApps = systemApps();
-    
-    return frequent.map(freqApp => {
-      const appItem = allApps.find(app => app.bundleId === freqApp.bundleId);
-      if (appItem) {
-        return { ...appItem, score: freqApp.usageCount };
-      }
-      return null;
-    }).filter(Boolean) as CommandItem[];
+
+    return frequent
+      .map((freqApp) => {
+        const appItem = allApps.find(
+          (app) => app.bundleId === freqApp.bundleId,
+        );
+        if (appItem) {
+          return { ...appItem, score: freqApp.usageCount };
+        }
+        return null;
+      })
+      .filter(Boolean) as CommandItem[];
   });
 
   // Optimized search with fuzzy matching
   const searchResults = createMemo(() => {
     const query = search();
-    if (!query || query.startsWith('#')) {
+    if (!query || query.startsWith("#")) {
       return null; // No search active or file search
     }
 
@@ -441,7 +464,7 @@ export default function CommandPalette() {
 
     // Use fuzzy search
     const results = fuzzySearch(query, allItems);
-    
+
     return results.slice(0, 50); // Limit results for performance
   });
 
@@ -452,7 +475,7 @@ export default function CommandPalette() {
     );
 
     const searchQuery = search();
-    const hasSearch = searchQuery && !searchQuery.startsWith('#');
+    const hasSearch = searchQuery && !searchQuery.startsWith("#");
 
     // If searching, return search results
     if (hasSearch) {
@@ -511,14 +534,16 @@ export default function CommandPalette() {
       groups.push({
         heading: "System Applications",
         items: appsLoading()
-          ? Array(SKELETON_ITEMS_COUNT).fill(null).map((_, i) => ({
-              id: `loading-skeleton-${i}`,
-              title: "Loading...",
-              subtitle: "Please wait",
-              icon: "⏳",
-              type: "action" as const,
-              action: () => {},
-            }))
+          ? Array(SKELETON_ITEMS_COUNT)
+              .fill(null)
+              .map((_, i) => ({
+                id: `loading-skeleton-${i}`,
+                title: "Loading...",
+                subtitle: "Please wait",
+                icon: "⏳",
+                type: "action" as const,
+                action: () => {},
+              }))
           : systemApps().length > 0
             ? systemApps()
             : [
@@ -578,7 +603,7 @@ export default function CommandPalette() {
           {
             id: "action-toggle-categories",
             title: groupByCategory() ? "Show All Apps" : "Group by Category",
-            subtitle: groupByCategory() 
+            subtitle: groupByCategory()
               ? "Display apps in a single list"
               : "Organize apps by type (Browsers, Development, etc.)",
             icon: groupByCategory() ? "📋" : "📁",
@@ -676,7 +701,9 @@ export default function CommandPalette() {
           {
             id: "action-ai-chat",
             title: "AI Chat",
-            subtitle: isAIChatReady() ? "Chat with AI assistant" : "AI not available",
+            subtitle: isAIChatReady()
+              ? "Chat with AI assistant"
+              : "AI not available",
             icon: isAIChatReady() ? "🤖" : "❌",
             keywords: ["ai", "chat", "assistant", "gpt"],
             type: "action" as const,
@@ -684,7 +711,9 @@ export default function CommandPalette() {
               if (isAIChatReady()) {
                 setCurrentMode("chat");
               } else {
-                alert("AI Chat is not available. Please check your AI configuration.");
+                alert(
+                  "AI Chat is not available. Please check your AI configuration.",
+                );
               }
             },
           },
@@ -701,7 +730,10 @@ export default function CommandPalette() {
                 if (result.status === "ok") {
                   console.log("Settings window opened successfully");
                 } else {
-                  console.error("Failed to open settings window:", result.error);
+                  console.error(
+                    "Failed to open settings window:",
+                    result.error,
+                  );
                 }
               } catch (error) {
                 console.error("Failed to open settings:", error);
@@ -778,10 +810,14 @@ export default function CommandPalette() {
         ],
       },
       // Add file search results when searching with #
-      ...(search().startsWith('#') && fileSearchResults().length > 0 ? [{
-        heading: "File Search Results",
-        items: fileSearchResults(),
-      }] : []),
+      ...(search().startsWith("#") && fileSearchResults().length > 0
+        ? [
+            {
+              heading: "File Search Results",
+              items: fileSearchResults(),
+            },
+          ]
+        : []),
       {
         heading: "Plugins",
         items: pluginCommands(),
@@ -804,7 +840,9 @@ export default function CommandPalette() {
         setCurrentMode("chat");
         // Focus chat input after mode switch
         setTimeout(() => {
-          const chatInput = document.querySelector(".chat-input") as HTMLTextAreaElement;
+          const chatInput = document.querySelector(
+            ".chat-input",
+          ) as HTMLTextAreaElement;
           if (chatInput) {
             chatInput.focus();
           }
@@ -813,7 +851,9 @@ export default function CommandPalette() {
         setCurrentMode("command");
         // Focus command input after mode switch
         setTimeout(() => {
-          const commandInput = document.querySelector(".raycast-input") as HTMLInputElement;
+          const commandInput = document.querySelector(
+            ".raycast-input",
+          ) as HTMLInputElement;
           if (commandInput) {
             commandInput.focus();
             commandInput.select();
@@ -897,7 +937,7 @@ export default function CommandPalette() {
   // File search effect - trigger when search starts with #
   createEffect(() => {
     const searchValue = search();
-    if (searchValue.startsWith('#') && searchValue.length > 1) {
+    if (searchValue.startsWith("#") && searchValue.length > 1) {
       const searchPattern = searchValue.slice(1); // Remove the # prefix
       performFileSearch(searchPattern);
     } else {
@@ -918,48 +958,56 @@ export default function CommandPalette() {
   return (
     <>
       {/* Plugin Container */}
-      <div id="plugin-container" class="plugin-container"></div>
+      <div
+        id="plugin-container"
+        class="pointer-events-none fixed top-0 right-0 bottom-0 left-0 z-[10000]"
+      ></div>
 
-      <div class={`raycast-dialog ${open() ? "open" : ""}`}>
+      <div
+        class={`fixed inset-0 z-[9999] flex items-center justify-center transition-all duration-300 ${open() ? "visible opacity-100" : "invisible opacity-0"}`}
+      >
         {/* Backdrop */}
-        <div class="raycast-backdrop" onClick={() => setOpen(false)} />
+        <div
+          class="absolute inset-0 bg-black/40 backdrop-blur-md"
+          onClick={() => setOpen(false)}
+        />
 
         {/* Main Container */}
-        <div class="raycast-container">
+        <div class="relative flex max-h-[80vh] w-full max-w-[680px] flex-col">
           {/* Mode Indicator and Switcher */}
-          <div class="mode-switcher">
-            <div class="mode-tabs">
+          <div class="flex items-center justify-between rounded-t-2xl border border-b-0 border-white/10 bg-gray-900/95 p-3 backdrop-blur-xl sm:p-5">
+            <div class="flex gap-1 rounded-lg bg-white/5 p-1">
               <button
-                class={`mode-tab ${currentMode() === "command" ? "active" : ""}`}
+                class={`flex cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-white/60 transition-all duration-200 ${currentMode() === "command" ? "bg-blue-500/20 text-blue-400" : "hover:text-white/80"}`}
                 onClick={() => setCurrentMode("command")}
               >
-                <span class="mode-icon">🔍</span>
-                <span class="mode-label">Commands</span>
+                <span class="text-sm">🔍</span>
+                <span class="font-medium">Commands</span>
               </button>
               <Show when={isAIChatReady()}>
                 <button
-                  class={`mode-tab ${currentMode() === "chat" ? "active" : ""}`}
+                  class={`flex cursor-pointer items-center gap-1.5 rounded-md border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-white/60 transition-all duration-200 ${currentMode() === "chat" ? "bg-blue-500/20 text-blue-400" : "hover:text-white/80"}`}
                   onClick={() => setCurrentMode("chat")}
                 >
-                  <span class="mode-icon">🤖</span>
-                  <span class="mode-label">AI Chat</span>
+                  <span class="text-sm">🤖</span>
+                  <span class="font-medium">AI Chat</span>
                 </button>
               </Show>
             </div>
-            <div class="shortcuts-hint">
-              <kbd class="raycast-kbd raycast-kbd-small">
+            <div class="flex items-center gap-1.5 text-xs text-white/40">
+              <kbd class="inline-flex min-h-4 items-center justify-center gap-px rounded border border-white/20 bg-white/10 px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium text-white/80">
                 <span>Tab</span>
               </kbd>
-              <span class="hint-text">to switch</span>
+              <span class="font-normal">to switch</span>
             </div>
           </div>
 
           {/* Content based on mode */}
           <Show when={currentMode() === "command"}>
-            <Command class="raycast-palette">
+            <Command class="animate-fade-in flex max-h-[60vh] flex-col overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-gray-900/95 shadow-2xl backdrop-blur-xl">
               {/* Search Input */}
-              <div class="raycast-search">
-                <div class="raycast-search-icon">
+              <div class="flex items-center gap-3 border-b border-white/10 p-4 sm:p-5">
+                <div class="flex flex-shrink-0 items-center justify-center text-white/60 transition-colors duration-200 group-focus-within:text-blue-400/80">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
@@ -974,25 +1022,25 @@ export default function CommandPalette() {
                   value={search()}
                   onValueChange={setSearch}
                   placeholder="Search for apps and commands... (use # to search files)"
-                  class="raycast-input"
+                  class="flex-1 border-none bg-transparent text-base leading-6 font-normal text-white/90 outline-none placeholder:text-white/50 focus:outline-none"
                 />
-                <div class="raycast-shortcuts">
-                  <kbd class="raycast-kbd raycast-kbd-primary">
+                <div class="ml-auto flex items-center gap-2">
+                  <kbd class="inline-flex items-center justify-center gap-px rounded border border-blue-500/30 bg-blue-500/20 px-1.5 py-1 font-mono text-[11px] leading-none font-medium text-blue-400">
                     <span>⌘</span>
                     <span>K</span>
                   </kbd>
-                  <span class="raycast-shortcut-separator">or</span>
-                  <kbd class="raycast-kbd">
+                  <span class="text-xs font-medium text-white/40">or</span>
+                  <kbd class="inline-flex items-center justify-center gap-px rounded border border-white/20 bg-white/10 px-1.5 py-1 font-mono text-[11px] leading-none font-medium text-white/80">
                     <span>ESC</span>
                   </kbd>
                 </div>
               </div>
 
               {/* Command List */}
-              <Command.List class="raycast-list">
+              <Command.List class="max-h-[400px] overflow-y-auto py-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb:hover]:bg-white/30 [&::-webkit-scrollbar-track]:bg-transparent">
                 {/* Empty State */}
-                <Command.Empty class="raycast-empty">
-                  <div class="raycast-empty-icon">
+                <Command.Empty class="flex flex-col items-center justify-center p-12 text-center">
+                  <div class="mb-4 text-white/40">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                       <path
                         d="M9.75 9.75L14.25 14.25M14.25 9.75L9.75 14.25M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
@@ -1003,8 +1051,10 @@ export default function CommandPalette() {
                       />
                     </svg>
                   </div>
-                  <div class="raycast-empty-text">No results found</div>
-                  <div class="raycast-empty-subtitle">
+                  <div class="mb-1 text-base font-medium text-white/80">
+                    No results found
+                  </div>
+                  <div class="text-sm text-white/50">
                     Try searching for something else
                   </div>
                 </Command.Empty>
@@ -1012,62 +1062,73 @@ export default function CommandPalette() {
                 {/* Command Groups */}
                 {commandGroups().map((group) => (
                   <Command.Group heading={group.heading}>
-                    <div class="raycast-group-header">
+                    <div class="flex items-center justify-between px-5 py-2 pr-5 pl-5 text-[11px] font-semibold tracking-wide text-white/50 uppercase select-none">
                       {group.heading}
                       {group.heading === "Recent Applications" && (
-                        <span class="raycast-group-badge">⭐</span>
+                        <span class="ml-1.5 text-[10px]">⭐</span>
                       )}
                     </div>
                     {group.items.map((item, index) => (
                       <Command.Item
                         value={`${item.title} ${item.subtitle || ""} ${item.keywords?.join(" ") || ""}`}
                         onSelect={() => handleSelect(item)}
-                        class="raycast-item"
+                        class={`animate-slide-up mx-2 flex cursor-pointer items-center rounded-lg px-5 py-2 opacity-0 transition-all duration-200 outline-none select-none hover:scale-[1.01] hover:bg-white/8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500/50 aria-selected:scale-[1.02] aria-selected:border aria-selected:border-blue-500/30 aria-selected:bg-blue-500/15 aria-selected:shadow-[0_0_20px_rgba(59,130,246,0.1)]`}
                         style={{
                           "animation-delay": `${index * ANIMATION_DELAY_MS}ms`,
                         }}
                       >
-                        <div class="raycast-item-icon">
-                        {typeof item.icon === "string" && item.icon.startsWith("data:") ? (
-                          <img 
-                            src={item.icon} 
-                            alt="" 
-                            class="raycast-app-icon"
-                            loading="lazy"
-                          />
-                        ) : (
-                          item.icon
-                        )}
-                      </div>
-                        <div class="raycast-item-content">
-                          <div class="raycast-item-title">{item.title}</div>
+                        <div class="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center text-base transition-transform duration-200 group-hover:scale-110">
+                          {typeof item.icon === "string" &&
+                          item.icon.startsWith("data:") ? (
+                            <img
+                              src={item.icon}
+                              alt=""
+                              class="h-6 w-6 rounded-md object-cover transition-all duration-200 hover:shadow-lg"
+                              loading="lazy"
+                            />
+                          ) : (
+                            item.icon
+                          )}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <div class="overflow-hidden text-sm leading-tight font-medium text-ellipsis whitespace-nowrap text-white/90">
+                            {item.title}
+                          </div>
                           {item.subtitle && (
-                            <div class="raycast-item-subtitle">
+                            <div class="mt-px overflow-hidden text-xs leading-tight text-ellipsis whitespace-nowrap text-white/60">
                               {item.subtitle}
                             </div>
                           )}
                         </div>
-                        {!groupByCategory() && item.category && item.type === "app" && (
-                          <div 
-                            class="raycast-category-badge"
-                            style={{
-                              background: `${item.category.color}20`,
-                              border: `1px solid ${item.category.color}40`,
-                              color: item.category.color,
-                            }}
-                          >
-                            <span class="category-icon">{item.category.icon}</span>
-                            <span class="category-name">{item.category.name}</span>
-                          </div>
-                        )}
+                        {!groupByCategory() &&
+                          item.category &&
+                          item.type === "app" && (
+                            <div
+                              class="ml-2 flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition-all duration-200"
+                              style={{
+                                background: `${item.category.color}20`,
+                                border: `1px solid ${item.category.color}40`,
+                                color: item.category.color,
+                              }}
+                            >
+                              <span class="text-[10px]">
+                                {item.category.icon}
+                              </span>
+                              <span class="font-medium whitespace-nowrap">
+                                {item.category.name}
+                              </span>
+                            </div>
+                          )}
                         {item.score && item.score > 1 && (
-                          <div class="raycast-item-badge">
-                            <span class="badge-text">Used {item.score}x</span>
+                          <div class="ml-2 flex items-center rounded-full border border-blue-500/30 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold text-blue-400">
+                            <span class="whitespace-nowrap">
+                              Used {item.score}x
+                            </span>
                           </div>
                         )}
                         {item.shortcut && (
-                          <div class="raycast-item-shortcut">
-                            <kbd class="raycast-kbd raycast-kbd-small">
+                          <div class="ml-3 flex-shrink-0">
+                            <kbd class="inline-flex min-h-4 items-center justify-center gap-px rounded border border-white/20 bg-white/10 px-1 py-0.5 font-mono text-[10px] leading-none font-medium text-white/80">
                               {item.shortcut.split("+").map((key: string) => (
                                 <span>
                                   {key === "Cmd"
@@ -1093,18 +1154,22 @@ export default function CommandPalette() {
           </Show>
 
           <Show when={currentMode() === "chat" && isAIChatReady()}>
-            <AIChatInterface />
+            <div class="animate-fade-in overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-gray-900/95 shadow-2xl backdrop-blur-xl">
+              <AIChatInterface />
+            </div>
           </Show>
 
           <Show when={currentMode() === "chat" && !isAIChatReady()}>
-            <div class="ai-unavailable">
-              <div class="ai-unavailable-icon">⚠️</div>
-              <div class="ai-unavailable-title">AI Chat Unavailable</div>
-              <div class="ai-unavailable-subtitle">
+            <div class="flex flex-col items-center gap-4 rounded-b-2xl border border-t-0 border-white/10 bg-gray-900/95 p-12 text-center backdrop-blur-xl">
+              <div class="text-5xl opacity-60">⚠️</div>
+              <div class="text-xl font-semibold text-white/90">
+                AI Chat Unavailable
+              </div>
+              <div class="max-w-[300px] text-sm leading-relaxed text-white/60">
                 Please configure your AI provider settings to use this feature.
               </div>
               <button
-                class="ai-unavailable-button"
+                class="cursor-pointer rounded-lg border border-blue-500/30 bg-blue-500/20 px-4 py-2 text-sm font-medium text-blue-400 transition-all duration-200 hover:-translate-y-px hover:bg-blue-500/30"
                 onClick={() => setCurrentMode("command")}
               >
                 Back to Commands
@@ -1113,620 +1178,6 @@ export default function CommandPalette() {
           </Show>
         </div>
       </div>
-
-      {/* Raycast-style CSS */}
-      <style jsx global>{`
-        /* Raycast-inspired styling */
-        .raycast-dialog {
-          position: fixed;
-          inset: 0;
-          z-index: 9999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.15s ease, visibility 0.15s ease;
-        }
-
-        .raycast-dialog.open {
-          opacity: 1;
-          visibility: visible;
-        }
-
-        .raycast-backdrop {
-          position: absolute;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.4);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-        }
-
-        .raycast-container {
-          position: relative;
-          width: 100%;
-          max-width: 680px;
-          max-height: 80vh;
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* Mode Switcher */
-        .mode-switcher {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 20px;
-          background: rgba(23, 23, 23, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-bottom: none;
-          border-radius: 16px 16px 0 0;
-        }
-
-        .mode-tabs {
-          display: flex;
-          gap: 4px;
-          background: rgba(255, 255, 255, 0.05);
-          padding: 4px;
-          border-radius: 8px;
-        }
-
-        .mode-tab {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: transparent;
-          border: none;
-          border-radius: 6px;
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .mode-tab:hover {
-          color: rgba(255, 255, 255, 0.8);
-        }
-
-        .mode-tab.active {
-          background: rgba(59, 130, 246, 0.2);
-          color: #60a5fa;
-        }
-
-        .mode-icon {
-          font-size: 14px;
-        }
-
-        .mode-label {
-          font-weight: 500;
-        }
-
-        .shortcuts-hint {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 12px;
-        }
-
-        .hint-text {
-          font-weight: 400;
-        }
-
-        .raycast-palette {
-          background: rgba(23, 23, 23, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-top: none;
-          border-radius: 0 0 16px 16px;
-          box-shadow:
-            0 20px 25px -5px rgba(0, 0, 0, 0.1),
-            0 10px 10px -5px rgba(0, 0, 0, 0.04),
-            0 0 0 1px rgba(255, 255, 255, 0.05);
-          overflow: hidden;
-          animation: raycast-enter 0.15s ease-out;
-          display: flex;
-          flex-direction: column;
-          max-height: 60vh;
-        }
-
-        @keyframes raycast-enter {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-
-        @keyframes shimmer {
-          0% {
-            background-position: -1000px 0;
-          }
-          100% {
-            background-position: 1000px 0;
-          }
-        }
-
-        .loading-shimmer {
-          background: linear-gradient(
-            to right,
-            rgba(255, 255, 255, 0.05) 0%,
-            rgba(255, 255, 255, 0.1) 50%,
-            rgba(255, 255, 255, 0.05) 100%
-          );
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite linear;
-        }
-
-        .raycast-item[id^="loading-skeleton"] {
-          pointer-events: none;
-        }
-
-        .raycast-item[id^="loading-skeleton"] .raycast-item-title,
-        .raycast-item[id^="loading-skeleton"] .raycast-item-subtitle {
-          background: linear-gradient(
-            to right,
-            rgba(255, 255, 255, 0.1) 0%,
-            rgba(255, 255, 255, 0.2) 50%,
-            rgba(255, 255, 255, 0.1) 100%
-          );
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite linear;
-          border-radius: 4px;
-          color: transparent;
-        }
-
-        .raycast-search {
-          display: flex;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          gap: 12px;
-        }
-
-        .raycast-search-icon {
-          color: rgba(255, 255, 255, 0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          transition: color 0.2s ease;
-        }
-
-        .raycast-search:focus-within .raycast-search-icon {
-          color: rgba(59, 130, 246, 0.8);
-        }
-
-        .raycast-input {
-          flex: 1;
-          background: transparent;
-          border: none;
-          outline: none;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 16px;
-          font-weight: 400;
-          line-height: 1.5;
-          font-family:
-            -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-            "Helvetica Neue", Arial, sans-serif;
-        }
-
-        .raycast-input::placeholder {
-          color: rgba(255, 255, 255, 0.5);
-        }
-
-        .raycast-input:focus {
-          outline: none;
-        }
-
-        .raycast-shortcuts {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-left: auto;
-        }
-
-        .raycast-shortcut-separator {
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .raycast-kbd {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 1px;
-          padding: 2px 6px;
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 6px;
-          font-size: 11px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.8);
-          font-family:
-            "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas,
-            "Courier New", monospace;
-          line-height: 1;
-          user-select: none;
-        }
-
-        .raycast-kbd-primary {
-          background: rgba(59, 130, 246, 0.2);
-          border-color: rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-        }
-
-        .raycast-kbd-small {
-          padding: 1px 4px;
-          font-size: 10px;
-          min-height: 16px;
-        }
-
-        .raycast-list {
-          max-height: 400px;
-          overflow-y: auto;
-          padding: 8px 0;
-        }
-
-        .raycast-list::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .raycast-list::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .raycast-list::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 3px;
-        }
-
-        .raycast-list::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-
-        .raycast-group-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 8px 20px 4px;
-          font-size: 11px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          color: rgba(255, 255, 255, 0.5);
-          user-select: none;
-        }
-
-        .raycast-group-badge {
-          font-size: 10px;
-          margin-left: 6px;
-        }
-
-        .raycast-item {
-          display: flex;
-          align-items: center;
-          padding: 8px 20px;
-          margin: 0 8px;
-          border-radius: 8px;
-          cursor: pointer;
-          user-select: none;
-          transition: all 0.15s ease;
-          outline: none;
-          animation: item-slide-in 0.2s ease-out forwards;
-          opacity: 0;
-        }
-
-        @keyframes item-slide-in {
-          from {
-            opacity: 0;
-            transform: translateY(-4px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .raycast-item:hover {
-          background: rgba(255, 255, 255, 0.08);
-          transform: scale(1.01);
-        }
-        
-        .raycast-item[aria-selected="true"] {
-          background: rgba(59, 130, 246, 0.15);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          transform: scale(1.02);
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
-        }
-
-        .raycast-item-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          margin-right: 12px;
-          font-size: 16px;
-          flex-shrink: 0;
-          transition: transform 0.2s ease;
-        }
-
-        .raycast-item:hover .raycast-item-icon {
-          transform: scale(1.1);
-        }
-
-        .raycast-app-icon {
-          width: 24px;
-          height: 24px;
-          object-fit: contain;
-          border-radius: 4px;
-          transition: all 0.2s ease;
-        }
-
-        .raycast-app-icon:hover {
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .raycast-item-content {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .raycast-item-badge {
-          display: flex;
-          align-items: center;
-          margin-left: 8px;
-          padding: 2px 8px;
-          background: rgba(59, 130, 246, 0.15);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          border-radius: 12px;
-          font-size: 10px;
-          color: #60a5fa;
-          font-weight: 600;
-        }
-
-        .badge-text {
-          white-space: nowrap;
-        }
-
-        .raycast-category-badge {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          margin-left: 8px;
-          padding: 3px 8px;
-          border-radius: 8px;
-          font-size: 11px;
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-
-        .category-icon {
-          font-size: 10px;
-        }
-
-        .category-name {
-          white-space: nowrap;
-          font-weight: 500;
-        }
-
-        .raycast-item-title {
-          font-size: 14px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.9);
-          line-height: 1.4;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .raycast-item-subtitle {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.6);
-          line-height: 1.3;
-          margin-top: 1px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .raycast-item-shortcut {
-          margin-left: 12px;
-          flex-shrink: 0;
-        }
-
-        .raycast-empty {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 48px 20px;
-          text-align: center;
-        }
-
-        .raycast-empty-icon {
-          color: rgba(255, 255, 255, 0.4);
-          margin-bottom: 16px;
-        }
-
-        .raycast-empty-text {
-          font-size: 16px;
-          font-weight: 500;
-          color: rgba(255, 255, 255, 0.8);
-          margin-bottom: 4px;
-        }
-
-        .raycast-empty-subtitle {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* Plugin Container */
-        .plugin-container {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          pointer-events: none;
-          z-index: 10000;
-        }
-
-        .plugin-container plugin-host {
-          pointer-events: auto;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-          .raycast-dialog {
-            padding-top: 8vh;
-          }
-
-          .raycast-container {
-            margin: 0 12px;
-          }
-
-          .raycast-search {
-            padding: 12px 16px;
-          }
-
-          .raycast-item {
-            padding: 12px 16px;
-            margin: 0 4px;
-          }
-
-          .raycast-group-header {
-            padding: 8px 16px 4px;
-          }
-        }
-
-        /* Focus states */
-        .raycast-item:focus-visible {
-          outline: 2px solid rgba(59, 130, 246, 0.5);
-          outline-offset: 2px;
-        }
-
-        .raycast-input:focus-visible {
-          outline: none;
-        }
-
-        /* AI Chat Unavailable State */
-        .ai-unavailable {
-          background: rgba(23, 23, 23, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-top: none;
-          border-radius: 0 0 16px 16px;
-          padding: 48px 32px;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .ai-unavailable-icon {
-          font-size: 48px;
-          opacity: 0.6;
-        }
-
-        .ai-unavailable-title {
-          font-size: 20px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-          margin: 0;
-        }
-
-        .ai-unavailable-subtitle {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.6);
-          line-height: 1.5;
-          max-width: 300px;
-          margin: 0;
-        }
-
-        .ai-unavailable-button {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .ai-unavailable-button:hover {
-          background: rgba(59, 130, 246, 0.3);
-          transform: translateY(-1px);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 640px) {
-          .raycast-dialog {
-            padding-top: 8vh;
-          }
-
-          .raycast-container {
-            margin: 0 12px;
-            max-width: calc(100% - 24px);
-          }
-
-          .mode-switcher {
-            padding: 10px 16px;
-          }
-
-          .mode-tab {
-            padding: 5px 10px;
-            font-size: 12px;
-          }
-
-          .mode-icon {
-            font-size: 12px;
-          }
-
-          .shortcuts-hint {
-            display: none;
-          }
-
-          .raycast-search {
-            padding: 12px 16px;
-          }
-
-          .raycast-item {
-            padding: 12px 16px;
-            margin: 0 4px;
-          }
-
-          .raycast-group-header {
-            padding: 8px 16px 4px;
-          }
-
-          .ai-unavailable {
-            padding: 32px 24px;
-          }
-
-          .ai-unavailable-title {
-            font-size: 18px;
-          }
-
-          .ai-unavailable-subtitle {
-            font-size: 13px;
-          }
-        }
-      `}</style>
     </>
   );
 }

@@ -8,7 +8,7 @@ export type SystemInfo = {
 };
 
 export type CommandResult<T = any> = {
-  status: 'ok' | 'error';
+  status: "ok" | "error";
   data?: T;
   error?: string;
 };
@@ -55,7 +55,7 @@ export type McpTool = {
 
 // AI Agent types (simplified for BigInt compatibility)
 export type ChatMessage = {
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp?: number;
 };
@@ -89,19 +89,26 @@ export interface Commands {
   getAppIconDataUrl: (icon: string | null) => Promise<CommandResult<string>>;
 
   // Search
-  searchFiles: (options: SearchOptions, windowId: string | null) => Promise<CommandResult<SearchResult[]>>;
+  searchFiles: (
+    options: SearchOptions,
+    windowId: string | null,
+  ) => Promise<CommandResult<SearchResult[]>>;
 
   // AI System
-  getAgentStatus: () => Promise<CommandResult<{ status: string; message: string }>>;
+  getAgentStatus: () => Promise<
+    CommandResult<{ status: string; message: string }>
+  >;
   initializeAiSystem: () => Promise<CommandResult<string>>;
-  sendChatMessage: (request: ChatRequest) => Promise<CommandResult<ChatResponse>>;
+  sendChatMessage: (
+    request: ChatRequest,
+  ) => Promise<CommandResult<ChatResponse>>;
 
   // Settings
   openSettingsWindow: () => Promise<CommandResult<void>>;
 }
 
 // Import the actual commands from Tauri API
-import * as Tauri from '@tauri-apps/api/core';
+import * as Tauri from "@tauri-apps/api/core";
 
 // Create a proxy that forwards calls to Tauri commands
 const commands = new Proxy({} as Commands, {
@@ -114,7 +121,8 @@ const commands = new Proxy({} as Commands, {
         throw error;
       }
     };
-  }
+  },
 });
 
 export default commands;
+

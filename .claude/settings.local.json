@@ -40,7 +40,8 @@
       "Bash(perl:*)",
       "Bash(python3:*)",
       "Read(//Users/sternelee/www/github/**)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []

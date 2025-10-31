@@ -1,9 +1,9 @@
-import { createSignal, createEffect, For, Show } from 'solid-js';
-import { commands } from '../bindings';
+import { createSignal, createEffect, For, Show } from "solid-js";
+import { commands } from "../bindings";
 
 interface SourceReference {
   id: string;
-  source_type: 'file' | 'app' | 'url' | 'conversation';
+  source_type: "file" | "app" | "url" | "conversation";
   path: string;
   name?: string;
   description?: string;
@@ -20,11 +20,15 @@ export default function ContextualChatInput(props: {
   placeholder?: string;
   disabled?: boolean;
 }) {
-  const [inputValue, setInputValue] = createSignal('');
+  const [inputValue, setInputValue] = createSignal("");
   const [showSuggestions, setShowSuggestions] = createSignal(false);
   const [suggestions, setSuggestions] = createSignal<string[]>([]);
-  const [currentSources, setCurrentSources] = createSignal<SourceReference[]>([]);
-  const [suggestionType, setSuggestionType] = createSignal<'file' | 'app'>('file');
+  const [currentSources, setCurrentSources] = createSignal<SourceReference[]>(
+    [],
+  );
+  const [suggestionType, setSuggestionType] = createSignal<"file" | "app">(
+    "file",
+  );
   const [cursorPosition, setCursorPosition] = createSignal(0);
 
   let textareaRef: HTMLTextAreaElement | undefined;
@@ -39,21 +43,29 @@ export default function ContextualChatInput(props: {
     const appMatch = beforeCursor.match(/#([^\s]*)$/);
 
     if (fileMatch) {
-      setSuggestionType('file');
+      setSuggestionType("file");
       const query = fileMatch[1];
       if (query.length > 0) {
         searchFiles(query);
       }
       setShowSuggestions(true);
-      return { trigger: '@', query: fileMatch[1], start: cursorPos - query.length - 1 };
+      return {
+        trigger: "@",
+        query: fileMatch[1],
+        start: cursorPos - query.length - 1,
+      };
     } else if (appMatch) {
-      setSuggestionType('app');
+      setSuggestionType("app");
       const query = appMatch[1];
       if (query.length > 0) {
         searchApps(query);
       }
       setShowSuggestions(true);
-      return { trigger: '#', query: appMatch[1], start: cursorPos - query.length - 1 };
+      return {
+        trigger: "#",
+        query: appMatch[1],
+        start: cursorPos - query.length - 1,
+      };
     } else {
       setShowSuggestions(false);
       return null;
@@ -70,11 +82,11 @@ export default function ContextualChatInput(props: {
         `/home/user/code/${query}.rs`,
         `/home/user/config/${query}.json`,
         `/home/user/logs/${query}.log`,
-      ].filter(path => path.includes(query));
+      ].filter((path) => path.includes(query));
 
       setSuggestions(mockFiles);
     } catch (error) {
-      console.error('Error searching files:', error);
+      console.error("Error searching files:", error);
       setSuggestions([]);
     }
   };
@@ -84,28 +96,30 @@ export default function ContextualChatInput(props: {
     try {
       // In a real implementation, this would search installed applications
       const mockApps = [
-        'Visual Studio Code',
-        'Google Chrome',
-        'Spotify',
-        'Slack',
-        'Terminal',
-        'Finder',
-        'System Settings',
-        'Notes',
-      ].filter(app => app.toLowerCase().includes(query.toLowerCase()));
+        "Visual Studio Code",
+        "Google Chrome",
+        "Spotify",
+        "Slack",
+        "Terminal",
+        "Finder",
+        "System Settings",
+        "Notes",
+      ].filter((app) => app.toLowerCase().includes(query.toLowerCase()));
 
       setSuggestions(mockApps);
     } catch (error) {
-      console.error('Error searching apps:', error);
+      console.error("Error searching apps:", error);
       setSuggestions([]);
     }
   };
 
   // Handle input changes
-  const handleInput = (e: Event & {
-    currentTarget: HTMLTextAreaElement;
-    target: HTMLTextAreaElement;
-  }) => {
+  const handleInput = (
+    e: Event & {
+      currentTarget: HTMLTextAreaElement;
+      target: HTMLTextAreaElement;
+    },
+  ) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart;
 
@@ -128,23 +142,23 @@ export default function ContextualChatInput(props: {
 
       let newSource: SourceReference;
 
-      if (trigger === '@') {
+      if (trigger === "@") {
         // File reference
         newSource = {
           id: crypto.randomUUID(),
-          source_type: 'file',
+          source_type: "file",
           path: suggestion,
-          name: suggestion.split('/').pop(),
+          name: suggestion.split("/").pop(),
           description: `File: ${suggestion}`,
           metadata: {
-            file_type: suggestion.split('.').pop()?.toLowerCase(),
+            file_type: suggestion.split(".").pop()?.toLowerCase(),
           },
         };
       } else {
         // App reference
         newSource = {
           id: crypto.randomUUID(),
-          source_type: 'app',
+          source_type: "app",
           path: suggestion,
           name: suggestion,
           description: `Application: ${suggestion}`,
@@ -154,17 +168,18 @@ export default function ContextualChatInput(props: {
         };
       }
 
-      setCurrentSources(prev => [...prev, newSource]);
+      setCurrentSources((prev) => [...prev, newSource]);
 
       // Update input value
-      const newValue = beforeMatch + trigger + suggestion + ' ' + afterMatch;
+      const newValue = beforeMatch + trigger + suggestion + " " + afterMatch;
       setInputValue(newValue);
       setShowSuggestions(false);
 
       // Focus back on textarea
       if (textareaRef) {
         textareaRef.focus();
-        const newCursorPos = beforeMatch.length + trigger.length + suggestion.length + 1;
+        const newCursorPos =
+          beforeMatch.length + trigger.length + suggestion.length + 1;
         textareaRef.setSelectionRange(newCursorPos, newCursorPos);
       }
     }
@@ -175,7 +190,7 @@ export default function ContextualChatInput(props: {
     const message = inputValue().trim();
     if (message && !props.disabled) {
       props.onSendMessage(message, currentSources());
-      setInputValue('');
+      setInputValue("");
       setCurrentSources([]);
       setShowSuggestions(false);
     }
@@ -183,19 +198,19 @@ export default function ContextualChatInput(props: {
 
   // Handle keyboard shortcuts
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (showSuggestions() && suggestions().length > 0) {
         selectSuggestion(suggestions()[0]);
       } else {
         handleSend();
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setShowSuggestions(false);
-    } else if (e.key === 'ArrowDown' && showSuggestions()) {
+    } else if (e.key === "ArrowDown" && showSuggestions()) {
       e.preventDefault();
       // Navigate suggestions
-    } else if (e.key === 'ArrowUp' && showSuggestions()) {
+    } else if (e.key === "ArrowUp" && showSuggestions()) {
       e.preventDefault();
       // Navigate suggestions
     }
@@ -204,32 +219,40 @@ export default function ContextualChatInput(props: {
   // Handle textarea auto-resize
   createEffect(() => {
     if (textareaRef) {
-      textareaRef.style.height = 'auto';
-      textareaRef.style.height = textareaRef.scrollHeight + 'px';
+      textareaRef.style.height = "auto";
+      textareaRef.style.height = textareaRef.scrollHeight + "px";
     }
   });
 
   return (
-    <div class="contextual-chat-input">
+    <div class="relative mx-auto w-full max-w-2xl">
       {/* Current sources display */}
       <Show when={currentSources().length > 0}>
-        <div class="sources-display">
-          <div class="sources-label">Context Sources:</div>
-          <div class="sources-list">
+        <div class="mb-3 rounded-lg border border-white/10 bg-white/5 p-2">
+          <div class="mb-1.5 text-xs font-semibold tracking-wide text-white/60 uppercase">
+            Context Sources:
+          </div>
+          <div class="flex flex-wrap gap-1.5">
             <For each={currentSources()}>
               {(source) => (
-                <div class={`source-badge source-${source.source_type}`}>
-                  <span class="source-icon">
-                    {source.source_type === 'file' ? '📄' : '🚀'}
+                <div
+                  class={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${
+                    source.source_type === "file"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : "bg-green-500/20 text-green-400"
+                  }`}
+                >
+                  <span class="text-[10px]">
+                    {source.source_type === "file" ? "📄" : "🚀"}
                   </span>
-                  <span class="source-name">
+                  <span class="max-w-[150px] truncate">
                     {source.name || source.path}
                   </span>
                   <button
-                    class="source-remove"
+                    class="ml-1 cursor-pointer border-none bg-none p-0 text-[10px] text-inherit opacity-70 transition-opacity hover:opacity-100"
                     onClick={() => {
-                      setCurrentSources(prev =>
-                        prev.filter(s => s.id !== source.id)
+                      setCurrentSources((prev) =>
+                        prev.filter((s) => s.id !== source.id),
                       );
                     }}
                   >
@@ -243,270 +266,64 @@ export default function ContextualChatInput(props: {
       </Show>
 
       {/* Input area */}
-      <div class="input-container">
+      <div class="relative flex items-end rounded-xl border border-white/10 bg-white/5 p-3 transition-colors focus-within:border-white/30">
         <textarea
           ref={textareaRef}
-          class="chat-textarea"
+          class="font-inherit min-[20px] max-h-[120px] flex-1 resize-none overflow-y-auto border-none bg-transparent text-sm leading-6 text-white placeholder-white/60 outline-none disabled:cursor-not-allowed disabled:opacity-50"
           value={inputValue()}
           onInput={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder={props.placeholder || "Type @filename for files, #appname for applications, or just type your message..."}
+          placeholder={
+            props.placeholder ||
+            "Type @filename for files, #appname for applications, or just type your message..."
+          }
           disabled={props.disabled}
           rows={1}
         />
 
         <button
-          class="send-button"
+          class="ml-2 flex cursor-pointer items-center justify-center rounded-lg border-none bg-white p-2 text-black transition-all hover:-translate-y-px hover:transform hover:opacity-90 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-30"
           onClick={handleSend}
           disabled={!inputValue().trim() || props.disabled}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9 4 20 7z"/>
-            <path d="M22 2L15 9l-4 9"/>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9 4 20 7z" />
+            <path d="M22 2L15 9l-4 9" />
           </svg>
         </button>
       </div>
 
       {/* Suggestions dropdown */}
       <Show when={showSuggestions() && suggestions().length > 0}>
-        <div class="suggestions-dropdown">
-          <div class="suggestions-header">
-            {suggestionType() === 'file' ? '📄 Files' : '🚀 Applications'}
+        <div class="absolute right-0 bottom-full left-0 z-50 mb-2 max-h-[200px] overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-lg">
+          <div class="border-b border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/60">
+            {suggestionType() === "file" ? "📄 Files" : "🚀 Applications"}
           </div>
-          <div class="suggestions-list">
+          <div class="max-h-[160px] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb:hover]:bg-white/30 [&::-webkit-scrollbar-track]:bg-transparent">
             <For each={suggestions()}>
               {(suggestion) => (
                 <div
-                  class="suggestion-item"
+                  class="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-white/10"
                   onClick={() => selectSuggestion(suggestion)}
                 >
-                  <span class="suggestion-icon">
-                    {suggestionType() === 'file' ? '📄' : '🚀'}
+                  <span class="w-4 text-center text-sm">
+                    {suggestionType() === "file" ? "📄" : "🚀"}
                   </span>
-                  <span class="suggestion-text">{suggestion}</span>
+                  <span class="flex-1 text-white/90">{suggestion}</span>
                 </div>
               )}
             </For>
           </div>
         </div>
       </Show>
-
-      <style jsx>{`
-        .contextual-chat-input {
-          position: relative;
-          width: 100%;
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .sources-display {
-          margin-bottom: 12px;
-          padding: 8px 12px;
-          background: var(--raycast-surface);
-          border: 1px solid var(--raycast-border);
-          border-radius: 8px;
-        }
-
-        .sources-label {
-          font-size: 12px;
-          font-weight: 600;
-          color: var(--raycast-muted);
-          margin-bottom: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .sources-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-
-        .source-badge {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 4px 8px;
-          background: var(--raycast-accent);
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 500;
-          color: var(--raycast-accent-foreground);
-        }
-
-        .source-file {
-          background: rgba(59, 130, 246, 0.1);
-          color: rgb(59, 130, 246);
-        }
-
-        .source-app {
-          background: rgba(34, 197, 94, 0.1);
-          color: rgb(34, 197, 94);
-        }
-
-        .source-icon {
-          font-size: 10px;
-        }
-
-        .source-name {
-          max-width: 150px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .source-remove {
-          background: none;
-          border: none;
-          color: inherit;
-          cursor: pointer;
-          font-size: 10px;
-          padding: 0;
-          margin-left: 4px;
-          opacity: 0.7;
-          transition: opacity 0.15s ease;
-        }
-
-        .source-remove:hover {
-          opacity: 1;
-        }
-
-        .input-container {
-          position: relative;
-          display: flex;
-          align-items: flex-end;
-          background: var(--raycast-surface);
-          border: 1px solid var(--raycast-border);
-          border-radius: 12px;
-          padding: 12px;
-          transition: border-color 0.15s ease;
-        }
-
-        .input-container:focus-within {
-          border-color: var(--raycast-accent-foreground);
-        }
-
-        .chat-textarea {
-          flex: 1;
-          background: transparent;
-          border: none;
-          outline: none;
-          resize: none;
-          font-family: inherit;
-          font-size: 14px;
-          line-height: 1.5;
-          color: var(--raycast-foreground);
-          min-height: 20px;
-          max-height: 120px;
-          overflow-y: auto;
-        }
-
-        .chat-textarea::placeholder {
-          color: var(--raycast-muted);
-        }
-
-        .chat-textarea:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .send-button {
-          background: var(--raycast-accent-foreground);
-          border: none;
-          border-radius: 8px;
-          padding: 8px;
-          margin-left: 8px;
-          color: var(--raycast-accent);
-          cursor: pointer;
-          transition: all 0.15s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .send-button:hover:not(:disabled) {
-          opacity: 0.9;
-          transform: translateY(-1px);
-        }
-
-        .send-button:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .suggestions-dropdown {
-          position: absolute;
-          bottom: 100%;
-          left: 0;
-          right: 0;
-          margin-bottom: 8px;
-          background: var(--raycast-surface);
-          border: 1px solid var(--raycast-border);
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          z-index: 1000;
-          max-height: 200px;
-          overflow: hidden;
-        }
-
-        .suggestions-header {
-          padding: 8px 12px;
-          font-size: 12px;
-          font-weight: 600;
-          color: var(--raycast-muted);
-          background: var(--raycast-input);
-          border-bottom: 1px solid var(--raycast-border);
-        }
-
-        .suggestions-list {
-          max-height: 160px;
-          overflow-y: auto;
-        }
-
-        .suggestion-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          cursor: pointer;
-          transition: background-color 0.15s ease;
-          font-size: 14px;
-        }
-
-        .suggestion-item:hover {
-          background: var(--raycast-accent);
-        }
-
-        .suggestion-icon {
-          font-size: 14px;
-          width: 16px;
-          text-align: center;
-        }
-
-        .suggestion-text {
-          flex: 1;
-          color: var(--raycast-foreground);
-        }
-
-        /* Custom scrollbar for suggestions */
-        .suggestions-list::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .suggestions-list::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .suggestions-list::-webkit-scrollbar-thumb {
-          background: var(--raycast-border);
-          border-radius: 2px;
-        }
-
-        .suggestions-list::-webkit-scrollbar-thumb:hover {
-          background: var(--raycast-muted);
-        }
-      `}</style>
     </div>
   );
 }
+

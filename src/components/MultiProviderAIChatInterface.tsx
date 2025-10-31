@@ -59,7 +59,8 @@ export default function MultiProviderAIChatInterface() {
   const [currentProvider, setCurrentProvider] = createSignal<string>("");
   const [currentModel, setCurrentModel] = createSignal<string>("");
   const [toolCallingEnabled, setToolCallingEnabled] = createSignal(true);
-  const [imageGenerationEnabled, setImageGenerationEnabled] = createSignal(false);
+  const [imageGenerationEnabled, setImageGenerationEnabled] =
+    createSignal(false);
   const [embeddingsEnabled, setEmbeddingsEnabled] = createSignal(false);
 
   let chatContainerRef: HTMLDivElement | undefined;
@@ -72,7 +73,8 @@ export default function MultiProviderAIChatInterface() {
       model: "",
       temperature: 0.7,
       max_tokens: 1000,
-      preamble: "You are a helpful AI assistant integrated into a desktop application with access to multiple AI providers.",
+      preamble:
+        "You are a helpful AI assistant integrated into a desktop application with access to multiple AI providers.",
       enable_vision: false,
       enable_tools: true,
       enable_embeddings: false,
@@ -103,7 +105,7 @@ export default function MultiProviderAIChatInterface() {
         const conversationResult = await commands.createConversationWithDb(
           null,
           config.model,
-          format!("{:?}", config.provider)
+          format!("{:?}", config.provider),
         );
 
         if (conversationResult.status === "ok") {
@@ -120,10 +122,10 @@ export default function MultiProviderAIChatInterface() {
             content: `AI Agent initialized successfully!\n\nProvider: ${format!("{:?}", config.provider)}\nModel: ${config.model}\nVision: ${config.enable_vision ? "Enabled" : "Disabled"}\nTools: ${config.enable_tools ? "Enabled" : "Disabled"}\nEmbeddings: ${config.enable_embeddings ? "Enabled" : "Disabled"}`,
             timestamp: new Date(),
             provider: format!("{:?}", config.provider),
-            model: config.model
+            model: config.model,
           };
 
-          setMessages(prev => [...prev, systemMessage]);
+          setMessages((prev) => [...prev, systemMessage]);
         }
       } else {
         throw new Error(result.error || "Failed to initialize agent");
@@ -145,7 +147,8 @@ export default function MultiProviderAIChatInterface() {
 
   const sendMessage = async () => {
     const content = inputValue().trim();
-    if (!content || isLoading() || !isAgentInitialized() || !conversationId()) return;
+    if (!content || isLoading() || !isAgentInitialized() || !conversationId())
+      return;
 
     setIsLoading(true);
     setInputValue("");
@@ -157,10 +160,10 @@ export default function MultiProviderAIChatInterface() {
       content,
       timestamp: new Date(),
       provider: currentProvider(),
-      model: currentModel()
+      model: currentModel(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
       // Extract context from message
@@ -173,7 +176,7 @@ export default function MultiProviderAIChatInterface() {
         context.apps,
         context.files,
         agentConfig()?.enable_vision || false,
-        agentConfig()?.enable_tools !== false
+        agentConfig()?.enable_tools !== false,
       );
 
       if (result.status === "ok") {
@@ -184,10 +187,10 @@ export default function MultiProviderAIChatInterface() {
           timestamp: new Date(),
           toolCalls: result.data.tool_calls || [],
           provider: currentProvider(),
-          model: currentModel()
+          model: currentModel(),
         };
 
-        setMessages(prev => [...prev, assistantMessage]);
+        setMessages((prev) => [...prev, assistantMessage]);
       } else {
         throw new Error(result.error || "Failed to get AI response");
       }
@@ -200,10 +203,10 @@ export default function MultiProviderAIChatInterface() {
         content: `Sorry, I encountered an error while processing your request: ${error}`,
         timestamp: new Date(),
         provider: currentProvider(),
-        model: currentModel()
+        model: currentModel(),
       };
 
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -215,20 +218,23 @@ export default function MultiProviderAIChatInterface() {
     // Extract @app mentions
     const appMatches = message.match(/@([^\s]+)/g);
     if (appMatches) {
-      context.apps = appMatches.map(match => {
-        const appName = match.slice(1);
-        const app = systemApps().find(a =>
-          a.name.toLowerCase() === appName.toLowerCase() ||
-          a.bundle_id.toLowerCase() === appName.toLowerCase()
-        );
-        return app ? app.bundle_id : "";
-      }).filter(Boolean);
+      context.apps = appMatches
+        .map((match) => {
+          const appName = match.slice(1);
+          const app = systemApps().find(
+            (a) =>
+              a.name.toLowerCase() === appName.toLowerCase() ||
+              a.bundle_id.toLowerCase() === appName.toLowerCase(),
+          );
+          return app ? app.bundle_id : "";
+        })
+        .filter(Boolean);
     }
 
     // Extract #file mentions
     const fileMatches = message.match(/#([^\s]+)/g);
     if (fileMatches) {
-      context.files = fileMatches.map(match => match.slice(1));
+      context.files = fileMatches.map((match) => match.slice(1));
     }
 
     return context;
@@ -257,30 +263,30 @@ export default function MultiProviderAIChatInterface() {
   });
 
   return (
-    <div class="multi-provider-ai-chat-interface">
+    <div class="-webkit-backdrop-blur-xl flex h-screen flex-col bg-gray-900/95 backdrop-blur-xl">
       {/* Header */}
-      <div class="chat-header">
-        <div class="header-left">
-          <h2>AI Chat</h2>
+      <div class="flex flex-shrink-0 items-center justify-between border-b border-white/10 p-5">
+        <div class="flex-1">
+          <h2 class="m-0 text-xl font-semibold text-white/90">AI Chat</h2>
           <Show when={isAgentInitialized()}>
-            <div class="current-provider">
-              <span class="provider-info">
+            <div class="mt-1 flex items-center gap-3">
+              <span class="rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-xs text-white/70">
                 {currentProvider()} - {currentModel()}
               </span>
               <button
                 onClick={switchProvider}
-                class="switch-provider-button"
+                class="cursor-pointer rounded-md border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs text-blue-400 transition-all hover:bg-blue-500/30"
               >
                 Switch Provider
               </button>
             </div>
           </Show>
         </div>
-        <div class="header-right">
+        <div class="flex-shrink-0">
           <Show when={!isAgentInitialized()}>
             <button
               onClick={() => setShowConfigPanel(true)}
-              class="configure-button"
+              class="cursor-pointer rounded-md border border-blue-500/30 bg-blue-500/20 px-3 py-1.5 text-xs text-blue-400 transition-all hover:bg-blue-500/30"
             >
               Configure AI
             </button>
@@ -290,13 +296,15 @@ export default function MultiProviderAIChatInterface() {
 
       {/* Config Panel */}
       <Show when={showConfigPanel()}>
-        <div class="config-panel-overlay">
-          <div class="config-panel">
-            <div class="config-panel-header">
-              <h3>Configure AI Provider</h3>
+        <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80">
+          <div class="max-h-[90vh] w-[90%] max-w-[600px] overflow-y-auto rounded-xl bg-gray-800/98 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-white/10 p-5">
+              <h3 class="m-0 text-lg font-semibold text-white/90">
+                Configure AI Provider
+              </h3>
               <button
                 onClick={() => setShowConfigPanel(false)}
-                class="close-button"
+                class="cursor-pointer rounded border-none bg-none p-1 text-lg text-white/70 transition-all hover:bg-white/10 hover:text-white/90"
               >
                 ✕
               </button>
@@ -305,10 +313,10 @@ export default function MultiProviderAIChatInterface() {
               onConfigChange={handleConfigChange}
               initialConfig={agentConfig() || undefined}
             />
-            <div class="config-panel-actions">
+            <div class="flex justify-end gap-3 border-t border-white/10 p-5">
               <button
                 onClick={() => setShowConfigPanel(false)}
-                class="cancel-button"
+                class="cursor-pointer rounded-lg border border-white/20 bg-white/10 px-5 py-2.5 text-white/80 transition-all hover:bg-white/15"
               >
                 Cancel
               </button>
@@ -319,7 +327,7 @@ export default function MultiProviderAIChatInterface() {
                   }
                 }}
                 disabled={!agentConfig()?.provider || !agentConfig()?.model}
-                class="initialize-button"
+                class="cursor-pointer rounded-lg border border-blue-500/30 bg-blue-500/20 px-5 py-2.5 text-blue-400 transition-all hover:bg-blue-500/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Initialize AI
               </button>
@@ -330,43 +338,64 @@ export default function MultiProviderAIChatInterface() {
 
       {/* Welcome Screen */}
       <Show when={!isAgentInitialized()}>
-        <div class="welcome-screen">
-          <div class="welcome-content">
-            <h2>Welcome to Multi-Provider AI Chat</h2>
-            <p>Choose from multiple AI providers including OpenAI, Anthropic, Google, Ollama, and more.</p>
-            <div class="features">
-              <div class="feature">
-                <span class="feature-icon">🤖</span>
+        <div class="flex flex-1 items-center justify-center p-10">
+          <div class="max-w-[500px] text-center">
+            <h2 class="m-0 mb-4 text-4xl font-bold text-white/90">
+              Welcome to Multi-Provider AI Chat
+            </h2>
+            <p class="m-0 mb-8 text-base leading-relaxed text-white/70">
+              Choose from multiple AI providers including OpenAI, Anthropic,
+              Google, Ollama, and more.
+            </p>
+            <div class="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="flex items-start gap-3 text-left">
+                <span class="flex-shrink-0 text-2xl">🤖</span>
                 <div>
-                  <h4>Multiple Providers</h4>
-                  <p>Support for 13+ AI providers</p>
+                  <h4 class="m-0 mb-1 text-sm font-semibold text-white/90">
+                    Multiple Providers
+                  </h4>
+                  <p class="m-0 text-xs leading-relaxed text-white/60">
+                    Support for 13+ AI providers
+                  </p>
                 </div>
               </div>
-              <div class="feature">
-                <span class="feature-icon">🛠️</span>
+              <div class="flex items-start gap-3 text-left">
+                <span class="flex-shrink-0 text-2xl">🛠️</span>
                 <div>
-                  <h4>Tool Calling</h4>
-                  <p>Advanced tool integration</p>
+                  <h4 class="m-0 mb-1 text-sm font-semibold text-white/90">
+                    Tool Calling
+                  </h4>
+                  <p class="m-0 text-xs leading-relaxed text-white/60">
+                    Advanced tool integration
+                  </p>
                 </div>
               </div>
-              <div class="feature">
-                <span class="feature-icon">🎨</span>
+              <div class="flex items-start gap-3 text-left">
+                <span class="flex-shrink-0 text-2xl">🎨</span>
                 <div>
-                  <h4>Image Generation</h4>
-                  <p>DALL-E and vision models</p>
+                  <h4 class="m-0 mb-1 text-sm font-semibold text-white/90">
+                    Image Generation
+                  </h4>
+                  <p class="m-0 text-xs leading-relaxed text-white/60">
+                    DALL-E and vision models
+                  </p>
                 </div>
               </div>
-              <div class="feature">
-                <span class="feature-icon">🔍</span>
+              <div class="flex items-start gap-3 text-left">
+                <span class="flex-shrink-0 text-2xl">🔍</span>
                 <div>
-                  <h4>Semantic Search</h4>
-                  <p>Vector embeddings support</p>
+                  <h4 class="m-0 mb-1 text-sm font-semibold text-white/90">
+                    Semantic Search
+                  </h4>
+                  <p class="m-0 text-xs leading-relaxed text-white/60">
+                    Vector embeddings support
+                  </p>
                 </div>
               </div>
             </div>
             <button
               onClick={() => setShowConfigPanel(true)}
-              class="get-started-button"
+              class="cursor-pointer rounded-lg border border-blue-500/30 bg-blue-500/20 px-7 py-3.5 text-base font-semibold text-blue-400 transition-all hover:-translate-y-px hover:bg-blue-500/30"
             >
               Get Started - Configure AI
             </button>
@@ -377,33 +406,56 @@ export default function MultiProviderAIChatInterface() {
       {/* Chat Interface */}
       <Show when={isAgentInitialized()}>
         {/* Messages Container */}
-        <div class="chat-messages" ref={chatContainerRef}>
+        <div
+          class="flex flex-1 flex-col gap-4 overflow-y-auto p-5"
+          ref={chatContainerRef}
+        >
           <For each={messages()}>
             {(message) => (
-              <div class={`chat-message ${message.role}`}>
-                <div class="message-avatar">
+              <div
+                class={`flex max-w-full gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
+              >
+                <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-lg">
                   {message.role === "user" ? "👤" : "🤖"}
                 </div>
-                <div class="message-content">
-                  <div class="message-text">{message.content}</div>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class={`rounded-[18px] px-4.5 py-3.5 text-sm leading-6 break-words whitespace-pre-wrap text-white/90 ${
+                      message.role === "user"
+                        ? "border border-blue-500/30 bg-blue-500/20 text-right"
+                        : "bg-white/10"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
 
                   {/* Provider and Model Info */}
                   <Show when={message.provider && message.model}>
-                    <div class="message-provider">
+                    <div
+                      class={`mt-1.5 text-xs text-white/50 italic ${
+                        message.role === "user" ? "text-right" : ""
+                      }`}
+                    >
                       {message.provider} - {message.model}
                     </div>
                   </Show>
 
                   {/* Tool Calls */}
-                  <Show when={message.toolCalls && message.toolCalls.length > 0}>
-                    <div class="tool-calls">
-                      <div class="tool-calls-header">Tool Calls:</div>
+                  <Show
+                    when={message.toolCalls && message.toolCalls.length > 0}
+                  >
+                    <div class="mt-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
+                      <div class="mb-2 text-xs font-semibold text-green-400">
+                        Tool Calls:
+                      </div>
                       <For each={message.toolCalls}>
                         {(toolCall) => (
-                          <div class={`tool-call ${toolCall.status || "completed"}`}>
-                            <div class="tool-name">{toolCall.name}</div>
+                          <div class="mb-2 rounded-md bg-white/5 p-2 last:mb-0">
+                            <div class="mb-1 text-xs font-semibold text-white/90">
+                              {toolCall.name}
+                            </div>
                             <Show when={toolCall.result}>
-                              <pre class="tool-result">
+                              <pre class="mx-0 my-1 overflow-x-auto rounded bg-black/30 px-2 py-1 text-xs text-white/80">
                                 {JSON.stringify(toolCall.result, null, 2)}
                               </pre>
                             </Show>
@@ -413,7 +465,7 @@ export default function MultiProviderAIChatInterface() {
                     </div>
                   </Show>
 
-                  <div class="message-time">
+                  <div class="mt-1.5 text-[11px] text-white/40">
                     {message.timestamp.toLocaleTimeString()}
                   </div>
                 </div>
@@ -423,13 +475,17 @@ export default function MultiProviderAIChatInterface() {
 
           {/* Loading indicator */}
           <Show when={isLoading()}>
-            <div class="chat-message assistant">
-              <div class="message-avatar">🤖</div>
-              <div class="message-content">
-                <div class="typing-indicator">
-                  <span></span>
-                  <span></span>
-                  <span></span>
+            <div class="flex gap-3">
+              <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-lg">
+                🤖
+              </div>
+              <div class="flex-1">
+                <div class="rounded-[18px] bg-white/10 px-4.5 py-3.5">
+                  <div class="flex gap-1">
+                    <span class="animate-typing h-2 w-2 rounded-full bg-white/60 [animation-delay:-0.32s]"></span>
+                    <span class="animate-typing h-2 w-2 rounded-full bg-white/60 [animation-delay:-0.16s]"></span>
+                    <span class="animate-typing h-2 w-2 rounded-full bg-white/60"></span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -437,456 +493,26 @@ export default function MultiProviderAIChatInterface() {
         </div>
 
         {/* Input Area */}
-        <div class="chat-input-container">
+        <div class="flex flex-shrink-0 items-end gap-3 border-t border-white/10 p-5">
           <textarea
             ref={inputRef}
             value={inputValue()}
             onInput={(e) => setInputValue(e.currentTarget.value)}
             onKeyDown={handleInputKeyDown}
             placeholder="Ask AI anything... Supports @app mentions and #file references"
-            class="chat-input"
+            class="max-h-[120px] min-h-[48px] flex-1 resize-none rounded-[18px] border border-white/10 bg-white/5 px-4.5 py-3.5 text-sm leading-6 text-white/90 placeholder-white/50 outline-none focus:border-blue-500/30 focus:bg-white/8"
             rows={2}
           />
           <button
             onClick={sendMessage}
             disabled={!inputValue().trim() || isLoading()}
-            class="send-button"
+            class="flex h-12 w-12 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-none border-blue-500/30 bg-blue-500/20 text-lg text-blue-400 transition-all hover:scale-105 hover:bg-blue-500/30 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading() ? "⏳" : "📤"}
           </button>
         </div>
       </Show>
-
-      <style>{`
-        .multi-provider-ai-chat-interface {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          background: rgba(23, 23, 23, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-        }
-
-        .chat-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          flex-shrink: 0;
-        }
-
-        .header-left h2 {
-          margin: 0;
-          font-size: 20px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-        }
-
-        .current-provider {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-top: 4px;
-        }
-
-        .provider-info {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.7);
-          padding: 4px 8px;
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.2);
-          border-radius: 6px;
-        }
-
-        .switch-provider-button,
-        .configure-button {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          padding: 6px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .switch-provider-button:hover,
-        .configure-button:hover {
-          background: rgba(59, 130, 246, 0.3);
-        }
-
-        .config-panel-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-
-        .config-panel {
-          background: rgba(30, 30, 30, 0.98);
-          border-radius: 12px;
-          max-width: 600px;
-          max-height: 90vh;
-          width: 90%;
-          overflow-y: auto;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .config-panel-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .config-panel-header h3 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-        }
-
-        .close-button {
-          background: none;
-          border: none;
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 18px;
-          cursor: pointer;
-          padding: 4px;
-          border-radius: 4px;
-          transition: all 0.15s ease;
-        }
-
-        .close-button:hover {
-          background: rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.9);
-        }
-
-        .config-panel-actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 12px;
-          padding: 20px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .cancel-button {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: rgba(255, 255, 255, 0.8);
-          padding: 10px 20px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .cancel-button:hover {
-          background: rgba(255, 255, 255, 0.15);
-        }
-
-        .initialize-button {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          padding: 10px 20px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .initialize-button:hover:not(:disabled) {
-          background: rgba(59, 130, 246, 0.3);
-        }
-
-        .initialize-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .welcome-screen {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px;
-        }
-
-        .welcome-content {
-          text-align: center;
-          max-width: 500px;
-        }
-
-        .welcome-content h2 {
-          margin: 0 0 16px 0;
-          font-size: 32px;
-          font-weight: 700;
-          color: rgba(255, 255, 255, 0.9);
-        }
-
-        .welcome-content p {
-          margin: 0 0 32px 0;
-          font-size: 16px;
-          color: rgba(255, 255, 255, 0.7);
-          line-height: 1.6;
-        }
-
-        .features {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-          margin-bottom: 40px;
-        }
-
-        .feature {
-          display: flex;
-          align-items: flex-start;
-          gap: 12px;
-          text-align: left;
-        }
-
-        .feature-icon {
-          font-size: 24px;
-          flex-shrink: 0;
-        }
-
-        .feature h4 {
-          margin: 0 0 4px 0;
-          font-size: 14px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.9);
-        }
-
-        .feature p {
-          margin: 0;
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.6);
-          line-height: 1.4;
-        }
-
-        .get-started-button {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          padding: 14px 28px;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.15s ease;
-        }
-
-        .get-started-button:hover {
-          background: rgba(59, 130, 246, 0.3);
-          transform: translateY(-1px);
-        }
-
-        .chat-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .chat-message {
-          display: flex;
-          gap: 12px;
-          max-width: 100%;
-        }
-
-        .chat-message.user {
-          flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          flex-shrink: 0;
-        }
-
-        .message-content {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .chat-message.user .message-content {
-          text-align: right;
-        }
-
-        .message-text {
-          background: rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.9);
-          padding: 14px 18px;
-          border-radius: 18px;
-          font-size: 14px;
-          line-height: 1.5;
-          word-wrap: break-word;
-          white-space: pre-wrap;
-        }
-
-        .chat-message.user .message-text {
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .message-provider {
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.5);
-          margin-top: 6px;
-          font-style: italic;
-        }
-
-        .chat-message.user .message-provider {
-          text-align: right;
-        }
-
-        .tool-calls {
-          margin-top: 8px;
-          padding: 12px;
-          background: rgba(34, 197, 94, 0.1);
-          border: 1px solid rgba(34, 197, 94, 0.2);
-          border-radius: 8px;
-        }
-
-        .tool-calls-header {
-          color: #4ade80;
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 8px;
-        }
-
-        .tool-name {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 4px;
-        }
-
-        .tool-result {
-          background: rgba(0, 0, 0, 0.3);
-          padding: 6px 8px;
-          border-radius: 4px;
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.8);
-          overflow-x: auto;
-          margin: 4px 0;
-        }
-
-        .message-time {
-          font-size: 11px;
-          color: rgba(255, 255, 255, 0.4);
-          margin-top: 6px;
-        }
-
-        .typing-indicator {
-          display: flex;
-          gap: 4px;
-          padding: 14px 18px;
-        }
-
-        .typing-indicator span {
-          width: 8px;
-          height: 8px;
-          background: rgba(255, 255, 255, 0.6);
-          border-radius: 50%;
-          animation: typing 1.4s infinite ease-in-out;
-        }
-
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes typing {
-          0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-
-        .chat-input-container {
-          padding: 20px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          gap: 12px;
-          align-items: flex-end;
-          flex-shrink: 0;
-        }
-
-        .chat-input {
-          flex: 1;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 18px;
-          padding: 14px 18px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          resize: none;
-          outline: none;
-          min-height: 48px;
-          max-height: 120px;
-          line-height: 1.5;
-        }
-
-        .chat-input::placeholder {
-          color: rgba(255, 255, 255, 0.5);
-        }
-
-        .chat-input:focus {
-          border-color: rgba(59, 130, 246, 0.3);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .send-button {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          border: none;
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          color: #60a5fa;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          transition: all 0.15s ease;
-          flex-shrink: 0;
-        }
-
-        .send-button:hover:not(:disabled) {
-          background: rgba(59, 130, 246, 0.3);
-          transform: scale(1.05);
-        }
-
-        .send-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        @media (max-width: 768px) {
-          .features {
-            grid-template-columns: 1fr;
-            gap: 16px;
-          }
-
-          .config-panel {
-            width: 95%;
-            max-height: 95vh;
-          }
-        }
-      `}</style>
     </div>
   );
 }
+

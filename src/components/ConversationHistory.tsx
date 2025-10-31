@@ -1,9 +1,4 @@
-import {
-  createSignal,
-  onMount,
-  For,
-  Show,
-} from "solid-js";
+import { createSignal, onMount, For, Show } from "solid-js";
 import { commands } from "../bindings";
 
 interface ConversationHistoryProps {
@@ -64,7 +59,10 @@ export default function ConversationHistory(props: ConversationHistoryProps) {
     props.onSelectConversation(conversationId);
   };
 
-  const handleDeleteConversation = async (conversationId: string, event: MouseEvent) => {
+  const handleDeleteConversation = async (
+    conversationId: string,
+    event: MouseEvent,
+  ) => {
     event.stopPropagation();
 
     if (confirm("Are you sure you want to delete this conversation?")) {
@@ -105,44 +103,52 @@ export default function ConversationHistory(props: ConversationHistoryProps) {
   };
 
   return (
-    <div class="conversation-history">
+    <div class="flex h-full w-[300px] flex-col overflow-hidden border-l border-white/10 bg-gray-900/95 backdrop-blur-xl">
       {/* Search Bar */}
-      <div class="search-container">
-        <div class="search-input-wrapper">
+      <div class="border-b border-white/10 p-4">
+        <div class="relative">
           <input
             type="text"
             value={searchQuery()}
             onInput={(e) => handleSearch(e.currentTarget.value)}
             placeholder="Search conversations..."
-            class="search-input"
+            class="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 pl-9 text-sm text-white/90 placeholder-white/50 transition-all outline-none focus:border-blue-500/30 focus:bg-white/8"
           />
-          <div class="search-icon">🔍</div>
+          <div class="absolute top-1/2 left-3 -translate-y-1/2 transform text-sm text-white/50">
+            🔍
+          </div>
         </div>
       </div>
 
       {/* New Conversation Button */}
       <button
         onClick={() => props.onNewConversation()}
-        class="new-conversation-btn"
+        class="mx-4 mb-4 flex cursor-pointer items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/20 p-3 text-sm font-medium text-blue-400 transition-all hover:-translate-y-px hover:bg-blue-500/30"
       >
-        <span class="new-conversation-icon">➕</span>
+        <span class="text-base">➕</span>
         <span>New Conversation</span>
       </button>
 
       {/* Conversation List */}
-      <div class="conversation-list">
+      <div class="flex-1 overflow-y-auto px-4 pb-4 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-sm [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-track]:bg-transparent">
         <Show when={isLoading()}>
-          <div class="loading-indicator">Loading conversations...</div>
+          <div class="p-5 text-center text-sm text-white/60">
+            Loading conversations...
+          </div>
         </Show>
 
         <Show when={!isLoading() && displayConversations().length === 0}>
-          <div class="empty-state">
-            <div class="empty-icon">💬</div>
-            <div class="empty-text">
-              {searchQuery() ? "No conversations found" : "No conversations yet"}
+          <div class="px-4 py-8 text-center text-white/60">
+            <div class="mb-4 text-5xl opacity-50">💬</div>
+            <div class="mb-2 text-base font-medium">
+              {searchQuery()
+                ? "No conversations found"
+                : "No conversations yet"}
             </div>
-            <div class="empty-subtitle">
-              {searchQuery() ? "Try a different search term" : "Start your first conversation"}
+            <div class="text-sm text-white/40">
+              {searchQuery()
+                ? "Try a different search term"
+                : "Start your first conversation"}
             </div>
           </div>
         </Show>
@@ -150,32 +156,36 @@ export default function ConversationHistory(props: ConversationHistoryProps) {
         <For each={displayConversations()}>
           {(conversation) => (
             <div
-              class={`conversation-item ${
-                props.currentConversationId === conversation.id ? "active" : ""
+              class={`group relative mb-2 cursor-pointer rounded-lg border border-white/10 bg-white/5 p-3 transition-all hover:-translate-y-px hover:bg-white/8 ${
+                props.currentConversationId === conversation.id
+                  ? "border-blue-500/30 bg-blue-500/20"
+                  : ""
               }`}
               onClick={() => handleSelectConversation(conversation.id)}
             >
-              <div class="conversation-header">
-                <div class="conversation-title">{conversation.title}</div>
-                <div class="conversation-meta">
-                  <span class="conversation-model">{conversation.model}</span>
-                  <span class="conversation-date">
+              <div class="mb-2">
+                <div class="mb-1 truncate text-sm font-medium text-white/90">
+                  {conversation.title}
+                </div>
+                <div class="flex items-center gap-2 text-xs text-white/50">
+                  <span class="rounded bg-white/10 px-1.5 py-0.5 font-medium">
+                    {conversation.model}
+                  </span>
+                  <span class="flex-1 text-right">
                     {formatDate(conversation.updated_at)}
                   </span>
                 </div>
               </div>
 
-              <div class="conversation-stats">
-                <span class="message-count">
+              <div class="flex items-center justify-between text-xs text-white/40">
+                <span class="font-medium">
                   {conversation.message_count} messages
                 </span>
-                <span class="conversation-provider">
-                  {conversation.provider}
-                </span>
+                <span class="capitalize">{conversation.provider}</span>
               </div>
 
               <button
-                class="delete-btn"
+                class="absolute top-2 right-2 cursor-pointer rounded border-none bg-transparent p-1 text-xs text-white/30 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400"
                 onClick={(e) => handleDeleteConversation(conversation.id, e)}
                 title="Delete conversation"
               >
@@ -185,228 +195,7 @@ export default function ConversationHistory(props: ConversationHistoryProps) {
           )}
         </For>
       </div>
-
-      <style>{`
-        .conversation-history {
-          width: 300px;
-          height: 100%;
-          background: rgba(23, 23, 23, 0.95);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-left: 1px solid rgba(255, 255, 255, 0.1);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-
-        .search-container {
-          padding: 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .search-input-wrapper {
-          position: relative;
-        }
-
-        .search-input {
-          width: 100%;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 8px 12px 8px 36px;
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          outline: none;
-          transition: all 0.15s ease;
-        }
-
-        .search-input::placeholder {
-          color: rgba(255, 255, 255, 0.5);
-        }
-
-        .search-input:focus {
-          border-color: rgba(59, 130, 246, 0.3);
-          background: rgba(255, 255, 255, 0.08);
-        }
-
-        .search-icon {
-          position: absolute;
-          left: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 14px;
-        }
-
-        .new-conversation-btn {
-          margin: 0 16px 16px;
-          padding: 12px;
-          background: rgba(59, 130, 246, 0.2);
-          border: 1px solid rgba(59, 130, 246, 0.3);
-          border-radius: 8px;
-          color: #60a5fa;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        .new-conversation-btn:hover {
-          background: rgba(59, 130, 246, 0.3);
-          transform: translateY(-1px);
-        }
-
-        .new-conversation-icon {
-          font-size: 16px;
-        }
-
-        .conversation-list {
-          flex: 1;
-          overflow-y: auto;
-          padding: 0 16px 16px;
-        }
-
-        .conversation-list::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .conversation-list::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .conversation-list::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 2px;
-        }
-
-        .loading-indicator {
-          text-align: center;
-          color: rgba(255, 255, 255, 0.6);
-          padding: 20px;
-          font-size: 14px;
-        }
-
-        .empty-state {
-          text-align: center;
-          padding: 32px 16px;
-          color: rgba(255, 255, 255, 0.6);
-        }
-
-        .empty-icon {
-          font-size: 48px;
-          margin-bottom: 16px;
-          opacity: 0.5;
-        }
-
-        .empty-text {
-          font-size: 16px;
-          font-weight: 500;
-          margin-bottom: 8px;
-        }
-
-        .empty-subtitle {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.4);
-        }
-
-        .conversation-item {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
-          padding: 12px;
-          margin-bottom: 8px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          position: relative;
-        }
-
-        .conversation-item:hover {
-          background: rgba(255, 255, 255, 0.08);
-          transform: translateY(-1px);
-        }
-
-        .conversation-item.active {
-          background: rgba(59, 130, 246, 0.2);
-          border-color: rgba(59, 130, 246, 0.3);
-        }
-
-        .conversation-header {
-          margin-bottom: 8px;
-        }
-
-        .conversation-title {
-          color: rgba(255, 255, 255, 0.9);
-          font-size: 14px;
-          font-weight: 500;
-          margin-bottom: 4px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .conversation-meta {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.5);
-        }
-
-        .conversation-model {
-          background: rgba(255, 255, 255, 0.1);
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-weight: 500;
-        }
-
-        .conversation-date {
-          flex: 1;
-          text-align: right;
-        }
-
-        .conversation-stats {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.4);
-        }
-
-        .message-count {
-          font-weight: 500;
-        }
-
-        .conversation-provider {
-          text-transform: capitalize;
-        }
-
-        .delete-btn {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          background: transparent;
-          border: none;
-          color: rgba(255, 255, 255, 0.3);
-          cursor: pointer;
-          padding: 4px;
-          border-radius: 4px;
-          font-size: 12px;
-          opacity: 0;
-          transition: all 0.15s ease;
-        }
-
-        .conversation-item:hover .delete-btn {
-          opacity: 1;
-        }
-
-        .delete-btn:hover {
-          background: rgba(239, 68, 68, 0.2);
-          color: #ef4444;
-        }
-      `}</style>
     </div>
   );
 }
+
