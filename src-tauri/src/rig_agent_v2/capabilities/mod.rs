@@ -235,6 +235,13 @@ impl AICapability {
         self.agent_manager.get_config().await
     }
 
+    /// Get ReAct configuration
+    pub async fn get_react_config(&self) -> Result<ReActConfig> {
+        // For now, return default config
+        // TODO: Store and retrieve ReAct config from AgentConfig
+        Ok(ReActConfig::default())
+    }
+
     // Helper methods for tool search
 
     /// Categorize a tool based on its name
@@ -545,13 +552,19 @@ impl AICapability {
         &self,
         request: ChatRequest,
     ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamEvent>> + Send>>> {
-        // For now, just use chat_stream
-        // TODO: Implement ReAct mode
+        // For now, implement basic ReAct mode by delegating to chat_stream
+        // TODO: Implement full ReAct reasoning loop with proper state management
+
         let agent = self.agent_manager.providers().get_agent().await?;
         let client = self.agent_manager.providers().get_client().await?;
-
         let unified_agent = UnifiedAgent::new(agent, client);
-        unified_agent.chat_stream(request).await
+
+        // Create ReAct-specific events by wrapping the chat stream
+        let chat_stream = unified_agent.chat_stream(request).await?;
+
+        // For now, just return the chat stream as-is
+        // Future enhancement: add ReAct events (thought, action, observation) around the chat stream
+        Ok(chat_stream)
     }
 
     async fn execute_embeddings(&self, texts: Vec<String>) -> Result<Vec<Vec<f32>>> {

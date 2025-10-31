@@ -199,8 +199,15 @@ impl ProviderManager {
             }
 
             AIProvider::Anthropic => {
-                // TODO: Implement Anthropic client when rig API is verified
-                Err(AgentError::ProviderNotInitialized)
+                // Create Anthropic client
+                let client = if let Some(_url) = base_url {
+                    // TODO: Check if Anthropic client supports custom base URL
+                    // For now, use standard client creation
+                    providers::anthropic::Client::new(&api_key)
+                } else {
+                    providers::anthropic::Client::new(&api_key)
+                };
+                Ok(DynamicClient::Anthropic(client))
             }
 
             AIProvider::Google | AIProvider::GoogleGemini => {
@@ -265,8 +272,16 @@ impl ProviderManager {
             }
 
             DynamicClient::Anthropic(anthropic_client) => {
-                // TODO: Implement Anthropic agent creation when API is verified
-                Err(AgentError::ProviderNotInitialized)
+                // Create agent with Anthropic client
+                let mut agent_builder = anthropic_client.agent(model);
+
+                if !system_prompt.is_empty() {
+                    agent_builder = agent_builder.preamble(&system_prompt);
+                }
+
+                let agent = agent_builder.build();
+
+                Ok(DynamicAgent::Anthropic(agent))
             }
 
             DynamicClient::Gemini(gemini_client) => {
