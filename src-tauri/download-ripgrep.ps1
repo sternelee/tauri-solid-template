@@ -20,15 +20,15 @@ function Download-Ripgrep {
         [string]$BinaryName,
         [string]$ExtractPath
     )
-    
+
     Write-Host "Downloading ripgrep for $Platform..." -ForegroundColor Cyan
-    
+
     $url = "https://github.com/BurntSushi/ripgrep/releases/download/$RIPGREP_VERSION/$Archive"
     $archivePath = Join-Path $TEMP_DIR $Archive
-    
+
     # Download
     Invoke-WebRequest -Uri $url -OutFile $archivePath
-    
+
     # Extract
     if ($Archive -like "*.tar.gz") {
         # For tar.gz files, we need 7-Zip or tar command
@@ -43,7 +43,7 @@ function Download-Ripgrep {
         $destBinary = Join-Path $BINARIES_DIR $BinaryName
         Copy-Item $sourceBinary $destBinary
     }
-    
+
     Write-Host "✓ Downloaded and extracted $BinaryName" -ForegroundColor Green
 }
 

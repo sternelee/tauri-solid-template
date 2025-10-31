@@ -37,18 +37,28 @@ fn is_ripgrep_installed() -> bool {
 #[cfg(not(target_os = "android"))]
 #[cfg(not(target_os = "ios"))]
 fn get_sidecar_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
-    use tauri::Manager;
-    
-    // Get the sidecar command from Tauri
-    let sidecar_command = app_handle
-        .shell()
-        .sidecar("rg")
-        .map_err(|e| format!("Failed to get ripgrep sidecar: {}", e))?;
+    use tauri_plugin_shell::ShellExt;
 
-    // Get the program path from the sidecar command
-    let program = sidecar_command.program();
-    
-    Ok(program.to_string_lossy().to_string())
+    // Since we can't easily get the sidecar path in Tauri 2.x,
+    // let's try a different approach - use the system ripgrep if available
+    if std::path::Path::new("/usr/bin/rg").exists() {
+        return Ok("/usr/bin/rg".to_string());
+    }
+
+    // Try common locations for ripgrep
+    let common_paths = vec![
+        "/usr/local/bin/rg",
+        "/opt/homebrew/bin/rg",
+        "/usr/bin/rg",
+    ];
+
+    for path in common_paths {
+        if std::path::Path::new(path).exists() {
+            return Ok(path.to_string());
+        }
+    }
+
+    Err("ripgrep binary not found".to_string())
 }
 
 /// Execute ripgrep with the given arguments
