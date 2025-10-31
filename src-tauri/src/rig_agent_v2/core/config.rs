@@ -33,6 +33,7 @@ pub struct ProviderConfig {
     pub top_p: Option<f32>,
     pub frequency_penalty: Option<f32>,
     pub presence_penalty: Option<f32>,
+    #[specta(type = Option<i32>)] // Use Option<i32> for TypeScript compatibility
     pub timeout_seconds: Option<u64>,
 
     // Provider-specific settings

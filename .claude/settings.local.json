@@ -39,7 +39,8 @@
       "Bash(rustc:*)",
       "Bash(perl:*)",
       "Bash(python3:*)",
-      "Read(//Users/sternelee/www/github/**)"
+      "Read(//Users/sternelee/www/github/**)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

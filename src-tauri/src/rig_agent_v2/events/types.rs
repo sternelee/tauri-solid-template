@@ -207,6 +207,7 @@ pub struct AgentEvent {
     pub metadata: HashMap<String, serde_json::Value>,
 
     /// Duration of the operation in milliseconds (if applicable)
+    #[specta(type = Option<i32>)] // Use Option<i32> for TypeScript compatibility
     pub duration_ms: Option<u64>,
 
     /// Error information (if applicable)

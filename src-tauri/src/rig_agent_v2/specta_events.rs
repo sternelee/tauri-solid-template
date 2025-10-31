@@ -66,6 +66,7 @@ pub struct ToolEvent {
     pub parameters: Option<serde_json::Value>,
     pub result: Option<serde_json::Value>,
     pub error: Option<String>,
+    #[specta(type = Option<i32>)] // Use Option<i32> for TypeScript compatibility
     pub execution_time_ms: Option<u64>,
     pub timestamp: String,
 }

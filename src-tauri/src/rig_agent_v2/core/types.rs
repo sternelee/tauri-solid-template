@@ -144,6 +144,7 @@ pub struct ToolResult {
     pub success: bool,
     pub result: Option<serde_json::Value>,
     pub error: Option<String>,
+    #[specta(type = Option<i32>)] // Use Option<i32> for TypeScript compatibility
     pub execution_time_ms: Option<u64>,
 }
 

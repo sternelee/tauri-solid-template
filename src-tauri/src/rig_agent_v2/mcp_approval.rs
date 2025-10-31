@@ -24,6 +24,7 @@ pub struct McpServerConfig {
     /// URL或连接字符串
     pub url: Option<String>,
     /// 超时时间（秒）
+    #[specta(type = Option<i32>)] // Use Option<i32> for TypeScript compatibility
     pub timeout: Option<u64>,
 }
 
