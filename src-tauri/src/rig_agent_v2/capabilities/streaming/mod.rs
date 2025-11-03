@@ -79,8 +79,7 @@ impl ReActCapability {
         tools: Option<Vec<String>>,
     ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<super::StreamEvent>> + Send>>> {
         use futures::stream;
-        use futures::StreamExt;
-
+  
         // Initialize ReAct state
         let mut state = super::ReActState::new();
         state.current_context = format!("User question: {}", message);

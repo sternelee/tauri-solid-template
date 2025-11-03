@@ -254,7 +254,7 @@ impl ProviderManager {
         config: &AgentConfig,
     ) -> Result<DynamicAgent> {
         let model = &config.provider.model;
-        let temperature = config.provider.temperature.unwrap_or(0.7) as f64;
+        let _temperature = config.provider.temperature.unwrap_or(0.7) as f64;
         let system_prompt = config.get_system_prompt();
 
         match client {
@@ -455,7 +455,6 @@ pub struct ProviderInfo {
     pub supported_features: Vec<String>,
 }
 
-/// Global provider manager instance
 lazy_static! {
     static ref PROVIDER_MANAGER: tokio::sync::Mutex<Option<Arc<ProviderManager>>> =
         tokio::sync::Mutex::const_new(None);

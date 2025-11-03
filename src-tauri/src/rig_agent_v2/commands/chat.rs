@@ -1,5 +1,5 @@
 use crate::rig_agent_v2::core::*;
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 /// Send chat message
 #[tauri::command]
@@ -14,7 +14,7 @@ pub async fn send_chat_message(
 
     // Create conversation and message
     let conversation_id = conversation_id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    let conversation = Conversation {
+    let _conversation = Conversation {
         id: conversation_id.clone(),
         title: None,
         messages: vec![],
@@ -30,8 +30,10 @@ pub async fn send_chat_message(
     let request = ChatRequest::new(conversation_id, chat_message);
 
     // Send the chat message
-    manager.agent().chat(request).await
-        .map_err(|e| format!("Failed to send chat message: {}", e))
+    let response: crate::rig_agent_v2::core::ChatResponse = manager.agent().chat(request).await
+        .map_err(|e| format!("Failed to send chat message: {}", e))?;
+
+    Ok(response)
 }
 
 /// Start streaming chat
@@ -63,7 +65,7 @@ pub async fn start_chat_stream(
     );
 
     // Create chat request for streaming
-    let request = crate::rig_agent_v2::core::types::ChatRequest::new(conversation_id.clone(), chat_message);
+    let _request = crate::rig_agent_v2::core::types::ChatRequest::new(conversation_id.clone(), chat_message);
 
     // Get the stream using capabilities
     let chat_capability = crate::rig_agent_v2::capabilities::ChatCapability::new(manager.clone());

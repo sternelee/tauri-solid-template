@@ -8,7 +8,7 @@ use tauri::{AppHandle, Emitter, State};
 #[tauri::command]
 #[specta::specta]
 pub async fn initialize_mcp_tools(
-    app: AppHandle,
+    _app: AppHandle,
     mcp_state: State<'_, McpState>,
 ) -> Result<String, String> {
     // Create MCP tool adapter to verify MCP integration is working

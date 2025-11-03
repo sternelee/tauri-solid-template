@@ -1,4 +1,3 @@
-use crate::rig_agent_v2::*;
 use serde_json::Value;
 use tauri::{AppHandle, Manager};
 
@@ -46,7 +45,7 @@ pub async fn initialize_ai_system(
 #[tauri::command]
 #[specta::specta]
 pub async fn get_ai_system_info(
-    app: AppHandle,
+    _app: AppHandle,
 ) -> std::result::Result<Value, String> {
     // Return mock data for now
     Ok(serde_json::json!({
@@ -71,7 +70,7 @@ pub async fn get_ai_system_info(
 #[tauri::command]
 #[specta::specta]
 pub async fn get_ai_capabilities(
-    app: AppHandle,
+    _app: AppHandle,
 ) -> std::result::Result<Value, String> {
     // Return mock capabilities for now
     Ok(serde_json::json!({

@@ -1,6 +1,6 @@
 use crate::rig_agent_v2::capabilities::streaming::*;
 use crate::rig_agent_v2::core::*;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager, Emitter};
 
 /// Start ReAct chat
 #[tauri::command]
@@ -90,7 +90,7 @@ pub async fn start_react_chat(
 /// Get ReAct configuration
 #[tauri::command]
 #[specta::specta]
-pub async fn get_react_config(app: AppHandle) -> std::result::Result<ReActConfig, String> {
+pub async fn get_react_config(_app: AppHandle) -> std::result::Result<ReActConfig, String> {
     // Return default configuration for now
     // In a real implementation, this could be stored and retrieved from a database
     Ok(ReActConfig::default())
@@ -100,8 +100,8 @@ pub async fn get_react_config(app: AppHandle) -> std::result::Result<ReActConfig
 #[tauri::command]
 #[specta::specta]
 pub async fn update_react_config(
-    app: AppHandle,
-    config: ReActConfig,
+    _app: AppHandle,
+    _config: ReActConfig,
 ) -> std::result::Result<String, String> {
     // In a real implementation, this would persist the configuration
     // For now, just return success
@@ -115,7 +115,7 @@ pub async fn execute_react_step(
     app: AppHandle,
     step_type: String,
     context: String,
-    state: Option<ReActState>,
+    _state: Option<ReActState>,
 ) -> std::result::Result<serde_json::Value, String> {
     // Get the agent manager from app state
     let manager: std::sync::Arc<crate::rig_agent_v2::AgentManager> = app

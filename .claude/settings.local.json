@@ -41,7 +41,8 @@
       "Bash(python3:*)",
       "Read(//Users/sternelee/www/github/**)",
       "Bash(echo:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,4 @@
 use tauri::{AppHandle, Manager};
-use crate::rig_agent_v2::tools::*;
 
 /// Execute a tool
 #[tauri::command]

@@ -4,9 +4,9 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 use tokio::time::timeout;
-use tracing::{debug, error, info, warn};
+use tracing::{info, warn};
 
 use super::models::McpServerConfig;
 
