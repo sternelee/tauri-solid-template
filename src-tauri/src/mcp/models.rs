@@ -1,7 +1,7 @@
-use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use specta::Type;
+use std::time::Duration;
 
 /// Configuration parameters extracted from MCP server config
 #[derive(Debug, Clone)]
@@ -24,3 +24,4 @@ pub struct ToolWithServer {
     pub input_schema: serde_json::Value,
     pub server: String,
 }
+

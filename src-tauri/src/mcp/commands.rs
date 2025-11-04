@@ -27,7 +27,8 @@ pub async fn activate_mcp_server(
     config: Value,
 ) -> Result<(), String> {
     // Use the simplified start_mcp_server_with_restart
-    start_mcp_server_with_restart(&app, Arc::new(state.inner().clone()), name, config, Some(3)).await
+    start_mcp_server_with_restart(&app, Arc::new(state.inner().clone()), name, config, Some(3))
+        .await
 }
 
 /// Deactivate an MCP server
@@ -54,7 +55,10 @@ pub async fn deactivate_mcp_server(state: State<'_, McpState>, name: String) -> 
         active_servers.remove(&name);
     }
 
-    log::info!("Server {} stopped successfully and marked as deactivated.", name);
+    log::info!(
+        "Server {} stopped successfully and marked as deactivated.",
+        name
+    );
     Ok(())
 }
 
@@ -116,7 +120,9 @@ pub async fn get_tools(
     state: State<'_, McpState>,
     server_name: Option<String>,
 ) -> Result<Vec<ToolWithServer>, String> {
-    let client_manager = state.client_manager.as_ref()
+    let client_manager = state
+        .client_manager
+        .as_ref()
         .ok_or("MCP client manager not initialized")?;
 
     let mut all_tools: Vec<ToolWithServer> = Vec::new();
@@ -137,7 +143,10 @@ pub async fn get_tools(
             }
             Err(e) => {
                 log::error!("Failed to get tools from server {}: {}", server_name, e);
-                return Err(format!("Failed to get tools from server {}: {}", server_name, e));
+                return Err(format!(
+                    "Failed to get tools from server {}: {}",
+                    server_name, e
+                ));
             }
         }
     } else {
@@ -150,7 +159,9 @@ pub async fn get_tools(
                         all_tools.push(ToolWithServer {
                             name: format_tool_name(&srv_name, &tool),
                             description: tool.description,
-                            input_schema: tool.input_schema.unwrap_or_else(|| serde_json::json!({})),
+                            input_schema: tool
+                                .input_schema
+                                .unwrap_or_else(|| serde_json::json!({})),
                             server: srv_name.clone(),
                         });
                     }
@@ -175,7 +186,9 @@ pub async fn call_tool(
     arguments: Option<Map<String, Value>>,
     cancellation_token: Option<String>,
 ) -> Result<CallToolResult, String> {
-    let client_manager = state.client_manager.as_ref()
+    let client_manager = state
+        .client_manager
+        .as_ref()
         .ok_or("MCP client manager not initialized")?;
 
     // Set up cancellation if token is provided
@@ -190,7 +203,11 @@ pub async fn call_tool(
     let (server_name, actual_tool_name) = super::client::parse_tool_name(&tool_name)
         .ok_or_else(|| format!("Invalid tool name format: {}", tool_name))?;
 
-    log::info!("Calling tool '{}' on server '{}'", actual_tool_name, server_name);
+    log::info!(
+        "Calling tool '{}' on server '{}'",
+        actual_tool_name,
+        server_name
+    );
 
     // Convert arguments format
     let args = arguments.map(|args_map| {
@@ -202,7 +219,10 @@ pub async fn call_tool(
     });
 
     // Call the tool using the client manager
-    let result = match client_manager.call_tool(&server_name, &actual_tool_name, args).await {
+    let result = match client_manager
+        .call_tool(&server_name, &actual_tool_name, args)
+        .await
+    {
         Ok(mcp_result) => {
             log::info!("Tool '{}' called successfully", tool_name);
             // Convert the result to the expected format
@@ -321,3 +341,4 @@ pub struct McpServerStatus {
     pub active: bool,
     pub restart_count: u32,
 }
+

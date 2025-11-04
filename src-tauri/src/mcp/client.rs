@@ -57,7 +57,8 @@ impl HttpMcpClient {
 
         info!("Making MCP request to {}: {}", self.url, method);
 
-        let mut req = self.client
+        let mut req = self
+            .client
             .post(&self.url)
             .header("Accept", "application/json, text/event-stream")
             .json(&request_body);
@@ -88,7 +89,8 @@ impl HttpMcpClient {
         if response_text.starts_with("event: message\ndata: ") {
             // Parse SSE response
             let json_start = response_text.find("data: ").unwrap_or(0) + 6;
-            let json_end = response_text[json_start..].find('\n')
+            let json_end = response_text[json_start..]
+                .find('\n')
                 .map(|pos| pos + json_start)
                 .unwrap_or(response_text.len());
             let json_str = &response_text[json_start..json_end];
@@ -216,7 +218,8 @@ impl McpClientManager {
         let client: Box<dyn McpClientHandler> = match config.transport_type.as_deref() {
             Some("http") | Some("sse") => {
                 if let Some(url) = &config.url {
-                    let headers = config.headers
+                    let headers = config
+                        .headers
                         .iter()
                         .map(|(k, v)| (k.clone(), v.as_str().unwrap_or_default().to_string()))
                         .collect();
@@ -330,3 +333,4 @@ pub fn parse_tool_name(tool_name: &str) -> Option<(String, String)> {
         None
     }
 }
+

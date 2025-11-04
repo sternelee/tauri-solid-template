@@ -104,8 +104,18 @@ mod tests {
             "command": "test"
         });
 
-        assert_eq!(super::helpers::extract_active_status(&active_config), Some(true));
-        assert_eq!(super::helpers::extract_active_status(&inactive_config), Some(false));
-        assert_eq!(super::helpers::extract_active_status(&no_active_config), None);
+        assert_eq!(
+            super::helpers::extract_active_status(&active_config),
+            Some(true)
+        );
+        assert_eq!(
+            super::helpers::extract_active_status(&inactive_config),
+            Some(false)
+        );
+        assert_eq!(
+            super::helpers::extract_active_status(&no_active_config),
+            None
+        );
     }
 }
+

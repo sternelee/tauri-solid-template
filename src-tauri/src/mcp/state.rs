@@ -21,7 +21,9 @@ impl McpState {
 
     pub fn with_client_manager() -> Self {
         let mut state = Self::default();
-        let client_manager = Arc::new(super::client::McpClientManager::new(Arc::new(state.clone())));
+        let client_manager = Arc::new(super::client::McpClientManager::new(Arc::new(
+            state.clone(),
+        )));
         state.client_manager = Some(client_manager);
         state
     }
@@ -40,3 +42,4 @@ impl Clone for McpState {
         }
     }
 }
+

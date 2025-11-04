@@ -53,7 +53,10 @@ pub fn calculate_exponential_backoff_delay(attempt: u32) -> u64 {
 
 /// Get app data directory for MCP config storage
 pub fn get_app_data_folder_path<R: Runtime>(app: &AppHandle<R>) -> std::path::PathBuf {
-    let app_data_dir = app.path().app_data_dir().expect("Failed to get app data dir");
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .expect("Failed to get app data dir");
     std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
     app_data_dir
 }
@@ -114,10 +117,7 @@ pub async fn run_mcp_commands<R: Runtime>(
 }
 
 /// Start an MCP server
-pub async fn start_mcp_server(
-    name: &str,
-    config: &Value,
-) -> Result<(), String> {
+pub async fn start_mcp_server(name: &str, config: &Value) -> Result<(), String> {
     let config_params = extract_command_args(config)
         .ok_or_else(|| format!("Failed to extract command args from config for {}", name))?;
 
@@ -146,23 +146,23 @@ pub async fn start_mcp_server(
     });
 
     // Start the process
-    let mut child = cmd.spawn()
+    let mut child = cmd
+        .spawn()
         .map_err(|e| format!("Failed to start MCP server {}: {}", name, e))?;
 
     // Simple verification - wait a bit and check if it's still running
     sleep(Duration::from_millis(500)).await;
 
     match child.try_wait() {
-        Ok(Some(status)) => {
-            Err(format!("MCP server {} exited immediately with status: {}", name, status))
-        }
+        Ok(Some(status)) => Err(format!(
+            "MCP server {} exited immediately with status: {}",
+            name, status
+        )),
         Ok(None) => {
             log::info!("MCP server {} is running", name);
             Ok(())
         }
-        Err(e) => {
-            Err(format!("Failed to check MCP server {} status: {}", name, e))
-        }
+        Err(e) => Err(format!("Failed to check MCP server {} status: {}", name, e)),
     }
 }
 
@@ -179,7 +179,10 @@ pub fn extract_command_args(config: &Value) -> Option<McpServerConfig> {
     Some(McpServerConfig {
         transport_type: obj.get("type").and_then(|t| t.as_str()).map(String::from),
         url: obj.get("url").and_then(|u| u.as_str()).map(String::from),
-        timeout: obj.get("timeout").and_then(|t| t.as_u64()).map(Duration::from_secs),
+        timeout: obj
+            .get("timeout")
+            .and_then(|t| t.as_u64())
+            .map(Duration::from_secs),
         headers: obj
             .get("headers")
             .unwrap_or(&Value::Object(serde_json::Map::new()))
@@ -227,7 +230,12 @@ pub async fn start_mcp_server_with_restart<R: Runtime>(
     }
 
     for attempt in 1..=max_attempts {
-        log::info!("Starting MCP server {} (attempt {}/{})", name, attempt, max_attempts);
+        log::info!(
+            "Starting MCP server {} (attempt {}/{})",
+            name,
+            attempt,
+            max_attempts
+        );
 
         match start_mcp_server(&name, &config).await {
             Ok(_) => {
@@ -264,7 +272,12 @@ pub async fn start_mcp_server_with_restart<R: Runtime>(
                 return Ok(());
             }
             Err(e) => {
-                log::error!("Failed to start MCP server {} on attempt {}: {}", name, attempt, e);
+                log::error!(
+                    "Failed to start MCP server {} on attempt {}: {}",
+                    name,
+                    attempt,
+                    e
+                );
 
                 // Update restart count
                 {
@@ -288,7 +301,10 @@ pub async fn start_mcp_server_with_restart<R: Runtime>(
         connected.insert(name.clone(), false);
     }
 
-    Err(format!("Failed to start MCP server {} after {} attempts", name, max_attempts))
+    Err(format!(
+        "Failed to start MCP server {} after {} attempts",
+        name, max_attempts
+    ))
 }
 
 /// Restart active MCP servers
@@ -302,7 +318,10 @@ pub async fn restart_active_mcp_servers<R: Runtime>(
 
     for (name, config) in configs_to_restart {
         log::info!("Restarting MCP server: {}", name);
-        if let Err(e) = start_mcp_server_with_restart(app, mcp_state.clone(), name.clone(), config, Some(3)).await {
+        if let Err(e) =
+            start_mcp_server_with_restart(app, mcp_state.clone(), name.clone(), config, Some(3))
+                .await
+        {
             log::error!("Failed to restart MCP server {}: {}", name, e);
         }
     }
@@ -346,3 +365,4 @@ pub async fn clean_up_mcp_servers(mcp_state: Arc<McpState>) {
 
     log::info!("MCP servers cleaned up successfully");
 }
+
