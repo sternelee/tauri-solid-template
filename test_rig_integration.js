@@ -14,9 +14,10 @@ async function testRigIntegration() {
     console.log("2. Initializing agent...");
     const config = {
       model: "gpt-4o-mini",
-      preamble: "You are a helpful AI assistant integrated into a desktop application.",
+      preamble:
+        "You are a helpful AI assistant integrated into a desktop application.",
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 1000,
     };
 
     // Note: You'll need to provide a real OpenAI API key for this to work
@@ -24,7 +25,9 @@ async function testRigIntegration() {
     // const initResult = await commands.initializeAgent(config, apiKey);
     // console.log("   Agent initialization result:", initResult);
 
-    console.log("   NOTE: To test with real API calls, uncomment the apiKey lines above");
+    console.log(
+      "   NOTE: To test with real API calls, uncomment the apiKey lines above",
+    );
 
     // Test 3: Check conversation history (should be empty initially)
     console.log("3. Getting conversation history...");
@@ -47,17 +50,19 @@ async function testRigIntegration() {
     console.log("2. Create UI components to interact with the agent");
     console.log("3. Add error handling and loading states");
     console.log("4. Implement conversation persistence");
-
   } catch (error) {
     console.error("❌ Test failed:", error);
   }
 }
 
 // Export for use in browser or testing environment
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { testRigIntegration };
 } else {
   window.testRigIntegration = testRigIntegration;
 }
 
-console.log("Rig Agent Integration Test loaded. Run testRigIntegration() to test.");
+console.log(
+  "Rig Agent Integration Test loaded. Run testRigIntegration() to test.",
+);
+

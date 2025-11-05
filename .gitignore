@@ -9,3 +9,4 @@ src-tauri/temp_ripgrep
 
 # Ripgrep binaries (downloaded during build)
 src-tauri/binaries/rg-*
+.svelte-kit
